@@ -37,9 +37,12 @@ export class GridOverlay {
     for (const o of occluders) {
       g.lineStyle(1.5, 0x3399ff, 0.9);
       if (o.shape === 'ellipse') g.strokeEllipse(o.x + o.w / 2, o.y + o.h / 2, o.w, o.h);
+      else if (o.shape === 'poly') g.strokePoints(o.points.map(([x, y]) => ({ x, y })), true);
       else g.strokeRect(o.x, o.y, o.w, o.h);
+      // 노란 선: baseY (가로 길이 = 가려지는 범위 hideX)
+      const [hx0, hx1] = o.hideX || [o.x, o.x + o.w];
       g.lineStyle(1.5, 0xffdd00, 0.9);
-      g.lineBetween(o.x, o.baseY, o.x + o.w, o.baseY);
+      g.lineBetween(hx0, o.baseY, hx1, o.baseY);
     }
   }
 }

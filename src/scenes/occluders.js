@@ -1,5 +1,6 @@
 // 지붕·나무 가림 조각. 맵 그림에서 해당 모양만 오려 캐릭터 위층에 올림.
-// 캐릭터 발(y)이 baseY보다 위(북쪽)에 있으면 조각이 캐릭터를 덮고, 아래면 캐릭터가 앞에 그려짐.
+// baseY = 그 건물 앞벽이 땅에 닿는 선. 캐릭터 발이 baseY보다 북쪽이고 hideX 범위 안이면 조각이 캐릭터를 덮음.
+// 조각에는 지붕·나무 윗부분만 넣고 벽·마당·땅은 넣지 않음 (shape: poly, points로 윤곽을 따라감).
 // 조각 좌표는 맵 좌표계(mapWidth 기준). 맵 그림이 더 크면(고해상도) 그 해상도로 오려서 줄여 그림.
 
 export function createOccluders(scene, mapTextureKey, occluders, mapWidth) {
@@ -28,9 +29,12 @@ export function createOccluders(scene, mapTextureKey, occluders, mapWidth) {
     const key = `${mapTextureKey}/occ${i}`;
     if (scene.textures.exists(key)) scene.textures.remove(key);
     scene.textures.addCanvas(key, canvas);
-    images.push(
-      scene.add.image(o.x, o.y, key).setOrigin(0, 0).setDisplaySize(o.w, o.h).setDepth(o.baseY)
-    );
+    images.push({
+      image: scene.add.image(o.x, o.y, key).setOrigin(0, 0).setDisplaySize(o.w, o.h).setDepth(o.baseY),
+      baseY: o.baseY,
+      // 캐릭터 발이 이 가로 범위 안에 있을 때만 가릴 수 있음 (없으면 조각의 가로 범위)
+      hideX: Array.isArray(o.hideX) ? o.hideX : [o.x, o.x + o.w],
+    });
   });
   return images;
 }
