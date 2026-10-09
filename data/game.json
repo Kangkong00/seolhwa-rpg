@@ -1,0 +1,22 @@
+{
+  "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
+  "cameraZoom": 1.6,
+  "maxPixelRatio": 2,
+  "startMap": "village_temp",
+  "startOutfit": "outfit1_hotot",
+  "player": {
+    "_설명": "speed=초당 이동 픽셀, height=캐릭터 키, walkFrameMs=걷기 한 프레임 시간, stepLift=걷기 자세에서 몸을 띄우는 높이, footBox=충돌에 쓰는 발밑 상자, cornerSlide=모서리에 걸렸을 때 옆으로 비켜 주는 최대 거리",
+    "speed": 80,
+    "height": 44,
+    "walkFrameMs": 180,
+    "stepLift": 2,
+    "footBox": { "w": 14, "h": 6 },
+    "cornerSlide": 6
+  },
+  "joystick": {
+    "_설명": "radius=손잡이가 움직이는 반경(화면 픽셀), deadZone=이 비율 이하로 밀면 멈춤",
+    "radius": 44,
+    "deadZone": 0.25
+  },
+  "autoSaveMs": 3000
+}
