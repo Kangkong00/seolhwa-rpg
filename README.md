@@ -7,3 +7,28 @@
 - 그림 프롬프트 모음: https://claude.ai/code/artifact/85967246-5bab-4ad7-8766-d0af60309e2f
 
 현재 단계: 단계 2 — 마을을 걸어 다니는 시제품
+
+## 실행
+
+- 배포 주소: https://kangkong00.github.io/seolhwa-rpg/ (아이폰 사파리 → 공유 → 홈 화면에 추가)
+- 내 컴퓨터에서: 저장소 폴더에서 `python3 -m http.server 8000` 실행 후 http://localhost:8000 접속 (파일을 더블클릭해서 열면 동작하지 않음)
+
+## 조작
+
+- 이동: 화면 왼쪽을 누르고 끌기(가상 조이스틱), PC는 방향키·WASD
+- `옷` 버튼 / 숫자 1~6: 옷 바꾸기 (시험용)
+- `격자` 버튼 / G: 못 가는 칸·지붕 조각 보기와 격자 편집
+
+## 폴더
+
+```
+index.html          시작 페이지
+src/core/           게임 규칙 (격자, 이동·충돌) — 화면 코드와 무관
+src/scenes/         화면 (마을, 캐릭터 그림 가공, 지붕 가림)
+src/ui/             조이스틱, 버튼, 격자 편집 도구
+src/save/           기기 안 자동 저장
+data/               조정 가능한 값 (game.json, outfits.json, maps/)
+assets/             그림
+lib/                Phaser 4.2.1 (MIT)
+docs/plan.md        개발 계획서 사본
+```
