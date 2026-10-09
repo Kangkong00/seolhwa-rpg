@@ -36,8 +36,9 @@ export class VillageScene extends Phaser.Scene {
       this.map.grid = Grid.fromRows(edited, this.map.cellSize);
     }
 
-    this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDepth(-1);
-    createOccluders(this, this.mapKey, this.map.occluders);
+    // 맵 그림이 좌표계보다 크면(고해상도 그림) 좌표계 크기로 줄여 그림
+    this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDisplaySize(this.map.width, this.map.height).setDepth(-1);
+    createOccluders(this, this.mapKey, this.map.occluders, this.map.width);
 
     // 주인공 상태 (위치는 발끝 기준)
     const save = loadSave();
