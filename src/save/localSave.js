@@ -3,6 +3,7 @@
 
 const SAVE_KEY = 'seolhwa-rpg:save:v1';
 const GRID_KEY_PREFIX = 'seolhwa-rpg:grid-edit:';
+const ZOOM_KEY = 'seolhwa-rpg:zoom';
 
 function read(key) {
   try {
@@ -44,4 +45,14 @@ export function writeGridEdit(mapId, rows) {
 
 export function clearGridEdit(mapId) {
   return write(GRID_KEY_PREFIX + mapId, null);
+}
+
+// 임시 확대·축소 버튼으로 고른 배율 (이 기기에만)
+export function loadZoom() {
+  const z = read(ZOOM_KEY);
+  return typeof z === 'number' && z > 0 ? z : null;
+}
+
+export function writeZoom(z) {
+  return write(ZOOM_KEY, z);
 }

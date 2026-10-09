@@ -8,7 +8,7 @@ import { createOccluders } from './occluders.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
-import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
+import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit, loadZoom, writeZoom } from '../save/localSave.js';
 
 export class VillageScene extends Phaser.Scene {
   constructor() {
@@ -38,7 +38,7 @@ export class VillageScene extends Phaser.Scene {
 
     // 맵 그림이 좌표계보다 크면(고해상도 그림) 좌표계 크기로 줄여 그림
     this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDisplaySize(this.map.width, this.map.height).setDepth(-1);
-    createOccluders(this, this.mapKey, this.map.occluders, this.map.width);
+    this.occluders = createOccluders(this, this.mapKey, this.map.occluders, this.map.width);
 
     // 주인공 상태 (위치는 발끝 기준)
     const save = loadSave();
@@ -59,8 +59,6 @@ export class VillageScene extends Phaser.Scene {
     cam.setBounds(0, 0, this.map.width, this.map.height);
     this.followTarget = { x: this.pos.x, y: this.pos.y };
     cam.startFollow(this.followTarget, false, 1, 1);
-    this.applyZoom();
-    this.scale.on('resize', () => this.applyZoom());
 
     // 격자 보기·편집
     this.overlay = new GridOverlay(this);
@@ -68,15 +66,23 @@ export class VillageScene extends Phaser.Scene {
     this.hud = new Hud({
       onOutfit: () => this.changeOutfit(1),
       onGrid: () => this.setGridMode(!this.gridOn),
+      onZoom: (dir) => this.changeZoom(dir),
     });
     this.editor = new EditorPanel({
       onExport: () => this.exportGrid(),
       onReset: () => this.resetGrid(),
       onClose: () => this.setGridMode(false),
     });
+
+    // 확대 배율: 기본은 data/game.json, 화면의 +/- 버튼으로 바꾼 값은 이 기기에 기억
+    this.zoom = loadZoom() || cfg.cameraZoom;
+    this.applyZoom();
+    this.scale.on('resize', () => this.applyZoom());
     this.setupPainting();
     this.input.keyboard.on('keydown', (e) => {
       if (e.code === 'KeyG') this.setGridMode(!this.gridOn);
+      if (e.code === 'Equal' || e.code === 'NumpadAdd') this.changeZoom(1);
+      if (e.code === 'Minus' || e.code === 'NumpadSubtract') this.changeZoom(-1);
       const n = Number(e.key);
       if (n >= 1 && n <= this.d.outfits.outfits.length) this.setOutfit(n - 1);
     });
@@ -92,12 +98,23 @@ export class VillageScene extends Phaser.Scene {
   }
 
   applyZoom() {
-    this.cameras.main.setZoom(this.cfg.cameraZoom * this.d.getPixelRatio());
+    this.cameras.main.setZoom(this.zoom * this.d.getPixelRatio());
+    this.hud.setZoomLabel(this.zoom);
+  }
+
+  // 임시 확대·축소 버튼 (아이폰에서 알맞은 배율을 찾기 위한 것)
+  changeZoom(dir) {
+    const { min, max, step } = this.cfg.zoomButtons;
+    const next = Math.round((this.zoom + dir * step) * 100) / 100;
+    this.zoom = Math.min(max, Math.max(min, next));
+    writeZoom(this.zoom);
+    this.applyZoom();
   }
 
   // 화면에 실제로 보일 크기에 맞춰 캐릭터 텍스처 축소 비율을 정함
   textureScale() {
-    const px = this.cfg.player.height * this.cfg.cameraZoom * this.d.getPixelRatio();
+    // 버튼으로 가장 크게 확대해도 선명하도록 최대 배율 기준으로 만듦
+    const px = this.cfg.player.height * this.cfg.zoomButtons.max * this.d.getPixelRatio();
     return Math.min(1, (px * 1.25) / this.d.outfits.canvas.standHeight);
   }
 
@@ -198,6 +215,12 @@ export class VillageScene extends Phaser.Scene {
     }
 
     this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving);
+    // 지붕·나무 조각은 캐릭터 발이 그 조각의 가로 범위(hideX) 안에 있을 때만 앞뒤를 따짐.
+    // 범위 밖(건물 옆)에서는 항상 캐릭터가 위에 그려져, 처마 끝에 몸이 잘리지 않음.
+    for (const occ of this.occluders) {
+      const inRange = this.pos.x >= occ.hideX[0] && this.pos.x <= occ.hideX[1];
+      occ.image.setDepth(inRange ? occ.baseY : -0.5);
+    }
     // 카메라는 발이 아니라 몸 가운데를 따라감 (걷기 들썩임은 따라가지 않음)
     this.followTarget.x = this.pos.x;
     this.followTarget.y = this.pos.y - p.height * 0.45;
