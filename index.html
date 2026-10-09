@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>설화 RPG</title>
+  <meta name="theme-color" content="#1d1a14">
+  <!-- 아이폰 홈 화면에 추가했을 때 앱처럼 열리도록 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="설화 RPG">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+  <link rel="icon" type="image/png" href="assets/icons/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <div id="game"></div>
+
+  <!-- 왼쪽 가상 조이스틱 (src/ui/joystick.js) -->
+  <div id="joystick-zone">
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
+  </div>
+
+  <!-- 오른쪽 위 시험용 버튼 (src/ui/hud.js) -->
+  <div id="hud">
+    <button id="btn-outfit" type="button">옷</button>
+    <button id="btn-grid" type="button">격자</button>
+  </div>
+  <div id="fps"></div>
+
+  <!-- 격자 편집 도구 (src/ui/editorPanel.js) -->
+  <div id="editor-panel" hidden>
+    <div class="editor-title">격자 편집</div>
+    <div class="editor-help">드래그로 칠하기. 빨간 칸에서 시작하면 지우고, 빈 칸에서 시작하면 막습니다.</div>
+    <button id="ed-brush" type="button">붓 1칸</button>
+    <button id="ed-export" type="button">파일로 내보내기</button>
+    <button id="ed-reset" type="button">원래대로</button>
+    <button id="ed-close" type="button">닫기</button>
+  </div>
+
+  <div id="rotate">
+    <div class="rotate-icon">⟳</div>
+    <div>화면을 가로로 돌려 주세요</div>
+  </div>
+  <div id="loading">불러오는 중…</div>
+
+  <script src="lib/phaser.min.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

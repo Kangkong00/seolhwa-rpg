@@ -1,0 +1,14 @@
+{
+  "name": "설화 RPG",
+  "short_name": "설화 RPG",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1d1a14",
+  "theme_color": "#1d1a14",
+  "icons": [
+    { "src": "assets/icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
