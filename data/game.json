@@ -13,6 +13,13 @@
     "footBox": { "w": 14, "h": 6 },
     "cornerSlide": 6
   },
+  "shadow": {
+    "_설명": "발밑 반투명 타원 그림자. width·height=맵 픽셀 크기, alpha=진하기(0~1), offsetY=발에서 아래로 내리는 거리, softness=가장자리 흐림(0 또렷~1 흐림). 몬스터는 표시 키(data/monsters.json height)에 비례: 너비=키×widthRatio, 높이=키×heightRatio",
+    "color": "#000000",
+    "softness": 0.6,
+    "player": { "width": 30, "height": 10, "alpha": 0.35, "offsetY": 0 },
+    "monster": { "widthRatio": 1.2, "heightRatio": 0.35, "alpha": 0.35 }
+  },
   "joystick": {
     "_설명": "radius=손잡이가 움직이는 반경(화면 픽셀), deadZone=이 비율 이하로 밀면 멈춤",
     "radius": 44,

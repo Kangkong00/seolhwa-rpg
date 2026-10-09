@@ -51,7 +51,7 @@ export class VillageScene extends Phaser.Scene {
     this.dir = null;
     this.moving = false;
 
-    this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas);
+    this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow);
     this.outfitIndex = Math.max(0, this.d.outfits.outfits.findIndex((o) => o.id === ((save && save.outfit) || cfg.startOutfit)));
 
     // 카메라
