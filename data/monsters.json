@@ -1,0 +1,8 @@
+{
+  "_설명": "몬스터 그림 규격과 표시 크기. height=1376 좌표 기준 표시 키(정면 서 있기). 능력치·경험치·드랍은 단계 3에서 정함(아직 없음).",
+  "canvas": { "width": 640, "height": 400, "footY": 380, "standHeight": 240 },
+  "monsters": [
+    { "id": "rat", "name": "들쥐", "folder": "assets/monsters/rat", "height": 28, "_확정": "2026-10-10 강콩" },
+    { "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 60, "_확인필요": "권장값, 강콩 확인 전" }
+  ]
+}
