@@ -1,6 +1,6 @@
 // 마을 화면: 통그림 맵 + 보이지 않는 격자 + 주인공 + 카메라 따라가기.
 import { Grid } from '../core/grid.js';
-import { parseMap, serializeMap } from '../core/mapData.js';
+import { parseMap, scaleMapY, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { loadOutfitImages, buildOutfitFrames } from './characterFrames.js';
 import { PlayerView } from './PlayerView.js';
@@ -28,23 +28,22 @@ export class VillageScene extends Phaser.Scene {
   create() {
     const { game: cfg, mapJson, mapId } = this.d;
     this.cfg = cfg;
-    this.map = parseMap(mapJson);
-
-    // 기기에 저장된 격자 편집 내용이 있으면 적용
-    const edited = loadGridEdit(mapId);
-    if (Array.isArray(edited) && edited.length === this.map.grid.rows && edited[0].length === this.map.grid.cols) {
-      this.map.grid = Grid.fromRows(edited, this.map.cellSize);
-    }
+    // 시험용 세로 배율 (data/game.json의 mapScaleY). 1이 아니면 격자 편집은 보기만 됨
+    this.scaleY = cfg.mapScaleY || 1;
+    this.map = this.loadMap();
 
     // 맵 그림이 좌표계보다 크면(고해상도 그림) 좌표계 크기로 줄여 그림
     this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDisplaySize(this.map.width, this.map.height).setDepth(-1);
-    this.occluders = createOccluders(this, this.mapKey, this.map.occluders, this.map.width);
+    this.occluders = createOccluders(this, this.mapKey, this.map.occluders, this.map.width, this.map.height);
 
     // 주인공 상태 (위치는 발끝 기준)
     const save = loadSave();
     const box = cfg.player.footBox;
     let start = this.map.spawn;
-    if (save && save.map === mapId && Number.isFinite(save.x) && Number.isFinite(save.y)) start = { x: save.x, y: save.y };
+    // 저장 위치는 늘리기 전(배율 1) 좌표로 보관 → 배율을 바꿔도 같은 자리에서 시작
+    if (save && save.map === mapId && Number.isFinite(save.x) && Number.isFinite(save.y)) {
+      start = { x: save.x, y: save.y * this.scaleY };
+    }
     const safe = nearestStandable(this.map.grid, start.x, start.y, box) || this.map.spawn;
     this.pos = { x: safe.x, y: safe.y };
     this.facing = (save && save.facing) || 'down';
@@ -123,20 +122,35 @@ export class VillageScene extends Phaser.Scene {
     writeSave({
       map: this.d.mapId,
       x: Math.round(this.pos.x),
-      y: Math.round(this.pos.y),
+      y: Math.round(this.pos.y / this.scaleY),
       facing: this.facing,
       outfit: this.d.outfits.outfits[this.outfitIndex].id,
     });
+  }
+
+  // 맵 파일 + 이 기기에 저장된 격자 편집 → 세로 배율 적용
+  loadMap() {
+    const map = parseMap(this.d.mapJson);
+    const edited = loadGridEdit(this.d.mapId);
+    if (Array.isArray(edited) && edited.length === map.grid.rows && edited[0].length === map.grid.cols) {
+      map.grid = Grid.fromRows(edited, map.cellSize);
+    }
+    return scaleMapY(map, this.scaleY);
+  }
+
+  // 격자 편집은 배율 1일 때만 (늘린 격자를 저장하면 원래 맵 파일과 줄 수가 달라짐)
+  canEditGrid() {
+    return this.scaleY === 1;
   }
 
   // ---------- 격자 편집 ----------
   setGridMode(on) {
     this.gridOn = on;
     this.hud.setGridOn(on);
-    this.editor.setVisible(on);
+    this.editor.setVisible(on && this.canEditGrid());
     this.overlay.setVisible(on);
     // 편집 중에는 화면 왼쪽도 칠할 수 있게 조이스틱을 끔 (PC는 방향키로 이동)
-    this.d.joystick.setEnabled(!on);
+    this.d.joystick.setEnabled(!(on && this.canEditGrid()));
     if (on) this.overlay.draw(this.map.grid, this.map.occluders);
   }
 
@@ -159,7 +173,7 @@ export class VillageScene extends Phaser.Scene {
       if (changed) this.overlay.draw(this.map.grid, this.map.occluders);
     };
     this.input.on('pointerdown', (pointer) => {
-      if (!this.gridOn) return;
+      if (!this.gridOn || !this.canEditGrid()) return;
       paintValue = null;
       lastCell = null;
       paint(pointer);
@@ -179,7 +193,7 @@ export class VillageScene extends Phaser.Scene {
 
   resetGrid() {
     clearGridEdit(this.d.mapId);
-    this.map.grid = parseMap(this.d.mapJson).grid;
+    this.map.grid = this.loadMap().grid;
     this.overlay.draw(this.map.grid, this.map.occluders);
   }
 
