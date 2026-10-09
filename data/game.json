@@ -1,12 +1,6 @@
 {
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
-  "zoomButtons": {
-    "_설명": "화면의 임시 확대·축소(+/-) 버튼. 누를 때마다 step만큼, min~max 사이. 버튼으로 고른 값은 그 기기에만 기억됨",
-    "min": 0.6,
-    "max": 2.0,
-    "step": 0.1
-  },
   "maxPixelRatio": 2,
   "startMap": "village",
   "startOutfit": "outfit1_hotot",

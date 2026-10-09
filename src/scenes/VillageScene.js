@@ -8,7 +8,7 @@ import { createOccluders } from './occluders.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
-import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit, loadZoom, writeZoom } from '../save/localSave.js';
+import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
 export class VillageScene extends Phaser.Scene {
   constructor() {
@@ -66,7 +66,6 @@ export class VillageScene extends Phaser.Scene {
     this.hud = new Hud({
       onOutfit: () => this.changeOutfit(1),
       onGrid: () => this.setGridMode(!this.gridOn),
-      onZoom: (dir) => this.changeZoom(dir),
     });
     this.editor = new EditorPanel({
       onExport: () => this.exportGrid(),
@@ -74,15 +73,12 @@ export class VillageScene extends Phaser.Scene {
       onClose: () => this.setGridMode(false),
     });
 
-    // 확대 배율: 기본은 data/game.json, 화면의 +/- 버튼으로 바꾼 값은 이 기기에 기억
-    this.zoom = loadZoom() || cfg.cameraZoom;
+    // 확대 배율: data/game.json의 cameraZoom (1.0배 확정)
     this.applyZoom();
     this.scale.on('resize', () => this.applyZoom());
     this.setupPainting();
     this.input.keyboard.on('keydown', (e) => {
       if (e.code === 'KeyG') this.setGridMode(!this.gridOn);
-      if (e.code === 'Equal' || e.code === 'NumpadAdd') this.changeZoom(1);
-      if (e.code === 'Minus' || e.code === 'NumpadSubtract') this.changeZoom(-1);
       const n = Number(e.key);
       if (n >= 1 && n <= this.d.outfits.outfits.length) this.setOutfit(n - 1);
     });
@@ -98,23 +94,12 @@ export class VillageScene extends Phaser.Scene {
   }
 
   applyZoom() {
-    this.cameras.main.setZoom(this.zoom * this.d.getPixelRatio());
-    this.hud.setZoomLabel(this.zoom);
-  }
-
-  // 임시 확대·축소 버튼 (아이폰에서 알맞은 배율을 찾기 위한 것)
-  changeZoom(dir) {
-    const { min, max, step } = this.cfg.zoomButtons;
-    const next = Math.round((this.zoom + dir * step) * 100) / 100;
-    this.zoom = Math.min(max, Math.max(min, next));
-    writeZoom(this.zoom);
-    this.applyZoom();
+    this.cameras.main.setZoom(this.cfg.cameraZoom * this.d.getPixelRatio());
   }
 
   // 화면에 실제로 보일 크기에 맞춰 캐릭터 텍스처 축소 비율을 정함
   textureScale() {
-    // 버튼으로 가장 크게 확대해도 선명하도록 최대 배율 기준으로 만듦
-    const px = this.cfg.player.height * this.cfg.zoomButtons.max * this.d.getPixelRatio();
+    const px = this.cfg.player.height * this.cfg.cameraZoom * this.d.getPixelRatio();
     return Math.min(1, (px * 1.25) / this.d.outfits.canvas.standHeight);
   }
 
