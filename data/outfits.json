@@ -3,10 +3,10 @@
   "canvas": { "width": 400, "height": 720, "footY": 700, "standHeight": 640 },
   "outfits": [
     { "id": "outfit1_hotot", "name": "허름한 홑옷", "folder": "assets/characters/outfit1_hotot", "legSplitY": 555 },
-    { "id": "outfit2_mumyeong", "name": "무명옷", "folder": "assets/characters/outfit2_mumyeong", "legSplitY": 598 },
-    { "id": "outfit3_dopo", "name": "도포", "folder": "assets/characters/outfit3_dopo", "legSplitY": 595 },
-    { "id": "outfit4_cheollik", "name": "철릭", "folder": "assets/characters/outfit4_cheollik", "legSplitY": 618 },
-    { "id": "outfit5_dujeonggap", "name": "두정갑", "folder": "assets/characters/outfit5_dujeonggap", "legSplitY": 608 },
-    { "id": "outfit6_sinseon", "name": "신선복", "folder": "assets/characters/outfit6_sinseon", "legSplitY": 632 }
+    { "id": "outfit2_mumyeong", "name": "무명옷", "folder": "assets/characters/outfit2_mumyeong", "legSplitY": 590 },
+    { "id": "outfit3_dopo", "name": "도포", "folder": "assets/characters/outfit3_dopo", "legSplitY": 592 },
+    { "id": "outfit4_cheollik", "name": "철릭", "folder": "assets/characters/outfit4_cheollik", "legSplitY": 612 },
+    { "id": "outfit5_dujeonggap", "name": "두정갑", "folder": "assets/characters/outfit5_dujeonggap", "legSplitY": 600 },
+    { "id": "outfit6_sinseon", "name": "신선복", "folder": "assets/characters/outfit6_sinseon", "legSplitY": 600 }
   ]
 }
