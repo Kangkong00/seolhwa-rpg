@@ -8,7 +8,9 @@ function randRange([min, max], rng) {
   return min + (max - min) * rng();
 }
 
+// roam: "map"이면 맵 전체(갈 수 있는 칸 전부)를 돌아다님, 아니면 구역 사각형 안에서만
 function inZone(zone, x, y) {
+  if (zone.roam === 'map') return true;
   return x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h;
 }
 

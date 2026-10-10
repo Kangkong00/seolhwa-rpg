@@ -133,10 +133,10 @@ docs/          문서 사본
 
 ### 몬스터 구역 `spawnZones` (맵 JSON)
 
-- `{ name, monster, count, respawnMs, x, y, w, h }`: 구역 안에 `count`마리를 두고, 줄어들면 `respawnMs` 뒤에 한 마리씩 다시 생김. 몬스터는 구역 밖·벽으로 못 감. `noSpawnNearPortal`(픽셀) 안에는 생기지 않음. 격자 보기에서 보라 사각형.
+- `{ name, monster, count, respawnMs, x, y, w, h, roam? }`: 구역 안에 `count`마리를 두고, 줄어들면 `respawnMs` 뒤에 한 마리씩 다시 생김. 몬스터는 구역 밖·벽으로 못 감. `roam: "map"`이면 사각형은 처음 생기는 자리일 뿐이고 맵 전체(갈 수 있는 칸)를 돌아다님(큰 들쥐). `noSpawnNearPortal`(픽셀) 안에는 생기지 않음. 격자 보기에서 보라 사각형.
 - 움직임: 쉬기 ↔ 4방향으로 조금 걷기. 종류별 `speed`·`restMs`·`walkDistance`·`walkFrameMs`·`footBox`는 `data/monsters.json`(모두 임시값). 공격·쫓아오기는 아직 없음.
 - 규칙 코드는 `src/core/monsters.js`(화면 무관), 그리기는 `src/scenes/MonsterView.js`.
-- 들쥐굴 1층: 둥지 방 3, 창고 방 3, 가운데 싸움터 4마리(들쥐, 10초마다 다시 생김).
+- 들쥐굴 1층: 들쥐 둥지 방 3, 창고 방 3, 가운데 싸움터 4마리 + 큰 들쥐 1마리(싸움터에서 생겨 맵 전체를 돌아다님). 모두 10초마다 다시 생김(임시값, 같은 조건). 큰 들쥐 표시 키 36(`data/monsters.json`).
 
 레벨·경험치·전투 수치는 아직 정하지 않았습니다. 임의로 확정하지 말고 `data/`에 임시값으로만 두세요.
 

@@ -7,8 +7,9 @@
       "speed": 45, "restMs": [800, 2600], "walkDistance": [16, 64], "walkFrameMs": 120, "footBox": { "w": 12, "h": 5 }
     },
     {
-      "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 60, "_확인필요": "키 60은 권장값, 강콩 확인 전",
-      "speed": 35, "restMs": [1500, 4000], "walkDistance": [16, 48], "walkFrameMs": 160, "footBox": { "w": 20, "h": 6 }
+      "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 36, "_확인필요": "키 36: 들쥐보다 조금만 크게(권장값, 아이폰에서 보고 조정)",
+      "_움직임": "개발 단계에서는 들쥐와 같은 조건(2026-10-10 강콩). 다른 것은 크기와 돌아다니는 범위(맵 JSON의 roam)뿐",
+      "speed": 45, "restMs": [800, 2600], "walkDistance": [16, 64], "walkFrameMs": 120, "footBox": { "w": 14, "h": 5 }
     }
   ]
 }
