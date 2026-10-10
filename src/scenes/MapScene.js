@@ -103,6 +103,10 @@ export class MapScene extends Phaser.Scene {
       this.d.hud = new Hud({
         onOutfit: () => this.d.scene.changeOutfit(1),
         onWeapon: () => this.d.scene.changeWeapon(),
+        onSound: () => {
+          this.d.sfx.setMuted(!this.d.sfx.muted);
+          this.d.hud.setSoundOn(!this.d.sfx.muted);
+        },
         onGrid: () => this.d.scene.setGridMode(!this.d.scene.gridOn),
       });
       this.d.editor = new EditorPanel({
@@ -111,6 +115,7 @@ export class MapScene extends Phaser.Scene {
         onClose: () => this.d.scene.setGridMode(false),
       });
       this.d.attackButton = new AttackButton(document.getElementById('btn-attack'));
+      this.d.hud.setSoundOn(!this.d.sfx.muted);
       // 자동 저장: 앱이 가려질 때
       const saveNow = () => this.d.scene.save();
       document.addEventListener('visibilitychange', () => document.hidden && saveNow());
@@ -119,6 +124,8 @@ export class MapScene extends Phaser.Scene {
     this.hud = this.d.hud;
     this.editor = this.d.editor;
     this.attackButton = this.d.attackButton;
+    // 효과음 (Phaser 장면에 이미 'sound'가 있어 sfx 이름으로 둠)
+    this.sfx = this.d.sfx;
     this.overlay = new GridOverlay(this);
     this.setGridMode(false);
     this.setupPainting();
@@ -270,6 +277,7 @@ export class MapScene extends Phaser.Scene {
   // 무기 휘두르기 시작 (칼이 앞을 지나는 순간 맞힘 판정)
   startSwing() {
     const w = this.weaponDef;
+    this.sfx.play('swing');
     this.swing = { weapon: w, t: 0, hitDone: false, trail: null };
     this.attackCooldown = w.cooldownMs;
     const res = moveStep(this.map.grid, this.pos, this.facing, w.stepPx, this.cfg.player.footBox, 0);
@@ -337,6 +345,8 @@ export class MapScene extends Phaser.Scene {
     inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, d[0], d[1]);
     this.hitStopMs = sfx.hitStopMs;
     this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity);
+    this.sfx.play('woodHit');
+    this.playMonsterSound(target, result.killed);
     if (result.killed) {
       this.spawner.remove(target);
       this.monsterViews.delete(target.id);
@@ -363,7 +373,9 @@ export class MapScene extends Phaser.Scene {
     const result = hitMonster(target, this.facing, a.damage, a.knockbackPx, a.stunMs);
     const def = this.monsterDefs[target.type];
     const view = this.monsterViews.get(target.id);
+    this.sfx.play('punchHit');
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+    this.playMonsterSound(target, result.killed);
     if (result.killed) {
       // 규칙에서 바로 빼서 다시 생기는 시간이 흐르기 시작하고, 그림은 쓰러지는 연출 뒤 사라짐
       this.spawner.remove(target);
@@ -374,9 +386,17 @@ export class MapScene extends Phaser.Scene {
     }
   }
 
+  // 몬스터 맞음·쓰러짐 소리 (data/monsters.json의 sounds: { hit, die })
+  playMonsterSound(m, killed) {
+    const snd = this.monsterDefs[m.type].sounds || {};
+    const name = killed ? snd.die : snd.hit;
+    if (name) this.sfx.play(name);
+  }
+
   // ---------- 주인공이 물림 ----------
   onBitten(bite) {
     if (this.dead || this.transitioning) return;
+    this.sfx.play('playerHurt');
     const ph = this.cfg.playerHit;
     const result = hitPlayer(this.player, bite.damage);
     this.playerView.setHp(this.player.hp / this.player.maxHp);

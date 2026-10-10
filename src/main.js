@@ -3,6 +3,7 @@ import { MapScene } from './scenes/MapScene.js';
 import { loadSave } from './save/localSave.js';
 import { Joystick } from './ui/joystick.js';
 import { MoveInput } from './ui/input.js';
+import { SoundPlayer } from './audio/sound.js';
 
 async function fetchJson(url) {
   const res = await fetch(url, { cache: 'no-cache' });
@@ -21,12 +22,15 @@ async function boot() {
   lockPageGestures();
   const loading = document.getElementById('loading');
 
-  const [game, outfits, monsters, weapons] = await Promise.all([
+  const [game, outfits, monsters, weapons, sounds] = await Promise.all([
     fetchJson('data/game.json'),
     fetchJson('data/outfits.json'),
     fetchJson('data/monsters.json'),
     fetchJson('data/weapons.json'),
+    fetchJson('data/sounds.json'),
   ]);
+  // 효과음: 첫 터치 때 켜짐 (아이폰 사파리)
+  const sfx = new SoundPlayer(sounds);
   // 맵 파일은 한 번 받은 것을 다시 씀
   const mapCache = new Map();
   const fetchMap = (id) => {
@@ -97,6 +101,7 @@ async function boot() {
     outfits,
     monsters,
     weapons,
+    sfx,
     mapId,
     mapJson,
     fetchMap,
