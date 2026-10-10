@@ -7,6 +7,7 @@ import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale } from './characterFrames.js';
 import { InkTrail, inkSplash } from './weaponFx.js';
+import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { createOccluders } from './occluders.js';
@@ -245,7 +246,14 @@ export class MapScene extends Phaser.Scene {
     const outfit = this.d.outfits.outfits[this.d.outfitIndex];
     const attach = def && this.d.weapons.attach[outfit.id];
     if (def && attach && this.frames && this.frames.canSwing) {
-      this.playerView.setWeapon({ def, key: `weapon:${def.id}`, canvas: this.d.weapons.canvas, attach, textureScale: this.weaponTexScale });
+      this.playerView.setWeapon({
+        def,
+        key: `weapon:${def.id}`,
+        canvas: this.d.weapons.canvas,
+        attach,
+        swing: this.d.weapons.swing,
+        textureScale: this.weaponTexScale,
+      });
       this.canSwing = true;
     } else {
       this.playerView.setWeapon(null);
@@ -259,7 +267,7 @@ export class MapScene extends Phaser.Scene {
     this.setWeapon(ids[(i + 1) % ids.length]);
   }
 
-  // 무기 휘두르기 시작: raise → strike (strike 순간 맞힘 판정)
+  // 무기 휘두르기 시작 (칼이 앞을 지나는 순간 맞힘 판정)
   startSwing() {
     const w = this.weaponDef;
     this.swing = { weapon: w, t: 0, hitDone: false, trail: null };
@@ -269,34 +277,40 @@ export class MapScene extends Phaser.Scene {
     this.pos.y = res.y;
   }
 
-  // 휘두르는 중 한 프레임. 반환: 그릴 자세 { pose, sweep } 또는 null(끝남)
+  // 휘두르는 중 한 프레임. 칼 방향 theta를 thetaFrom → thetaTo로 돌림(처음엔 느리고 끝으로 빠르게).
+  // 몸 그림은 PlayerView가 theta로 고름(bodySwitchTheta까지 raise, 그 뒤 strike).
+  // 반환: 그릴 자세 { theta } 또는 null(끝남)
   updateSwing(dt) {
     const s = this.swing;
     const w = s.weapon;
+    const sw = this.d.weapons.swing;
     s.t += dt;
-    if (s.t < w.raiseMs) return { pose: 'raise', sweep: 0 };
-    if (s.t >= w.raiseMs + w.strikeMs) {
+    if (s.t >= w.swingMs + sw.recoverMs) {
       if (s.trail) s.trail.fadeOut();
       this.swing = null;
       return null;
     }
-    // 내려치기: 앞부분(sweepPart)에서 빠르게 돌고(끝에서 느려짐) 나머지는 그대로
-    const p = Math.min(1, (s.t - w.raiseMs) / (w.strikeMs * w.sweepPart));
-    const sweep = 1 - (1 - p) * (1 - p);
-    if (!s.hitDone) {
+    const theta = swingTheta(sw, s.t / w.swingMs);
+    // 칼이 앞을 지나는 순간(hitTheta) 맞힘 판정
+    if (!s.hitDone && theta >= sw.hitTheta) {
       s.hitDone = true;
       this.strikeHit(w);
-      // 먹선은 몸 위·칼 아래(칼날이 먹에 덮이지 않게)
-      s.trail = new InkTrail(this, w.trailColor, this.cfg.swingFx, this.pos.y + 0.005);
     }
-    if (s.trail) {
-      const facing = this.facing;
-      const x = this.pos.x;
-      const y = this.pos.y;
-      s.trail.draw((k) => this.playerView.weaponGeometry(facing, 'strike', k, x, y), sweep);
-      if (p >= 1) s.trail.fadeOut();
-    }
-    return { pose: 'strike', sweep };
+    // 먹선: 칼끝이 화면에서 실제로 지나간 자리(theta마다 그때 보이는 몸 그림의 주먹 기준)를 따라 그림
+    if (!s.trail) s.trail = new InkTrail(this, w.trailColor, this.cfg.swingFx, this.pos.y + 0.005);
+    const facing = this.facing;
+    const x = this.pos.x;
+    const y = this.pos.y;
+    const pv = this.playerView;
+    const lat = pv.swingLat(facing);
+    const span = sw.thetaTo - sw.thetaFrom;
+    const geometryAt = (k) => {
+      const th = sw.thetaFrom + span * k;
+      return pv.weaponGeometry(facing, pv.swingPose(th), th, lat, x, y);
+    };
+    s.trail.draw(geometryAt, (theta - sw.thetaFrom) / span);
+    if (s.t >= w.swingMs) s.trail.fadeOut();
+    return { theta };
   }
 
   // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·먹 튐·화면 흔들림
