@@ -1,5 +1,6 @@
 // 때리기 규칙. 화면 코드를 참조하지 않음 (나중에 서버로 옮김).
-// 지금은 주인공 → 몬스터 한 방향만. 몬스터 반격·레벨·경험치는 아직 없음.
+// 주인공 → 몬스터 (맞으면 몬스터가 반격 시작), 몬스터 → 주인공 (물기). 레벨·경험치는 아직 없음.
+import { provoke } from './monsters.js';
 
 const DIR_VECTORS = {
   up: { x: 0, y: -1 },
@@ -38,5 +39,12 @@ export function hitMonster(m, facing, damage, knockbackPx, stunMs) {
   m.stunMs = stunMs;
   m.state = 'rest';
   m.timer = stunMs;
+  provoke(m);
   return { damage, killed: m.hp <= 0 };
+}
+
+// 주인공이 물렸을 때: 체력을 깎음. 반환: { damage, killed }
+export function hitPlayer(player, damage) {
+  player.hp = Math.max(0, player.hp - damage);
+  return { damage, killed: player.hp <= 0 };
 }

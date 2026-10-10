@@ -1,5 +1,7 @@
 // 몬스터 생성·돌아다니기 규칙. 화면 코드를 참조하지 않음 (나중에 서버로 옮김).
-// 지금은 쉬기 ↔ 4방향으로 조금 걷기만 함. 공격·쫓아오기는 단계 3 뒤에서.
+// 평소: 쉬기 ↔ 4방향으로 조금 걷기 (먼저 덤비지 않음).
+// 맞으면 반격: 주인공을 쫓아와(구역 밖도 가능) 가까우면 일정 간격으로 묾.
+// 주인공이 멀어지거나(giveUpDistance) 한동안(giveUpMs) 서로 안 때리면 포기하고 구역으로 돌아감.
 import { moveStep, isStandable } from './movement.js';
 
 const DIR_NAMES = ['up', 'down', 'left', 'right'];
@@ -62,11 +64,91 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     knockLeft: 0,
     knockDir: null,
     stunMs: 0,
+    // 반격
+    aggro: false,
+    calmMs: 0, // 서로 안 때린 시간
+    biteCooldown: 0,
+    biteMs: 0, // 무는 동작 남은 시간 (그림: 튀어나갔다 돌아옴)
+    bitePending: false,
   };
 }
 
-// 한 프레임 진행. dtMs: 지난 프레임 이후 시간
-export function updateMonster(m, def, map, dtMs, rng = Math.random) {
+// 주인공 쪽으로 4방향 중 하나 (가로·세로 중 더 먼 쪽 먼저)
+function towardPoint(m, tx, ty) {
+  const dx = tx - m.x;
+  const dy = ty - m.y;
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'down' : 'up';
+}
+
+function otherAxis(m, tx, ty, dir) {
+  if (dir === 'left' || dir === 'right') return ty > m.y ? 'down' : 'up';
+  return tx > m.x ? 'right' : 'left';
+}
+
+// 막히면 다른 축으로 비켜 감
+function stepToward(m, def, map, tx, ty, dist) {
+  const first = towardPoint(m, tx, ty);
+  for (const dir of [first, otherAxis(m, tx, ty, first)]) {
+    const res = moveStep(map.grid, m, dir, dist, def.footBox, 2);
+    if (res.moved) {
+      m.x = res.x;
+      m.y = res.y;
+      m.facing = dir;
+      m.moving = true;
+      return true;
+    }
+  }
+  return false;
+}
+
+// 반격 중 한 프레임. 반환: 이번 프레임에 문 경우 { type: 'bite', damage } 아니면 null
+function updateAggro(m, def, map, dtMs, target) {
+  const dist = Math.hypot(target.x - m.x, target.y - m.y);
+  m.calmMs += dtMs;
+  if (!target.alive || dist > def.giveUpDistance || m.calmMs > def.giveUpMs) {
+    m.aggro = false;
+    m.state = 'rest';
+    m.timer = 300;
+    return null;
+  }
+  m.biteCooldown = Math.max(0, m.biteCooldown - dtMs);
+
+  // 무는 중: 동작 절반에서 실제로 닿는지 판정
+  if (m.biteMs > 0) {
+    m.biteMs -= dtMs;
+    if (m.bitePending && m.biteMs <= def.biteMs / 2) {
+      m.bitePending = false;
+      if (dist <= def.biteRange + 6) {
+        m.calmMs = 0;
+        return { type: 'bite', damage: def.biteDamage, dir: m.facing };
+      }
+    }
+    return null;
+  }
+
+  if (dist <= def.biteRange) {
+    m.facing = towardPoint(m, target.x, target.y);
+    if (m.biteCooldown <= 0) {
+      m.biteMs = def.biteMs;
+      m.bitePending = true;
+      m.biteCooldown = def.biteCooldownMs;
+    }
+    return null;
+  }
+  stepToward(m, def, map, target.x, target.y, (def.chaseSpeed * dtMs) / 1000);
+  return null;
+}
+
+// 맞았을 때 반격 시작 (combat.js에서 부름)
+export function provoke(m) {
+  m.aggro = true;
+  m.calmMs = 0;
+}
+
+// 한 프레임 진행. dtMs: 지난 프레임 이후 시간, target: 주인공 { x, y, alive }
+// 반환: 무는 데 성공했으면 { type: 'bite', damage, dir }, 아니면 null
+export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
   const zone = map.spawnZones[m.zoneIndex];
   m.moving = false;
 
@@ -80,13 +162,24 @@ export function updateMonster(m, def, map, dtMs, rng = Math.random) {
   }
   if (m.stunMs > 0) {
     m.stunMs -= dtMs;
-    return;
+    m.biteMs = 0;
+    m.bitePending = false;
+    return null;
   }
-  // 밀려나서 구역 밖에 있으면 구역 쪽으로 걷게 함
-  if (!inZone(zone, m.x, m.y) && m.state === 'rest') {
-    m.state = 'walk';
-    m.facing = towardZone(zone, m.x, m.y);
-    m.walkLeft = 24;
+  if (m.aggro && target) return updateAggro(m, def, map, dtMs, target);
+
+  // 구역 밖(밀려났거나 쫓아갔다 포기함)이면 구역 쪽으로 돌아감
+  if (!inZone(zone, m.x, m.y)) {
+    const cx = zone.x + zone.w / 2;
+    const cy = zone.y + zone.h / 2;
+    if (!stepToward(m, def, map, cx, cy, (def.speed * dtMs) / 1000)) {
+      // 벽에 걸려 못 가면 잠깐 아무 쪽으로 걸어 봄
+      m.state = 'walk';
+      m.facing = DIR_NAMES[Math.floor(rng() * 4)];
+      m.walkLeft = 16;
+    } else {
+      return null;
+    }
   }
 
   if (m.state === 'rest') {
@@ -96,7 +189,7 @@ export function updateMonster(m, def, map, dtMs, rng = Math.random) {
       m.facing = DIR_NAMES[Math.floor(rng() * 4)];
       m.walkLeft = randRange(def.walkDistance, rng);
     }
-    return;
+    return null;
   }
 
   // 걷기: 벽에 막히거나 구역 밖으로 나가려 하면 그 자리에서 쉬기로 돌아감
@@ -115,6 +208,7 @@ export function updateMonster(m, def, map, dtMs, rng = Math.random) {
     m.state = 'rest';
     m.timer = randRange(def.restMs, rng);
   }
+  return null;
 }
 
 // 구역별 마릿수 관리: 처음엔 가득 채우고, 줄어들면 respawnMs 뒤에 한 마리씩 다시 생김
@@ -145,8 +239,9 @@ export class MonsterSpawner {
     this.monsters = this.monsters.filter((x) => x !== m);
   }
 
-  // 반환: 이번 프레임에 새로 생긴 몬스터 목록
-  update(dtMs) {
+  // target: 주인공 { x, y, alive }
+  // 반환: { born: 새로 생긴 몬스터, bites: [{ monster, damage, dir }] }
+  update(dtMs, target) {
     const born = [];
     this.map.spawnZones.forEach((zone, i) => {
       const alive = this.monsters.filter((m) => m.zoneIndex === i).length;
@@ -161,7 +256,11 @@ export class MonsterSpawner {
         if (m) born.push(m);
       }
     });
-    for (const m of this.monsters) updateMonster(m, this.defs[m.type], this.map, dtMs, this.rng);
-    return born;
+    const bites = [];
+    for (const m of this.monsters) {
+      const ev = updateMonster(m, this.defs[m.type], this.map, dtMs, target, this.rng);
+      if (ev) bites.push({ monster: m, ...ev });
+    }
+    return { born, bites };
   }
 }
