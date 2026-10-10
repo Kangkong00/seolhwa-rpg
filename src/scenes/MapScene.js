@@ -8,6 +8,7 @@ import { loadOutfitImages, buildOutfitFrames } from './characterFrames.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { createOccluders } from './occluders.js';
+import { PortalFx } from './portalFx.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
@@ -39,6 +40,8 @@ export class MapScene extends Phaser.Scene {
     // 맵 그림이 좌표계보다 크면(고해상도 그림) 좌표계 크기로 줄여 그림
     this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDisplaySize(this.map.width, this.map.height).setDepth(-1);
     this.occluders = createOccluders(this, this.mapKey, this.map.occluders, this.map.width, this.map.height);
+    // 던전 입구 표시: 빛나는 테두리 + 가까이 가면 이름표
+    this.portalFx = this.map.portals.map((p) => new PortalFx(this, p, cfg.portalFx, this.d.getPixelRatio()));
 
     // 주인공 상태 (위치는 발끝 기준). 맵 이동으로 왔으면 도착 지점, 아니면 저장 위치, 없으면 맵의 시작 위치
     const save = loadSave();
@@ -290,6 +293,7 @@ export class MapScene extends Phaser.Scene {
       this.moving = res.moved;
     }
     this.checkPortal();
+    for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
     this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving);
     // 지붕·나무 조각은 캐릭터 발이 그 조각의 가로 범위(hideX) 안에 있을 때만 앞뒤를 따짐.

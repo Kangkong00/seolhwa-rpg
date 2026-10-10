@@ -25,6 +25,20 @@
     "radius": 44,
     "deadZone": 0.25
   },
+  "portalFx": {
+    "_설명": "던전 입구(맵 이동 지점) 표시. color=빛 색, periodMs=밝아졌다 어두워지는 한 바퀴 시간, alphaMin·alphaMax=가장 어두울 때·밝을 때 진하기, lineWidth=테두리 굵기, glowWidth=바깥 번짐 굵기, labelDistance=이름표가 뜨는 거리(맵 픽셀), labelFontPx=이름표 글자 크기, labelOffsetY=이름표를 테두리 위로 띄우는 거리",
+    "color": "#8fd3ff",
+    "periodMs": 2000,
+    "alphaMin": 0.25,
+    "alphaMax": 0.85,
+    "lineWidth": 1.5,
+    "glowWidth": 6,
+    "labelDistance": 80,
+    "labelFontPx": 11,
+    "labelColor": "#f3ead6",
+    "labelBackground": "rgba(20,30,45,0.7)",
+    "labelOffsetY": 6
+  },
   "mapFadeMs": 250,
   "_mapFadeMs": "맵 이동할 때 어두워졌다(밝아졌다) 하는 시간",
   "autoSaveMs": 3000
