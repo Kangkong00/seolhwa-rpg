@@ -1,32 +1,50 @@
 {
-  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, raiseMs·strikeMs=치켜들기·내려치기 시간, sweepPart=내려치기 시간 중 칼이 돌아가는 앞부분 비율, cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=먹선 색",
+  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, swingMs=휘두르기 시간(칼이 thetaFrom→thetaTo로 도는 시간), cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=먹선 색",
   "canvas": { "width": 240, "height": 960, "gripX": 120, "gripY": 800 },
   "weapons": [
     {
       "id": "wood_pine", "name": "소나무 목검", "image": "assets/weapons/wood_pine.png", "tipFromGrip": 420,
-      "damage": 2, "raiseMs": 80, "strikeMs": 160, "sweepPart": 0.45, "cooldownMs": 450,
+      "damage": 2, "swingMs": 200, "cooldownMs": 450,
       "reach": 42, "width": 34, "knockbackPx": 10, "stunMs": 320, "stepPx": 3, "trailColor": "#1b1712"
     },
     {
       "id": "wood_oak", "name": "참나무 목검", "image": "assets/weapons/wood_oak.png", "tipFromGrip": 430,
-      "damage": 2, "raiseMs": 85, "strikeMs": 165, "sweepPart": 0.45, "cooldownMs": 470,
+      "damage": 2, "swingMs": 210, "cooldownMs": 470,
       "reach": 44, "width": 34, "knockbackPx": 12, "stunMs": 340, "stepPx": 3, "trailColor": "#1b1712"
     },
     {
       "id": "wood_bakdal", "name": "박달나무 목검", "image": "assets/weapons/wood_bakdal.png", "tipFromGrip": 442,
-      "damage": 3, "raiseMs": 90, "strikeMs": 170, "sweepPart": 0.45, "cooldownMs": 500,
+      "damage": 3, "swingMs": 220, "cooldownMs": 500,
       "reach": 46, "width": 36, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#1b1712"
     }
   ],
-  "_attach": "무기 붙이는 값(옷별, 640×720 자세 그림 기준). grip=쥐는 점을 맞출 주먹 위치, angle=칼끝 위 기준 시계 방향 각도, behind=몸 뒤에 그림, scaleY=무기 세로 줄임. 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x, 각도를 반대로 바꿈. 값이 없는 옷은 무기를 들어도 주먹으로 침",
+  "swing": {
+    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 bodySwitchTheta까지 raise, 그 뒤 strike. hitTheta를 지나는 순간 맞힘 판정. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간",
+    "thetaFrom": -40,
+    "thetaTo": 125,
+    "ease": 2,
+    "latFrontBack": 0.15,
+    "latSide": 0,
+    "bodySwitchTheta": 60,
+    "hitTheta": 60,
+    "depthK": 0.5,
+    "recoverMs": 90
+  },
+  "_attach": "무기 쥐는 점(옷별, 640×720 자세 그림 기준, 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x로). hold·hold_step은 들고 서 있기·걷기의 쥐는 점과 방향(theta, lat), raise·strike는 휘두를 때 주먹(방향은 swing에서 계산). 값이 없는 옷은 무기를 들어도 주먹으로 침",
   "attach": {
     "outfit1_hotot": {
-      "front_raise": { "grip": [150, 160], "angle": 35, "behind": true, "scaleY": 1.0 },
-      "front_strike": { "grip": [360, 464], "angle": 215, "behind": false, "scaleY": 0.75 },
-      "side_raise": { "grip": [214, 136], "angle": 45, "behind": true, "scaleY": 1.0 },
-      "side_strike": { "grip": [210, 480], "angle": -105, "behind": false, "scaleY": 1.0 },
-      "back_raise": { "grip": [480, 160], "angle": -35, "behind": false, "scaleY": 1.0 },
-      "back_strike": { "grip": [430, 390], "angle": 200, "behind": true, "scaleY": 0.7 }
+      "hold": {
+        "front": { "grip": [200, 420], "theta": 15, "lat": -0.12 },
+        "side": { "grip": [200, 414], "theta": 20, "lat": 0 },
+        "back": { "grip": [436, 414], "theta": 10, "lat": -0.12 }
+      },
+      "hold_step": {
+        "front": { "grip": [224, 424], "theta": 15, "lat": -0.12 },
+        "side": { "grip": [210, 420], "theta": 20, "lat": 0 },
+        "back": { "grip": [450, 386], "theta": 10, "lat": -0.12 }
+      },
+      "raise": { "front": { "grip": [150, 160] }, "side": { "grip": [214, 136] }, "back": { "grip": [480, 160] } },
+      "strike": { "front": { "grip": [360, 464] }, "side": { "grip": [210, 480] }, "back": { "grip": [430, 390] } }
     }
   }
 }
