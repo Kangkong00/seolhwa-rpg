@@ -5,7 +5,7 @@
 
 const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step'];
 
-function loadImage(url) {
+export function loadImage(url) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -61,7 +61,7 @@ function mirrorLegs(img, splitY) {
 }
 
 // 반씩 여러 번 줄여서 계단 현상 없이 축소
-function downscale(src, scale) {
+export function downscale(src, scale) {
   const tw = Math.max(1, Math.round(src.width * scale));
   const th = Math.max(1, Math.round(src.height * scale));
   let cur = src;

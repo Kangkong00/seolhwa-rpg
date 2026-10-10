@@ -37,7 +37,7 @@ export function createShadow(scene, shadowCfg, width, height, alpha) {
   );
 }
 
-// 몬스터 그림자 크기: 몬스터 표시 키에 비례 (단계 3에서 몬스터를 띄울 때 사용)
+// 몬스터 그림자 크기: 몬스터 표시 키에 비례
 export function createMonsterShadow(scene, shadowCfg, monsterHeight) {
   const m = shadowCfg.monster;
   return createShadow(scene, shadowCfg, monsterHeight * m.widthRatio, monsterHeight * m.heightRatio, m.alpha);

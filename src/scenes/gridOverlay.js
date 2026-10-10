@@ -1,4 +1,5 @@
-// 격자 보기: 못 가는 칸(빨강), 가림 조각 테두리(파랑), 가림 기준선 baseY(노랑).
+// 격자 보기: 못 가는 칸(빨강), 가림 조각 테두리(파랑), 가림 기준선 baseY(노랑),
+// 맵 이동 지점(초록), 몬스터 구역(보라).
 
 export class GridOverlay {
   constructor(scene) {
@@ -10,7 +11,8 @@ export class GridOverlay {
     this.g.setVisible(v);
   }
 
-  draw(grid, occluders) {
+  draw(grid, map) {
+    const { occluders, portals, spawnZones } = map;
     const g = this.g;
     const s = grid.cellSize;
     g.clear();
@@ -44,5 +46,14 @@ export class GridOverlay {
       g.lineStyle(1.5, 0xffdd00, 0.9);
       g.lineBetween(hx0, o.baseY, hx1, o.baseY);
     }
+
+    g.lineStyle(2, 0x33ff66, 1);
+    g.fillStyle(0x33ff66, 0.3);
+    for (const p of portals) {
+      g.fillRect(p.x, p.y, p.w, p.h);
+      g.strokeRect(p.x, p.y, p.w, p.h);
+    }
+    g.lineStyle(1.5, 0xcc66ff, 0.9);
+    for (const z of spawnZones) g.strokeRect(z.x, z.y, z.w, z.h);
   }
 }
