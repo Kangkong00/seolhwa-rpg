@@ -3,7 +3,8 @@
 // - 정면·뒷면의 반대 발: step 그림에서 legSplitY 아래 다리만 좌우 반전하고 상체를 다시 얹음
 // - 큰 원본(400×720)을 화면에 맞는 크기로 미리 줄여 둠 (아이폰에서 부드럽게 보이도록)
 
-const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step', 'front_punch', 'back_punch', 'side_punch'];
+const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step', 'front_punch', 'back_punch', 'side_punch',
+  'front_raise', 'back_raise', 'side_raise', 'front_strike', 'back_strike', 'side_strike'];
 
 export function loadImage(url) {
   return new Promise((resolve) => {
@@ -106,16 +107,25 @@ export function buildOutfitFrames(textures, outfit, images, scale) {
     step: add('front_step', frontStep),
     stepAlt: add('front_step_alt', mirrorLegs(frontStep, outfit.legSplitY)),
     punch: add('front_punch', images.front_punch || images.front),
+    raise: images.front_raise ? add('front_raise', images.front_raise) : null,
+    strike: images.front_strike ? add('front_strike', images.front_strike) : null,
   };
   const up = {
     stand: add('back', back),
     step: add('back_step', backStep),
     stepAlt: add('back_step_alt', mirrorLegs(backStep, outfit.legSplitY)),
     punch: add('back_punch', images.back_punch || back),
+    raise: images.back_raise ? add('back_raise', images.back_raise) : null,
+    strike: images.back_strike ? add('back_strike', images.back_strike) : null,
   };
   // 옆면은 다리 반전 없이 side_step ↔ side 번갈아
   const sideStand = add('side', side);
   const sideStepKey = add('side_step', sideStep);
   const sidePunch = add('side_punch', images.side_punch || side);
-  return { down, up, side: { stand: sideStand, step: sideStepKey, stepAlt: sideStepKey, punch: sidePunch } };
+  const side2 = { stand: sideStand, step: sideStepKey, stepAlt: sideStepKey, punch: sidePunch };
+  side2.raise = images.side_raise ? add('side_raise', images.side_raise) : null;
+  side2.strike = images.side_strike ? add('side_strike', images.side_strike) : null;
+  // 휘두르기 자세(치켜들기·내려치기, 640×720)가 세 방향 모두 있어야 무기를 휘두를 수 있음
+  const canSwing = !!(down.raise && down.strike && up.raise && up.strike && side2.raise && side2.strike);
+  return { down, up, side: side2, canSwing };
 }
