@@ -68,7 +68,12 @@ async function boot() {
     height: h * dpr,
     backgroundColor: '#1d1a14',
     scale: { mode: Phaser.Scale.NONE, zoom: 1 / dpr },
-    render: { antialias: true, roundPixels: false },
+    render: {
+      antialias: true,
+      roundPixels: false,
+      // 한 번에 묶어 그리는 그림 수(0 = Phaser 기본). 기울인 그림이 잘려 보이는 기기에서는 1로
+      ...(game.maxTextures > 0 ? { maxTextures: game.maxTextures } : {}),
+    },
     input: { activePointers: 3 },
     banner: false,
   });
