@@ -4,7 +4,11 @@
 // - 큰 원본(400×720)을 화면에 맞는 크기로 미리 줄여 둠 (아이폰에서 부드럽게 보이도록)
 
 const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step', 'front_punch', 'back_punch', 'side_punch',
-  'front_raise', 'back_raise', 'side_raise', 'front_strike', 'back_strike', 'side_strike'];
+  'front_raise', 'back_raise', 'side_raise', 'front_strike', 'back_strike', 'side_strike',
+  // 무기 든 서 있기·걷기, 무기를 쥐는 그림마다 주먹만 오린 손 덮개(_hand)
+  'front_hold', 'back_hold', 'side_hold', 'front_hold_step', 'back_hold_step', 'side_hold_step',
+  ...['front', 'back', 'side'].flatMap((d) => ['hold', 'hold_step', 'raise', 'strike'].map((p) => `${d}_${p}_hand`)),
+];
 
 export function loadImage(url) {
   return new Promise((resolve) => {
@@ -125,7 +129,29 @@ export function buildOutfitFrames(textures, outfit, images, scale) {
   const side2 = { stand: sideStand, step: sideStepKey, stepAlt: sideStepKey, punch: sidePunch };
   side2.raise = images.side_raise ? add('side_raise', images.side_raise) : null;
   side2.strike = images.side_strike ? add('side_strike', images.side_strike) : null;
-  // 휘두르기 자세(치켜들기·내려치기, 640×720)가 세 방향 모두 있어야 무기를 휘두를 수 있음
-  const canSwing = !!(down.raise && down.strike && up.raise && up.strike && side2.raise && side2.strike);
+  // 무기 든 자세(640×720): 들고 서 있기·걷기(다리 반전은 holdLegSplitY), 손 덮개
+  const opt = (name) => (images[name] ? add(name, images[name]) : null);
+  const addHold = (set, dir) => {
+    const step = images[`${dir}_hold_step`];
+    set.hold = opt(`${dir}_hold`);
+    set.holdStep = opt(`${dir}_hold_step`);
+    // 옆면은 다리 반전 없이 hold_step ↔ hold
+    set.holdStepAlt = step && dir !== 'side' ? add(`${dir}_hold_step_alt`, mirrorLegs(step, outfit.holdLegSplitY || 560)) : set.holdStep;
+    const holdStepHand = opt(`${dir}_hold_step_hand`);
+    // 다리 반전 프레임은 손 덮개를 반전하지 않고 그대로 겹침 (상체는 같음)
+    set.hand = {
+      hold: opt(`${dir}_hold_hand`),
+      holdStep: holdStepHand,
+      holdStepAlt: holdStepHand,
+      raise: opt(`${dir}_raise_hand`),
+      strike: opt(`${dir}_strike_hand`),
+    };
+  };
+  addHold(down, 'front');
+  addHold(up, 'back');
+  addHold(side2, 'side');
+  // 휘두르기 자세(치켜들기·내려치기)와 들고 서 있기·걷기가 세 방향 모두 있어야 무기를 쥘 수 있음
+  const sets = [down, up, side2];
+  const canSwing = sets.every((s) => s.raise && s.strike && s.hold && s.holdStep);
   return { down, up, side: side2, canSwing };
 }
