@@ -6,7 +6,7 @@ import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale } from './characterFrames.js';
-import { InkTrail, inkSplash } from './weaponFx.js';
+import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
@@ -296,21 +296,31 @@ export class MapScene extends Phaser.Scene {
       s.hitDone = true;
       this.strikeHit(w);
     }
-    // 먹선: 칼끝이 화면에서 실제로 지나간 자리(theta마다 그때 보이는 몸 그림의 주먹 기준)를 따라 그림
-    if (!s.trail) s.trail = new InkTrail(this, w.trailColor, this.cfg.swingFx, this.pos.y + 0.005);
+    // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
+    if (!s.trail) s.trail = this.makeTrail(w);
+    s.trail.draw((theta - sw.thetaFrom) / (sw.thetaTo - sw.thetaFrom));
+    if (s.t >= w.swingMs) s.trail.fadeOut();
+    return { theta };
+  }
+
+  makeTrail(w) {
+    const tr = this.d.weapons.trail;
     const facing = this.facing;
+    const shape = tr[facing === 'up' ? 'back' : facing === 'down' ? 'front' : 'side'];
     const x = this.pos.x;
     const y = this.pos.y;
     const pv = this.playerView;
-    const lat = pv.swingLat(facing);
-    const span = sw.thetaTo - sw.thetaFrom;
-    const geometryAt = (k) => {
-      const th = sw.thetaFrom + span * k;
-      return pv.weaponGeometry(facing, pv.swingPose(th), th, lat, x, y);
-    };
-    s.trail.draw(geometryAt, (theta - sw.thetaFrom) / span);
-    if (s.t >= w.swingMs) s.trail.fadeOut();
-    return { theta };
+    return new SwingTrail(this, {
+      shape,
+      cfg: tr,
+      k: w.tipFromGrip / tr.refTip,
+      color: w.trailColor,
+      toMap: (px, py) => pv.posePoint(px, py, x, y, facing === 'right'),
+      res: this.pixelScale(),
+      // 칼(몸 앞 +0.01)·손 덮개(+0.02) 아래, 몸 위. 뒷면은 몸 뒤
+      depth: y + (shape.behind ? -0.03 : 0.005),
+      fx: this.cfg.swingFx,
+    });
   }
 
   // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·먹 튐·화면 흔들림
@@ -324,7 +334,7 @@ export class MapScene extends Phaser.Scene {
     const view = this.monsterViews.get(target.id);
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
     const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
-    inkSplash(this, target.x, target.y - def.height * 0.45, w.trailColor, sfx, d[0], d[1]);
+    inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, d[0], d[1]);
     this.hitStopMs = sfx.hitStopMs;
     this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity);
     if (result.killed) {
