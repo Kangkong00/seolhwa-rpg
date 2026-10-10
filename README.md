@@ -23,11 +23,11 @@
 
 ```
 index.html          시작 페이지
-src/core/           게임 규칙 (격자, 이동·충돌) — 화면 코드와 무관
-src/scenes/         화면 (마을, 캐릭터 그림 가공, 지붕 가림)
+src/core/           게임 규칙 (격자, 이동·충돌, 몬스터 돌아다니기) — 화면 코드와 무관
+src/scenes/         화면 (맵·던전 공통 MapScene, 캐릭터·몬스터 그림, 지붕 가림, 그림자)
 src/ui/             조이스틱, 버튼, 격자 편집 도구
 src/save/           기기 안 자동 저장
-data/               조정 가능한 값 (game.json, outfits.json, maps/)
+data/               조정 가능한 값 (game.json, outfits.json, monsters.json, maps/)
 assets/             그림
 lib/                Phaser 4.2.1 (MIT)
 docs/plan.md        개발 계획서 사본
