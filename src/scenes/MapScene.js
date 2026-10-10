@@ -5,7 +5,8 @@ import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
-import { loadOutfitImages, buildOutfitFrames } from './characterFrames.js';
+import { loadOutfitImages, buildOutfitFrames, loadImage, downscale } from './characterFrames.js';
+import { InkTrail, inkSplash } from './weaponFx.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { createOccluders } from './occluders.js';
@@ -64,6 +65,8 @@ export class MapScene extends Phaser.Scene {
     this.dir = null;
     this.moving = false;
     this.punchMs = 0; // 남은 주먹 자세 시간
+    this.swing = null; // 무기 휘두르는 중: { weapon, t, hitDone, trail }
+    this.hitStopMs = 0; // 맞는 순간 아주 짧게 멈춤
     this.knock = { dir: null, left: 0 }; // 물려서 밀려나는 중
     this.dead = false;
     // 주인공 체력: 맵을 옮겨도 이어짐. 처음이거나 쓰러졌다 다시 시작하면 가득
@@ -75,6 +78,10 @@ export class MapScene extends Phaser.Scene {
 
     this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow, cfg.hpBar);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
+    // 시험용 무기: 저장된 것, 없으면 swingFx.startWeapon
+    if (this.d.weaponId === undefined) {
+      this.d.weaponId = save && save.weapon !== undefined ? save.weapon : cfg.swingFx.startWeapon || '';
+    }
     if (this.d.outfitIndex === undefined) {
       const id = (save && save.outfit) || cfg.startOutfit;
       this.d.outfitIndex = Math.max(0, this.d.outfits.outfits.findIndex((o) => o.id === id));
@@ -94,6 +101,7 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.hud) {
       this.d.hud = new Hud({
         onOutfit: () => this.d.scene.changeOutfit(1),
+        onWeapon: () => this.d.scene.changeWeapon(),
         onGrid: () => this.d.scene.setGridMode(!this.d.scene.gridOn),
       });
       this.d.editor = new EditorPanel({
@@ -132,7 +140,8 @@ export class MapScene extends Phaser.Scene {
 
     this.fpsTimer = 0;
     cam.fadeIn(this.cfg.mapFadeMs);
-    Promise.all([this.setOutfit(this.d.outfitIndex), monsterReady]).then(() => {
+    Promise.all([this.setOutfit(this.d.outfitIndex), monsterReady]).then(async () => {
+      await this.setWeapon(this.d.weaponId);
       this.save();
       if (this.d.onReady) this.d.onReady();
     });
@@ -160,7 +169,9 @@ export class MapScene extends Phaser.Scene {
     const images = await loadOutfitImages(outfit);
     if (list[this.d.outfitIndex] !== outfit || !this.sys.isActive()) return; // 그새 다른 옷을 고르거나 맵을 옮김
     const scale = this.textureScale();
-    this.playerView.setFrames(buildOutfitFrames(this.textures, outfit, images, scale), scale);
+    this.frames = buildOutfitFrames(this.textures, outfit, images, scale);
+    this.playerView.setFrames(this.frames, scale);
+    if (this.weaponDef) this.applyWeapon();
     this.playerView.update(0, this.pos.x, this.pos.y, this.facing, false);
   }
 
@@ -176,6 +187,7 @@ export class MapScene extends Phaser.Scene {
       y: Math.round(this.pos.y),
       facing: this.facing,
       outfit: this.d.outfits.outfits[this.d.outfitIndex].id,
+      weapon: this.d.weaponId || '',
     });
   }
 
@@ -205,6 +217,109 @@ export class MapScene extends Phaser.Scene {
     const view = new MonsterView(this, this.monsterDefs[m.type], this.d.monsters.canvas, tex, this.cfg.shadow, this.cfg.hpBar);
     view.update(0, m);
     this.monsterViews.set(m.id, view);
+  }
+
+  // ---------- 무기 (시험용 바꾸기 버튼: 맨손 → 소나무 → 참나무 → 박달나무) ----------
+  async setWeapon(id) {
+    const list = this.d.weapons.weapons;
+    const def = list.find((w) => w.id === id) || null;
+    this.d.weaponId = def ? def.id : '';
+    this.weaponDef = def;
+    this.hud.setWeaponLabel(def ? def.name.replace(' 목검', '') : '맨손');
+    if (def) {
+      const key = `weapon:${def.id}`;
+      const scale = this.textureScale();
+      if (!this.textures.exists(key)) {
+        const img = await loadImage(def.image);
+        if (!img || !this.sys.isActive()) return;
+        if (!this.textures.exists(key)) this.textures.addCanvas(key, downscale(img, scale));
+      }
+      this.weaponTexScale = scale;
+    }
+    this.applyWeapon();
+  }
+
+  // 지금 옷에 무기 붙이는 값과 휘두르기 자세가 있으면 무기를 손에, 없으면 주먹으로
+  applyWeapon() {
+    const def = this.weaponDef;
+    const outfit = this.d.outfits.outfits[this.d.outfitIndex];
+    const attach = def && this.d.weapons.attach[outfit.id];
+    if (def && attach && this.frames && this.frames.canSwing) {
+      this.playerView.setWeapon({ def, key: `weapon:${def.id}`, canvas: this.d.weapons.canvas, attach, textureScale: this.weaponTexScale });
+      this.canSwing = true;
+    } else {
+      this.playerView.setWeapon(null);
+      this.canSwing = false;
+    }
+  }
+
+  changeWeapon() {
+    const ids = ['', ...this.d.weapons.weapons.map((w) => w.id)];
+    const i = ids.indexOf(this.d.weaponId || '');
+    this.setWeapon(ids[(i + 1) % ids.length]);
+  }
+
+  // 무기 휘두르기 시작: raise → strike (strike 순간 맞힘 판정)
+  startSwing() {
+    const w = this.weaponDef;
+    this.swing = { weapon: w, t: 0, hitDone: false, trail: null };
+    this.attackCooldown = w.cooldownMs;
+    const res = moveStep(this.map.grid, this.pos, this.facing, w.stepPx, this.cfg.player.footBox, 0);
+    this.pos.x = res.x;
+    this.pos.y = res.y;
+  }
+
+  // 휘두르는 중 한 프레임. 반환: 그릴 자세 { pose, sweep } 또는 null(끝남)
+  updateSwing(dt) {
+    const s = this.swing;
+    const w = s.weapon;
+    s.t += dt;
+    if (s.t < w.raiseMs) return { pose: 'raise', sweep: 0 };
+    if (s.t >= w.raiseMs + w.strikeMs) {
+      if (s.trail) s.trail.fadeOut();
+      this.swing = null;
+      return null;
+    }
+    // 내려치기: 앞부분(sweepPart)에서 빠르게 돌고(끝에서 느려짐) 나머지는 그대로
+    const p = Math.min(1, (s.t - w.raiseMs) / (w.strikeMs * w.sweepPart));
+    const sweep = 1 - (1 - p) * (1 - p);
+    if (!s.hitDone) {
+      s.hitDone = true;
+      this.strikeHit(w);
+      // 먹선은 몸 위·칼 아래(칼날이 먹에 덮이지 않게)
+      s.trail = new InkTrail(this, w.trailColor, this.cfg.swingFx, this.pos.y + 0.005);
+    }
+    if (s.trail) {
+      const facing = this.facing;
+      const x = this.pos.x;
+      const y = this.pos.y;
+      s.trail.draw((k) => this.playerView.weaponGeometry(facing, 'strike', k, x, y), sweep);
+      if (p >= 1) s.trail.fadeOut();
+    }
+    return { pose: 'strike', sweep };
+  }
+
+  // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·먹 튐·화면 흔들림
+  strikeHit(w) {
+    const fx = this.cfg.hitFx;
+    const sfx = this.cfg.swingFx;
+    const target = findTarget(this.pos, this.facing, this.spawner.monsters, w.reach, w.width);
+    if (!target) return;
+    const result = hitMonster(target, this.facing, w.damage, w.knockbackPx, w.stunMs);
+    const def = this.monsterDefs[target.type];
+    const view = this.monsterViews.get(target.id);
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+    const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
+    inkSplash(this, target.x, target.y - def.height * 0.45, w.trailColor, sfx, d[0], d[1]);
+    this.hitStopMs = sfx.hitStopMs;
+    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity);
+    if (result.killed) {
+      this.spawner.remove(target);
+      this.monsterViews.delete(target.id);
+      if (view) view.die(fx.deathMs, fx.flashMs);
+    } else if (view) {
+      view.flash(fx.flashMs);
+    }
   }
 
   // ---------- 주먹 지르기 ----------
@@ -348,6 +463,11 @@ export class MapScene extends Phaser.Scene {
 
   // ---------- 매 프레임 ----------
   update(time, delta) {
+    // 히트스톱: 맞는 순간 아주 짧게 모든 움직임을 멈춤 (연출 트윈은 계속)
+    if (this.hitStopMs > 0) {
+      this.hitStopMs -= delta;
+      return;
+    }
     const dt = Math.min(delta, 50); // 앱 전환 직후 큰 delta로 순간이동하지 않게
     const p = this.cfg.player;
     // 공격: 쿨다운이 끝났고 버튼(스페이스)이 눌려 있으면 주먹
@@ -355,8 +475,12 @@ export class MapScene extends Phaser.Scene {
     this.punchMs = Math.max(0, this.punchMs - dt);
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
     const wantAttack = this.attackCooldown <= 0 && this.attackButton.consume();
-    if (wantAttack && this.attackCooldown <= 0 && !this.transitioning && !this.gridOn) this.punch();
-    const punching = this.punchMs > 0;
+    if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead) {
+      if (this.canSwing) this.startSwing();
+      else this.punch();
+    }
+    const swingPose = this.swing ? this.updateSwing(dt) : null;
+    const punching = this.punchMs > 0 || !!swingPose;
 
     // 주먹 지르는 동안은 걷지 않음
     const v = this.transitioning || punching ? { x: 0, y: 0 } : this.d.input.getVector();
@@ -381,7 +505,7 @@ export class MapScene extends Phaser.Scene {
     this.checkPortal();
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
-    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, punching);
+    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || (this.punchMs > 0 ? 'punch' : null));
     // 지붕·나무 조각은 캐릭터 발이 그 조각의 가로 범위(hideX) 안에 있을 때만 앞뒤를 따짐.
     // 범위 밖(건물 옆)에서는 항상 캐릭터가 위에 그려져, 처마 끝에 몸이 잘리지 않음.
     for (const occ of this.occluders) {

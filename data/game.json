@@ -38,6 +38,21 @@
     "knockbackPx": 8,
     "stunMs": 300
   },
+  "swingFx": {
+    "_설명": "무기 휘두르기 연출(임시값). trailMs=먹선이 번지며 사라지는 시간, trailWidthStart·End=획 굵기(칼 길이에 대한 비율, 시작은 굵고 끝은 가늘게), trailAlpha=먹 진하기, hitStopMs=맞는 순간 멈춤, shakeMs·shakeIntensity=화면 흔들림(아주 약하게), splashCount·splashSize·splashMs=먹 튐 방울 수·크기·사라지는 시간",
+    "trailMs": 250,
+    "trailWidthStart": 0.3,
+    "trailWidthEnd": 0.04,
+    "trailAlpha": 0.65,
+    "hitStopMs": 60,
+    "shakeMs": 90,
+    "shakeIntensity": 0.0025,
+    "splashCount": 6,
+    "splashSize": 2.2,
+    "splashMs": 260,
+    "startWeapon": "wood_pine",
+    "_startWeapon": "시험용 시작 무기(맨손이면 빈 문자열)"
+  },
   "hitFx": {
     "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, damageFontPx=데미지 숫자 크기, damageColor·damageStroke=숫자 색·테두리, floatPx·floatMs=숫자가 떠오르는 높이·시간, deathMs=쓰러져 사라지는 시간",
     "flashMs": 90,

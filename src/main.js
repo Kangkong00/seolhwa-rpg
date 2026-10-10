@@ -21,10 +21,11 @@ async function boot() {
   lockPageGestures();
   const loading = document.getElementById('loading');
 
-  const [game, outfits, monsters] = await Promise.all([
+  const [game, outfits, monsters, weapons] = await Promise.all([
     fetchJson('data/game.json'),
     fetchJson('data/outfits.json'),
     fetchJson('data/monsters.json'),
+    fetchJson('data/weapons.json'),
   ]);
   // 맵 파일은 한 번 받은 것을 다시 씀
   const mapCache = new Map();
@@ -90,6 +91,7 @@ async function boot() {
     game,
     outfits,
     monsters,
+    weapons,
     mapId,
     mapJson,
     fetchMap,
