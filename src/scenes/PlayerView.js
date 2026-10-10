@@ -2,11 +2,12 @@
 // 프레임 순서: step → stand → step(다리 반전) → stand, 걷기 자세에서 몸을 살짝 띄움.
 
 import { createShadow } from './shadow.js';
+import { HpBar } from '../ui/hpBar.js';
 
 const WALK_SEQUENCE = ['step', 'stand', 'stepAlt', 'stand'];
 
 export class PlayerView {
-  constructor(scene, playerCfg, canvasSpec, shadowCfg) {
+  constructor(scene, playerCfg, canvasSpec, shadowCfg, hpBarCfg) {
     this.scene = scene;
     this.cfg = playerCfg;
     this.canvasSpec = canvasSpec;
@@ -17,6 +18,23 @@ export class PlayerView {
     const sh = shadowCfg.player;
     this.shadow = createShadow(scene, shadowCfg, sh.width, sh.height, sh.alpha);
     this.shadowOffsetY = sh.offsetY || 0;
+    this.hpBarCfg = hpBarCfg;
+    this.hpBar = new HpBar(scene, hpBarCfg, hpBarCfg.playerColor);
+    this.hpRatio = 1;
+  }
+
+  setHp(ratio) {
+    this.hpRatio = ratio;
+  }
+
+  // 물렸을 때: 붉게 번쩍
+  flash(color, ms) {
+    const c = Phaser.Display.Color.HexStringToColor(color).color;
+    this.sprite.setTint(c).setTintMode(Phaser.TintModes.FILL);
+    this.sprite.setAlpha(0.85);
+    this.scene.time.delayedCall(ms, () => {
+      if (this.sprite.active) this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY).setAlpha(1);
+    });
   }
 
   // textureScale: 원본 대비 텍스처 축소 비율
@@ -54,5 +72,6 @@ export class PlayerView {
     this.shadow.setPosition(x, y + this.shadowOffsetY);
     // 발 위치로 앞뒤 순서를 정함 (지붕 조각의 baseY와 비교됨)
     this.sprite.setDepth(y);
+    this.hpBar.set(x, y - this.cfg.height - this.hpBarCfg.gap, this.hpRatio);
   }
 }

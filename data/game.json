@@ -8,6 +8,8 @@
     "_설명": "speed=초당 이동 픽셀, height=캐릭터 키, walkFrameMs=걷기 한 프레임 시간, stepLift=걷기 자세에서 몸을 띄우는 높이, footBox=충돌에 쓰는 발밑 상자, cornerSlide=모서리에 걸렸을 때 옆으로 비켜 주는 최대 거리",
     "speed": 80,
     "height": 62,
+    "maxHp": 10,
+    "_maxHp": "주인공 체력(임시값). 0이 되면 마을 시작 위치에서 다시 시작",
     "walkFrameMs": 180,
     "stepLift": 2,
     "footBox": { "w": 14, "h": 6 },
@@ -45,6 +47,23 @@
     "floatPx": 20,
     "floatMs": 650,
     "deathMs": 400
+  },
+  "playerHit": {
+    "_설명": "주인공이 물렸을 때(임시값). flashColor·flashMs=붉게 번쩍, knockbackPx=밀려나는 거리, deathFadeMs=쓰러졌을 때 어두워지는 시간",
+    "flashColor": "#ff3b2f",
+    "flashMs": 160,
+    "knockbackPx": 6,
+    "deathFadeMs": 700
+  },
+  "hpBar": {
+    "_설명": "머리 위 작은 체력바. width·height=크기(맵 픽셀), gap=머리 위 띄우는 거리, monsterShowAlways=false면 몬스터는 다쳤거나 반격 중일 때만 보임",
+    "width": 26,
+    "height": 3,
+    "gap": 4,
+    "playerColor": "#5fd35f",
+    "monsterColor": "#e8553e",
+    "backColor": "#1a1410",
+    "monsterShowAlways": false
   },
   "portalFx": {
     "_설명": "던전 입구(맵 이동 지점) 표시. color=빛 색, periodMs=밝아졌다 어두워지는 한 바퀴 시간, alphaMin·alphaMax=가장 어두울 때·밝을 때 진하기, lineWidth=테두리 굵기, glowWidth=바깥 번짐 굵기, labelDistance=이름표가 뜨는 거리(맵 픽셀), labelFontPx=이름표 글자 크기, labelOffsetY=이름표를 테두리 위로 띄우는 거리",

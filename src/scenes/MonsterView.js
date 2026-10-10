@@ -1,6 +1,10 @@
-// 몬스터 그림 표시: 서 있기 ↔ 걷기 자세 번갈아(다리 반전 없음), 오른쪽은 side 좌우 반전, 발밑 그림자.
+// 몬스터 그림 표시: 서 있기 ↔ 걷기 자세 번갈아(다리 반전 없음), 오른쪽은 side 좌우 반전, 발밑 그림자, 머리 위 체력바.
+// 물기: 그림 없이 코드로 — 바라보는 쪽으로 빠르게 튀어나갔다 돌아옴 + step 그림.
 import { loadImage, downscale } from './characterFrames.js';
 import { createMonsterShadow } from './shadow.js';
+import { HpBar } from '../ui/hpBar.js';
+
+const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
 const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step'];
 const loaded = new Map();
@@ -27,7 +31,7 @@ export function loadMonsterTextures(scene, def, canvasSpec, pixelScale) {
 }
 
 export class MonsterView {
-  constructor(scene, def, canvasSpec, textures, shadowCfg) {
+  constructor(scene, def, canvasSpec, textures, shadowCfg, hpBarCfg) {
     this.def = def;
     this.textures = textures;
     this.walkTime = 0;
@@ -35,12 +39,23 @@ export class MonsterView {
     this.sprite.setOrigin(0.5, canvasSpec.footY / canvasSpec.height);
     this.sprite.setScale(def.height / canvasSpec.standHeight / textures.scale);
     this.shadow = createMonsterShadow(scene, shadowCfg, def.height);
+    this.hpBarCfg = hpBarCfg;
+    this.hpBar = new HpBar(scene, hpBarCfg, hpBarCfg.monsterColor);
   }
 
   update(dtMs, m) {
     const base = m.facing === 'up' ? 'back' : m.facing === 'down' ? 'front' : 'side';
     let step = false;
-    if (m.moving) {
+    // 무는 중: 앞으로 튀어나갔다(사인 곡선) 돌아옴
+    let ox = 0;
+    let oy = 0;
+    if (m.biteMs > 0) {
+      const t = 1 - m.biteMs / this.def.biteMs;
+      const k = Math.sin(Math.PI * Math.max(0, Math.min(1, t))) * this.def.lungePx;
+      ox = DIR[m.facing][0] * k;
+      oy = DIR[m.facing][1] * k;
+      step = true;
+    } else if (m.moving) {
       this.walkTime += dtMs;
       step = Math.floor(this.walkTime / this.def.walkFrameMs) % 2 === 0;
     } else {
@@ -49,9 +64,11 @@ export class MonsterView {
     const key = this.textures.keys[step ? `${base}_step` : base];
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
     this.sprite.setFlipX(m.facing === 'right');
-    this.sprite.setPosition(m.x, m.y);
+    this.sprite.setPosition(m.x + ox, m.y + oy);
     this.sprite.setDepth(m.y);
-    this.shadow.setPosition(m.x, m.y);
+    this.shadow.setPosition(m.x + ox, m.y + oy);
+    const showBar = this.hpBarCfg.monsterShowAlways || m.hp < m.maxHp || m.aggro;
+    this.hpBar.set(m.x, m.y - this.def.height - this.hpBarCfg.gap, m.hp / m.maxHp, showBar);
   }
 
   // 맞았을 때: 하얗게 번쩍
@@ -62,24 +79,30 @@ export class MonsterView {
     });
   }
 
-  // 쓰러짐: 하얗게 번쩍인 뒤 납작해지며 흐려져 사라짐
+  // 쓰러짐: 하얗게 번쩍인 뒤 뒤집히며 흐려져 사라짐
   die(ms, flashMs) {
     this.dead = true;
+    this.hpBar.set(0, 0, 0, false);
     this.flash(flashMs);
     const scene = this.sprite.scene;
+    // 발 기준점을 몸 가운데로 옮겨 그 자리에서 뒤집힘(세로로 -1배)
+    const s = this.sprite;
+    const lift = s.displayHeight * (s.originY - 0.5);
+    s.setOrigin(0.5, 0.5).setY(s.y - lift);
     scene.tweens.add({
-      targets: this.sprite,
-      alpha: 0,
-      scaleY: this.sprite.scaleY * 0.4,
-      scaleX: this.sprite.scaleX * 1.15,
+      targets: s,
+      scaleY: -s.scaleY,
+      y: s.y - 4,
       delay: flashMs,
-      duration: ms,
-      ease: 'Quad.easeIn',
+      duration: ms * 0.5,
+      ease: 'Quad.easeOut',
     });
+    scene.tweens.add({ targets: s, alpha: 0, delay: flashMs + ms * 0.3, duration: ms * 0.7 });
     scene.tweens.add({ targets: this.shadow, alpha: 0, delay: flashMs, duration: ms, onComplete: () => this.destroy() });
   }
 
   destroy() {
+    this.hpBar.destroy();
     this.sprite.destroy();
     this.shadow.destroy();
   }

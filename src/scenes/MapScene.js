@@ -4,7 +4,7 @@ import { Grid } from '../core/grid.js';
 import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
-import { findTarget, hitMonster } from '../core/combat.js';
+import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames } from './characterFrames.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
@@ -64,11 +64,17 @@ export class MapScene extends Phaser.Scene {
     this.dir = null;
     this.moving = false;
     this.punchMs = 0; // 남은 주먹 자세 시간
+    this.knock = { dir: null, left: 0 }; // 물려서 밀려나는 중
+    this.dead = false;
+    // 주인공 체력: 맵을 옮겨도 이어짐. 처음이거나 쓰러졌다 다시 시작하면 가득
+    if (!this.d.player || this.d.player.hp <= 0) this.d.player = { hp: cfg.player.maxHp, maxHp: cfg.player.maxHp };
+    this.player = this.d.player;
     this.attackCooldown = 0; // 다음 공격까지 남은 시간
     // 이동 지점 위에서 시작하면 한 번 밖으로 나가야 다시 작동 (도착하자마자 되돌아가지 않게)
     this.portalArmed = !this.portalAt(this.pos.x, this.pos.y);
 
-    this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow);
+    this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow, cfg.hpBar);
+    this.playerView.setHp(this.player.hp / this.player.maxHp);
     if (this.d.outfitIndex === undefined) {
       const id = (save && save.outfit) || cfg.startOutfit;
       this.d.outfitIndex = Math.max(0, this.d.outfits.outfits.findIndex((o) => o.id === id));
@@ -196,7 +202,7 @@ export class MapScene extends Phaser.Scene {
   addMonsterView(m) {
     const tex = this.monsterTextures && this.monsterTextures[m.type];
     if (!tex || !this.sys.isActive()) return;
-    const view = new MonsterView(this, this.monsterDefs[m.type], this.d.monsters.canvas, tex, this.cfg.shadow);
+    const view = new MonsterView(this, this.monsterDefs[m.type], this.d.monsters.canvas, tex, this.cfg.shadow, this.cfg.hpBar);
     view.update(0, m);
     this.monsterViews.set(m.id, view);
   }
@@ -227,6 +233,33 @@ export class MapScene extends Phaser.Scene {
     } else if (view) {
       view.flash(fx.flashMs);
     }
+  }
+
+  // ---------- 주인공이 물림 ----------
+  onBitten(bite) {
+    if (this.dead || this.transitioning) return;
+    const ph = this.cfg.playerHit;
+    const result = hitPlayer(this.player, bite.damage);
+    this.playerView.setHp(this.player.hp / this.player.maxHp);
+    this.playerView.flash(ph.flashColor, ph.flashMs);
+    showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, { ...this.cfg.hitFx, damageColor: '#ffb0a0' }, this.d.getPixelRatio());
+    this.knock = { dir: bite.dir, left: ph.knockbackPx };
+    if (result.killed) this.die();
+  }
+
+  // 쓰러짐: 화면이 어두워진 뒤 마을 시작 위치에서 체력 가득 차서 다시 시작 (임시)
+  die() {
+    this.dead = true;
+    this.transitioning = true;
+    const cam = this.cameras.main;
+    cam.fadeOut(this.cfg.playerHit.deathFadeMs, 40, 0, 0);
+    const start = this.cfg.startMap;
+    const next = this.d.fetchMap(start);
+    cam.once('camerafadeoutcomplete', async () => {
+      const mapJson = await next;
+      this.d.player = { hp: this.cfg.player.maxHp, maxHp: this.cfg.player.maxHp };
+      this.scene.restart({ ...this.d, mapId: start, mapJson, arrive: { ...mapJson.spawn, facing: 'down' } });
+    });
   }
 
   // ---------- 맵 이동 ----------
@@ -330,7 +363,15 @@ export class MapScene extends Phaser.Scene {
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 
     this.moving = false;
-    if (this.dir) {
+    // 물려서 밀려나는 중 (벽은 통과 안 함)
+    if (this.knock.left > 0) {
+      const step = Math.min(this.knock.left, (160 * dt) / 1000);
+      const res = moveStep(this.map.grid, this.pos, this.knock.dir, step, p.footBox, 0);
+      this.pos.x = res.x;
+      this.pos.y = res.y;
+      this.knock.left = res.moved ? this.knock.left - step : 0;
+    }
+    if (this.dir && !this.dead) {
       this.facing = this.dir;
       const res = moveStep(this.map.grid, this.pos, this.dir, (p.speed * dt) / 1000, p.footBox, p.cornerSlide);
       this.pos.x = res.x;
@@ -349,7 +390,10 @@ export class MapScene extends Phaser.Scene {
     }
 
     // 몬스터
-    for (const m of this.spawner.update(dt)) this.addMonsterView(m);
+    const target = { x: this.pos.x, y: this.pos.y, alive: !this.dead && !this.transitioning };
+    const { born, bites } = this.spawner.update(dt, target);
+    for (const m of born) this.addMonsterView(m);
+    for (const b of bites) this.onBitten(b);
     for (const m of this.spawner.monsters) {
       const view = this.monsterViews.get(m.id);
       if (view) view.update(dt, m);
