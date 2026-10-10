@@ -1,8 +1,14 @@
 {
-  "_설명": "몬스터 그림 규격과 표시 크기. height=1376 좌표 기준 표시 키(정면 서 있기). 능력치·경험치·드랍은 단계 3에서 정함(아직 없음).",
+  "_설명": "몬스터 그림 규격·표시 크기·돌아다니기 값. height=1376 좌표 기준 표시 키(정면 서 있기). speed=초당 이동 픽셀, restMs=[최소,최대] 쉬는 시간, walkDistance=[최소,최대] 한 번에 걷는 거리(픽셀), walkFrameMs=걷기 그림 바꾸는 간격, footBox=벽 충돌에 쓰는 발밑 상자. 움직임 값은 모두 임시값. 능력치·경험치·드랍은 아직 없음.",
   "canvas": { "width": 640, "height": 400, "footY": 380, "standHeight": 240 },
   "monsters": [
-    { "id": "rat", "name": "들쥐", "folder": "assets/monsters/rat", "height": 28, "_확정": "2026-10-10 강콩" },
-    { "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 60, "_확인필요": "권장값, 강콩 확인 전" }
+    {
+      "id": "rat", "name": "들쥐", "folder": "assets/monsters/rat", "height": 28, "_확정": "키 28: 2026-10-10 강콩",
+      "speed": 45, "restMs": [800, 2600], "walkDistance": [16, 64], "walkFrameMs": 120, "footBox": { "w": 12, "h": 5 }
+    },
+    {
+      "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 60, "_확인필요": "키 60은 권장값, 강콩 확인 전",
+      "speed": 35, "restMs": [1500, 4000], "walkDistance": [16, 48], "walkFrameMs": 160, "footBox": { "w": 20, "h": 6 }
+    }
   ]
 }
