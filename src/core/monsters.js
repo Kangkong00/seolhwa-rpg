@@ -3,6 +3,14 @@
 import { moveStep, isStandable } from './movement.js';
 
 const DIR_NAMES = ['up', 'down', 'left', 'right'];
+const KNOCK_SPEED = 160; // 맞아서 밀려나는 속도(초당 픽셀)
+
+function towardZone(zone, x, y) {
+  const cx = zone.x + zone.w / 2;
+  const cy = zone.y + zone.h / 2;
+  if (Math.abs(cx - x) > Math.abs(cy - y)) return cx > x ? 'right' : 'left';
+  return cy > y ? 'down' : 'up';
+}
 
 function randRange([min, max], rng) {
   return min + (max - min) * rng();
@@ -48,6 +56,12 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     timer: randRange(def.restMs, rng),
     walkLeft: 0,
     moving: false,
+    hp: def.hp,
+    maxHp: def.hp,
+    // 맞았을 때: 밀려날 남은 거리·방향, 잠깐 멈춤
+    knockLeft: 0,
+    knockDir: null,
+    stunMs: 0,
   };
 }
 
@@ -55,6 +69,25 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
 export function updateMonster(m, def, map, dtMs, rng = Math.random) {
   const zone = map.spawnZones[m.zoneIndex];
   m.moving = false;
+
+  // 맞아서 밀려나는 중: 벽은 통과하지 않음, 구역 밖으로는 조금 밀려나도 됨
+  if (m.knockLeft > 0) {
+    const step = Math.min(m.knockLeft, (KNOCK_SPEED * dtMs) / 1000);
+    const res = moveStep(map.grid, m, m.knockDir, step, def.footBox, 0);
+    m.x = res.x;
+    m.y = res.y;
+    m.knockLeft = res.moved ? m.knockLeft - step : 0;
+  }
+  if (m.stunMs > 0) {
+    m.stunMs -= dtMs;
+    return;
+  }
+  // 밀려나서 구역 밖에 있으면 구역 쪽으로 걷게 함
+  if (!inZone(zone, m.x, m.y) && m.state === 'rest') {
+    m.state = 'walk';
+    m.facing = towardZone(zone, m.x, m.y);
+    m.walkLeft = 24;
+  }
 
   if (m.state === 'rest') {
     m.timer -= dtMs;
@@ -69,7 +102,8 @@ export function updateMonster(m, def, map, dtMs, rng = Math.random) {
   // 걷기: 벽에 막히거나 구역 밖으로 나가려 하면 그 자리에서 쉬기로 돌아감
   const step = Math.min(m.walkLeft, (def.speed * dtMs) / 1000);
   const res = moveStep(map.grid, m, m.facing, step, def.footBox, 0);
-  if (!res.moved || !inZone(zone, res.x, res.y)) {
+  const wasInside = inZone(zone, m.x, m.y);
+  if (!res.moved || (wasInside && !inZone(zone, res.x, res.y))) {
     m.walkLeft = 0;
   } else {
     m.x = res.x;
