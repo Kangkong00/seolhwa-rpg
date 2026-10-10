@@ -4,11 +4,14 @@ import { Grid } from '../core/grid.js';
 import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
+import { findTarget, hitMonster } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames } from './characterFrames.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { createOccluders } from './occluders.js';
 import { PortalFx } from './portalFx.js';
+import { showDamage } from './damageText.js';
+import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
@@ -60,6 +63,8 @@ export class MapScene extends Phaser.Scene {
     this.facing = facing;
     this.dir = null;
     this.moving = false;
+    this.punchMs = 0; // 남은 주먹 자세 시간
+    this.attackCooldown = 0; // 다음 공격까지 남은 시간
     // 이동 지점 위에서 시작하면 한 번 밖으로 나가야 다시 작동 (도착하자마자 되돌아가지 않게)
     this.portalArmed = !this.portalAt(this.pos.x, this.pos.y);
 
@@ -90,6 +95,7 @@ export class MapScene extends Phaser.Scene {
         onReset: () => this.d.scene.resetGrid(),
         onClose: () => this.d.scene.setGridMode(false),
       });
+      this.d.attackButton = new AttackButton(document.getElementById('btn-attack'));
       // 자동 저장: 앱이 가려질 때
       const saveNow = () => this.d.scene.save();
       document.addEventListener('visibilitychange', () => document.hidden && saveNow());
@@ -97,6 +103,7 @@ export class MapScene extends Phaser.Scene {
     }
     this.hud = this.d.hud;
     this.editor = this.d.editor;
+    this.attackButton = this.d.attackButton;
     this.overlay = new GridOverlay(this);
     this.setGridMode(false);
     this.setupPainting();
@@ -194,6 +201,34 @@ export class MapScene extends Phaser.Scene {
     this.monsterViews.set(m.id, view);
   }
 
+  // ---------- 주먹 지르기 ----------
+  // 바라보는 쪽으로 조금 내딛고, 바로 앞 몬스터 1마리를 맞힘
+  punch() {
+    const a = this.cfg.attack;
+    const fx = this.cfg.hitFx;
+    this.punchMs = a.punchMs;
+    this.attackCooldown = a.cooldownMs;
+    const p = this.cfg.player;
+    const res = moveStep(this.map.grid, this.pos, this.facing, a.stepPx, p.footBox, 0);
+    this.pos.x = res.x;
+    this.pos.y = res.y;
+
+    const target = findTarget(this.pos, this.facing, this.spawner.monsters, a.reach, a.width);
+    if (!target) return;
+    const result = hitMonster(target, this.facing, a.damage, a.knockbackPx, a.stunMs);
+    const def = this.monsterDefs[target.type];
+    const view = this.monsterViews.get(target.id);
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+    if (result.killed) {
+      // 규칙에서 바로 빼서 다시 생기는 시간이 흐르기 시작하고, 그림은 쓰러지는 연출 뒤 사라짐
+      this.spawner.remove(target);
+      this.monsterViews.delete(target.id);
+      if (view) view.die(fx.deathMs, fx.flashMs);
+    } else if (view) {
+      view.flash(fx.flashMs);
+    }
+  }
+
   // ---------- 맵 이동 ----------
   portalAt(x, y) {
     return this.map.portals.find((p) => x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) || null;
@@ -231,6 +266,7 @@ export class MapScene extends Phaser.Scene {
     this.overlay.setVisible(on);
     // 편집 중에는 화면 왼쪽도 칠할 수 있게 조이스틱을 끔 (PC는 방향키로 이동)
     this.d.joystick.setEnabled(!on);
+    if (this.d.attackButton) this.d.attackButton.setVisible(!on);
     if (on) this.overlay.draw(this.map.grid, this.map);
   }
 
@@ -281,7 +317,16 @@ export class MapScene extends Phaser.Scene {
   update(time, delta) {
     const dt = Math.min(delta, 50); // 앱 전환 직후 큰 delta로 순간이동하지 않게
     const p = this.cfg.player;
-    const v = this.transitioning ? { x: 0, y: 0 } : this.d.input.getVector();
+    // 공격: 쿨다운이 끝났고 버튼(스페이스)이 눌려 있으면 주먹
+    this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+    this.punchMs = Math.max(0, this.punchMs - dt);
+    // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
+    const wantAttack = this.attackCooldown <= 0 && this.attackButton.consume();
+    if (wantAttack && this.attackCooldown <= 0 && !this.transitioning && !this.gridOn) this.punch();
+    const punching = this.punchMs > 0;
+
+    // 주먹 지르는 동안은 걷지 않음
+    const v = this.transitioning || punching ? { x: 0, y: 0 } : this.d.input.getVector();
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 
     this.moving = false;
@@ -295,7 +340,7 @@ export class MapScene extends Phaser.Scene {
     this.checkPortal();
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
-    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving);
+    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, punching);
     // 지붕·나무 조각은 캐릭터 발이 그 조각의 가로 범위(hideX) 안에 있을 때만 앞뒤를 따짐.
     // 범위 밖(건물 옆)에서는 항상 캐릭터가 위에 그려져, 처마 끝에 몸이 잘리지 않음.
     for (const occ of this.occluders) {

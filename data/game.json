@@ -25,6 +25,27 @@
     "radius": 44,
     "deadZone": 0.25
   },
+  "attack": {
+    "_설명": "주먹 지르기(모두 임시값). damage=한 대 데미지, cooldownMs=공격 간격(버튼을 누르고 있으면 이 간격으로 계속), punchMs=주먹 자세 유지 시간, stepPx=주먹 지를 때 앞으로 내딛는 거리, reach=앞으로 닿는 거리, width=맞힐 수 있는 폭, knockbackPx=맞은 몬스터가 밀려나는 거리, stunMs=맞은 몬스터가 멈칫하는 시간",
+    "damage": 1,
+    "cooldownMs": 400,
+    "punchMs": 150,
+    "stepPx": 3,
+    "reach": 30,
+    "width": 28,
+    "knockbackPx": 8,
+    "stunMs": 300
+  },
+  "hitFx": {
+    "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, damageFontPx=데미지 숫자 크기, damageColor·damageStroke=숫자 색·테두리, floatPx·floatMs=숫자가 떠오르는 높이·시간, deathMs=쓰러져 사라지는 시간",
+    "flashMs": 90,
+    "damageFontPx": 13,
+    "damageColor": "#ffffff",
+    "damageStroke": "#3a1a10",
+    "floatPx": 20,
+    "floatMs": 650,
+    "deathMs": 400
+  },
   "portalFx": {
     "_설명": "던전 입구(맵 이동 지점) 표시. color=빛 색, periodMs=밝아졌다 어두워지는 한 바퀴 시간, alphaMin·alphaMax=가장 어두울 때·밝을 때 진하기, lineWidth=테두리 굵기, glowWidth=바깥 번짐 굵기, labelDistance=이름표가 뜨는 거리(맵 픽셀), labelFontPx=이름표 글자 크기, labelOffsetY=이름표를 테두리 위로 띄우는 거리",
     "color": "#8fd3ff",

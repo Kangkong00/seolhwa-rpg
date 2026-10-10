@@ -26,13 +26,17 @@ export class PlayerView {
     this.sprite.setScale(s);
   }
 
-  update(deltaMs, x, y, facing, moving) {
+  // punching: 주먹 자세(그 동안은 걷기 그림 대신 punch)
+  update(deltaMs, x, y, facing, moving, punching = false) {
     if (!this.frames) return;
     const set = facing === 'up' ? this.frames.up : facing === 'down' ? this.frames.down : this.frames.side;
 
     let frameName = 'stand';
     let lift = 0;
-    if (moving) {
+    if (punching) {
+      frameName = 'punch';
+      this.walkTime = 0;
+    } else if (moving) {
       this.walkTime += deltaMs;
       const i = Math.floor(this.walkTime / this.cfg.walkFrameMs) % WALK_SEQUENCE.length;
       frameName = WALK_SEQUENCE[i];

@@ -54,6 +54,31 @@ export class MonsterView {
     this.shadow.setPosition(m.x, m.y);
   }
 
+  // 맞았을 때: 하얗게 번쩍
+  flash(ms) {
+    this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    this.sprite.scene.time.delayedCall(ms, () => {
+      if (this.sprite.active) this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+    });
+  }
+
+  // 쓰러짐: 하얗게 번쩍인 뒤 납작해지며 흐려져 사라짐
+  die(ms, flashMs) {
+    this.dead = true;
+    this.flash(flashMs);
+    const scene = this.sprite.scene;
+    scene.tweens.add({
+      targets: this.sprite,
+      alpha: 0,
+      scaleY: this.sprite.scaleY * 0.4,
+      scaleX: this.sprite.scaleX * 1.15,
+      delay: flashMs,
+      duration: ms,
+      ease: 'Quad.easeIn',
+    });
+    scene.tweens.add({ targets: this.shadow, alpha: 0, delay: flashMs, duration: ms, onComplete: () => this.destroy() });
+  }
+
   destroy() {
     this.sprite.destroy();
     this.shadow.destroy();

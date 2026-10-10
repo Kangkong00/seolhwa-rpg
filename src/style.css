@@ -104,6 +104,40 @@ html, body {
   background: rgba(150, 40, 30, 0.75);
 }
 
+/* ---------- 공격 버튼 ---------- */
+#btn-attack {
+  position: fixed;
+  right: calc(env(safe-area-inset-right) + 28px);
+  bottom: calc(env(safe-area-inset-bottom) + 28px);
+  z-index: 15;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  color: #f3ead6;
+  background: rgba(120, 40, 25, 0.55);
+  border: 2px solid rgba(243, 234, 214, 0.45);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#btn-attack.active {
+  background: rgba(170, 55, 30, 0.85);
+  transform: scale(0.94);
+}
+
+#btn-attack[hidden] {
+  display: none;
+}
+
+#btn-attack:focus:not(:focus-visible) {
+  outline: none;
+}
+
 #fps {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 8px);

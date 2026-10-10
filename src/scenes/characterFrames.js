@@ -3,7 +3,7 @@
 // - 정면·뒷면의 반대 발: step 그림에서 legSplitY 아래 다리만 좌우 반전하고 상체를 다시 얹음
 // - 큰 원본(400×720)을 화면에 맞는 크기로 미리 줄여 둠 (아이폰에서 부드럽게 보이도록)
 
-const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step'];
+const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step', 'front_punch', 'back_punch', 'side_punch'];
 
 export function loadImage(url) {
   return new Promise((resolve) => {
@@ -84,7 +84,9 @@ export function downscale(src, scale) {
 }
 
 // Phaser 텍스처로 등록하고 방향별 프레임 키를 돌려줌
-// 반환: { down: {stand, step, stepAlt}, up: {...}, side: {...} }
+// 반환: { down: {stand, step, stepAlt, punch}, up: {...}, side: {...} }
+// 주먹 그림은 640×720(몸 가운데 x=320), 서 있기는 400×720(x=200): 둘 다 캔버스 가로 가운데가 몸 가운데라
+// 같은 기준점(가로 0.5)으로 그리면 몸이 겹침. 없으면 서 있기 그림으로 대체.
 export function buildOutfitFrames(textures, outfit, images, scale) {
   const add = (name, source) => {
     const key = `${outfit.id}/${name}`;
@@ -103,14 +105,17 @@ export function buildOutfitFrames(textures, outfit, images, scale) {
     stand: add('front', images.front),
     step: add('front_step', frontStep),
     stepAlt: add('front_step_alt', mirrorLegs(frontStep, outfit.legSplitY)),
+    punch: add('front_punch', images.front_punch || images.front),
   };
   const up = {
     stand: add('back', back),
     step: add('back_step', backStep),
     stepAlt: add('back_step_alt', mirrorLegs(backStep, outfit.legSplitY)),
+    punch: add('back_punch', images.back_punch || back),
   };
   // 옆면은 다리 반전 없이 side_step ↔ side 번갈아
   const sideStand = add('side', side);
   const sideStepKey = add('side_step', sideStep);
-  return { down, up, side: { stand: sideStand, step: sideStepKey, stepAlt: sideStepKey } };
+  const sidePunch = add('side_punch', images.side_punch || side);
+  return { down, up, side: { stand: sideStand, step: sideStepKey, stepAlt: sideStepKey, punch: sidePunch } };
 }
