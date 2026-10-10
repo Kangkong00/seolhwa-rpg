@@ -1,0 +1,32 @@
+{
+  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, raiseMs·strikeMs=치켜들기·내려치기 시간, sweepPart=내려치기 시간 중 칼이 돌아가는 앞부분 비율, cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=먹선 색",
+  "canvas": { "width": 240, "height": 960, "gripX": 120, "gripY": 800 },
+  "weapons": [
+    {
+      "id": "wood_pine", "name": "소나무 목검", "image": "assets/weapons/wood_pine.png", "tipFromGrip": 420,
+      "damage": 2, "raiseMs": 80, "strikeMs": 160, "sweepPart": 0.45, "cooldownMs": 450,
+      "reach": 42, "width": 34, "knockbackPx": 10, "stunMs": 320, "stepPx": 3, "trailColor": "#1b1712"
+    },
+    {
+      "id": "wood_oak", "name": "참나무 목검", "image": "assets/weapons/wood_oak.png", "tipFromGrip": 430,
+      "damage": 2, "raiseMs": 85, "strikeMs": 165, "sweepPart": 0.45, "cooldownMs": 470,
+      "reach": 44, "width": 34, "knockbackPx": 12, "stunMs": 340, "stepPx": 3, "trailColor": "#1b1712"
+    },
+    {
+      "id": "wood_bakdal", "name": "박달나무 목검", "image": "assets/weapons/wood_bakdal.png", "tipFromGrip": 442,
+      "damage": 3, "raiseMs": 90, "strikeMs": 170, "sweepPart": 0.45, "cooldownMs": 500,
+      "reach": 46, "width": 36, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#1b1712"
+    }
+  ],
+  "_attach": "무기 붙이는 값(옷별, 640×720 자세 그림 기준). grip=쥐는 점을 맞출 주먹 위치, angle=칼끝 위 기준 시계 방향 각도, behind=몸 뒤에 그림, scaleY=무기 세로 줄임. 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x, 각도를 반대로 바꿈. 값이 없는 옷은 무기를 들어도 주먹으로 침",
+  "attach": {
+    "outfit1_hotot": {
+      "front_raise": { "grip": [150, 160], "angle": 35, "behind": true, "scaleY": 1.0 },
+      "front_strike": { "grip": [360, 464], "angle": 215, "behind": false, "scaleY": 0.75 },
+      "side_raise": { "grip": [214, 136], "angle": 45, "behind": true, "scaleY": 1.0 },
+      "side_strike": { "grip": [210, 480], "angle": -105, "behind": false, "scaleY": 1.0 },
+      "back_raise": { "grip": [480, 160], "angle": -35, "behind": false, "scaleY": 1.0 },
+      "back_strike": { "grip": [430, 390], "angle": 200, "behind": true, "scaleY": 0.7 }
+    }
+  }
+}
