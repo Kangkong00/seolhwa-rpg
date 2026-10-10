@@ -9,33 +9,12 @@ export function parseMap(json) {
     height: json.height,
     cellSize: json.cellSize,
     spawn: { ...json.spawn },
+    // 다른 맵으로 가는 이동 지점: { id, x, y, w, h, to, arrive: { x, y, facing } }
+    portals: (json.portals || []).map((p) => ({ ...p })),
+    // 몬스터 구역: { monster, count, respawnMs, x, y, w, h }
+    spawnZones: (json.spawnZones || []).map((z) => ({ ...z })),
+    noSpawnNearPortal: json.noSpawnNearPortal || 0,
     occluders: json.occluders.map((o) => ({ ...o })),
-    grid,
-  };
-}
-
-// 시험용: 맵을 세로로만 scaleY배 늘림. 격자·가림 조각·시작 위치도 같은 배율로 따라 늘어남.
-// 격자는 칸 크기(cellSize)를 그대로 두고 줄 수를 늘려, 새 줄마다 원래 격자에서 같은 높이의 줄을 가져옴.
-export function scaleMapY(map, scaleY) {
-  if (!scaleY || scaleY === 1) return map;
-  const src = map.grid;
-  const rows = Math.round(src.rows * scaleY);
-  const grid = new Grid(src.cols, rows, src.cellSize);
-  for (let r = 0; r < rows; r++) {
-    const sr = Math.min(src.rows - 1, Math.floor((r + 0.5) / scaleY));
-    grid.cells.set(src.cells.subarray(sr * src.cols, (sr + 1) * src.cols), r * src.cols);
-  }
-  return {
-    ...map,
-    height: map.height * scaleY,
-    spawn: { x: map.spawn.x, y: map.spawn.y * scaleY },
-    occluders: map.occluders.map((o) => ({
-      ...o,
-      y: o.y * scaleY,
-      h: o.h * scaleY,
-      baseY: o.baseY * scaleY,
-      ...(o.points ? { points: o.points.map(([x, y]) => [x, y * scaleY]) } : {}),
-    })),
     grid,
   };
 }
