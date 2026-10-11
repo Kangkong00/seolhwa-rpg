@@ -55,6 +55,7 @@ docs/          문서 사본
 | [docs/spec/weapons.md](docs/spec/weapons.md) | 무기 그림 규격(쥐는 점), 목검 3종, 무기 들고 서 있기·걷기, 3D 휘두르기 계산, 손 덮개, 휘두르기 3단계·몸 움직임, 궤적 모양·색, 외곽선 |
 | [docs/spec/headgear.md](docs/spec/headgear.md) | 머리 장비(두건 → 모자 → 관) 그림·옷·자세별 위치(`head_anchor.json`)·상투 지우개, 붙이는 법 |
 | [docs/spec/equipment.md](docs/spec/equipment.md) | 장비 칸 5개, 초반 아이템 목록, 아이템 아이콘(`assets/items/icons/`), 최소 장비창·가방 |
+| [docs/spec/economy.md](docs/spec/economy.md) | 초보 구간 1차 시험안: 경험치·레벨, 전리품(쥐고기 등)·엽전(푼·전·냥), 무예 3종(늙은 군관), 가게 사고팔기, 길잡이 의뢰 |
 | [docs/spec/combat.md](docs/spec/combat.md) | 때리기(맞히기·히트), 싸움 규칙(맞으면 반격·포기), 주인공 체력·체력바 |
 | [docs/spec/monsters.md](docs/spec/monsters.md) | 몬스터 그림 규격, 들쥐·큰 들쥐 크기, 돌아다니기, 몬스터 구역(`spawnZones`) |
 | [docs/spec/maps.md](docs/spec/maps.md) | 마을·들쥐굴 그림, 격자·지붕 가림(`occluders`), 맵 이동(`portals`)·던전 입구 표시, 닭장 마당 길 |
@@ -85,7 +86,7 @@ docs/          문서 사본
 - [x] 아이폰에서 소리가 안 남(무음 모드 때문일 가능성) → 무음 모드에서도 나게(`navigator.audioSession.type = 'playback'`, 없으면 소리 없는 `<audio>` 반복 재생) 반영됨 — 2026-10-11 강콩 아이폰 확인 완료
 - [x] 걷기 속도 올리기: `data/game.json` `player.speed` 80 → 110, `player.walkFrameMs` 180 → 130(속도에 맞춰 발 움직임도 빠르게, 안 그러면 발이 미끄러져 보임). 임시값 — 강콩 아이폰 확인 필요 (2026-10-11 강콩: 너무 느림)
 - [x] 초반 장비 묶음: 무명 두건 붙이기(`docs/spec/headgear.md`, 옷 6종 모든 자세 공용) + 최소 장비창·가방 + 아이콘 12개(`docs/spec/equipment.md`). 능력치는 0 — 강콩 아이폰 확인 필요
-- [ ] 보상(경험치·엽전·드랍)·레벨: 아직 미정 — 강콩이 무기·타격감 다음에 정하기로 함
+- [ ] 초보 구간 1차 시험안(`docs/spec/economy.md`): 경험치·레벨업, 전리품 드랍·줍기, 엽전, 늙은 군관 무예 3종, 가게 사고팔기, 촌장 길잡이 의뢰. 숫자는 모두 임시값 — 해 보고 고침
 - [ ] 옷 2~6 무기 자세 그림: 미룸(나중에 옷마다 3장, 들고 걷기는 합성)
 
 ## 작업 규칙
