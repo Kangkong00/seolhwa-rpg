@@ -164,6 +164,13 @@ export class MapScene extends Phaser.Scene {
     return this.cfg.cameraZoom * this.d.getPixelRatio();
   }
 
+  // 외곽선(게임 화면 기준 widthPx)을 텍스처 픽셀로: 텍스처 배율 × 그림 기준 키 ÷ 화면 키
+  outlineFor(texScale, displayHeight, standHeight) {
+    const o = this.cfg.outline;
+    if (!o || !(o.widthPx > 0)) return null;
+    return { width: (o.widthPx * texScale * standHeight) / displayHeight, color: o.color, alpha: o.alpha };
+  }
+
   textureScale() {
     const px = this.cfg.player.height * this.pixelScale();
     return Math.min(1, (px * 1.25) / this.d.outfits.canvas.standHeight);
@@ -177,7 +184,7 @@ export class MapScene extends Phaser.Scene {
     const images = await loadOutfitImages(outfit);
     if (list[this.d.outfitIndex] !== outfit || !this.sys.isActive()) return; // 그새 다른 옷을 고르거나 맵을 옮김
     const scale = this.textureScale();
-    this.frames = buildOutfitFrames(this.textures, outfit, images, scale);
+    this.frames = buildOutfitFrames(this.textures, outfit, images, scale, this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight));
     this.playerView.setFrames(this.frames, scale);
     if (this.weaponDef) this.applyWeapon();
     this.playerView.update(0, this.pos.x, this.pos.y, this.facing, false);
@@ -215,7 +222,7 @@ export class MapScene extends Phaser.Scene {
     this.monsterTextures = {};
     for (const t of types) {
       const def = this.monsterDefs[t];
-      if (def) this.monsterTextures[t] = await loadMonsterTextures(this, def, this.d.monsters.canvas, this.pixelScale());
+      if (def) this.monsterTextures[t] = await loadMonsterTextures(this, def, this.d.monsters.canvas, this.pixelScale(), (sc) => this.outlineFor(sc, def.height, this.d.monsters.canvas.standHeight));
     }
   }
 
@@ -240,7 +247,9 @@ export class MapScene extends Phaser.Scene {
       if (!this.textures.exists(key)) {
         const img = await loadImage(def.image);
         if (!img || !this.sys.isActive()) return;
-        if (!this.textures.exists(key)) this.textures.addCanvas(key, downscale(img, scale));
+        if (!this.textures.exists(key)) {
+          this.textures.addCanvas(key, downscale(img, scale, this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight)));
+        }
       }
       this.weaponTexScale = scale;
     }
@@ -285,20 +294,40 @@ export class MapScene extends Phaser.Scene {
     this.pos.y = res.y;
   }
 
-  // 휘두르는 중 한 프레임. 칼 방향 theta를 thetaFrom → thetaTo로 돌림(처음엔 느리고 끝으로 빠르게).
-  // 몸 그림은 PlayerView가 theta로 고름(bodySwitchTheta까지 raise, 그 뒤 strike).
-  // 반환: 그릴 자세 { theta } 또는 null(끝남)
+  // 몸 전체 움직임(640 기준): 직전 preMs 동안 뒤로 backPx → 진행 stepFrom~stepTo 동안 앞으로 step → 끝나면 제자리
+  swingLean(t, w) {
+    const sw = this.d.weapons.swing;
+    const L = sw.lean;
+    if (!L) return 0;
+    const side = this.facing === 'left' || this.facing === 'right';
+    const step = side ? L.stepSide : L.stepFrontBack;
+    const smooth = (v) => v * v * (3 - 2 * v);
+    if (t < L.preMs) return -L.backPx * smooth(t / L.preMs);
+    const p = (t - L.preMs) / w.swingMs;
+    if (p < L.stepFrom) return -L.backPx * (1 - smooth(p / L.stepFrom));
+    if (p < L.stepTo) return step * smooth((p - L.stepFrom) / (L.stepTo - L.stepFrom));
+    if (p <= 1) return step;
+    return step * (1 - smooth(Math.min(1, (t - L.preMs - w.swingMs) / sw.recoverMs)));
+  }
+
+  // 휘두르는 중 한 프레임. 직전 lean.preMs 동안은 몸만 뒤로 빼고(칼은 치켜든 채),
+  // 그 뒤 칼 방향 theta를 thetaFrom → thetaTo로 돌림(처음엔 느리고 끝으로 빠르게).
+  // 몸 그림은 PlayerView가 theta로 고름(raise → swing → strike).
+  // 반환: 그릴 자세 { theta, lean } 또는 null(끝남)
   updateSwing(dt) {
     const s = this.swing;
     const w = s.weapon;
     const sw = this.d.weapons.swing;
+    const pre = (sw.lean && sw.lean.preMs) || 0;
     s.t += dt;
-    if (s.t >= w.swingMs + sw.recoverMs) {
+    if (s.t >= pre + w.swingMs + sw.recoverMs) {
       if (s.trail) s.trail.fadeOut();
       this.swing = null;
       return null;
     }
-    const theta = swingTheta(sw, s.t / w.swingMs);
+    const lean = this.swingLean(s.t, w);
+    if (s.t < pre) return { theta: sw.thetaFrom, lean };
+    const theta = swingTheta(sw, (s.t - pre) / w.swingMs);
     // 칼이 앞을 지나는 순간(hitTheta) 맞힘 판정
     if (!s.hitDone && theta >= sw.hitTheta) {
       s.hitDone = true;
@@ -307,8 +336,8 @@ export class MapScene extends Phaser.Scene {
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
     if (!s.trail) s.trail = this.makeTrail(w);
     s.trail.draw((theta - sw.thetaFrom) / (sw.thetaTo - sw.thetaFrom));
-    if (s.t >= w.swingMs) s.trail.fadeOut();
-    return { theta };
+    if (s.t >= pre + w.swingMs) s.trail.fadeOut();
+    return { theta, lean };
   }
 
   makeTrail(w) {
@@ -518,7 +547,8 @@ export class MapScene extends Phaser.Scene {
     this.attackCooldown = Math.max(0, this.attackCooldown - dt);
     this.punchMs = Math.max(0, this.punchMs - dt);
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
-    const wantAttack = this.attackCooldown <= 0 && this.attackButton.consume();
+    // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
+    const wantAttack = this.attackCooldown <= 0 && !this.swing && this.attackButton.consume();
     if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead) {
       if (this.canSwing) this.startSwing();
       else this.punch();

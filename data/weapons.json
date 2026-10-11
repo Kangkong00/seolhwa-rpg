@@ -19,16 +19,18 @@
     }
   ],
   "swing": {
-    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 bodySwitchTheta까지 raise, 그 뒤 strike. hitTheta를 지나는 순간 맞힘 판정. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간",
+    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 theta < poseSwingTheta이면 raise, poseSwingTheta ≤ theta < poseStrikeTheta이면 swing, 그 이상 strike. hitTheta를 지나는 순간 맞힘 판정. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간. lean=몸 전체 움직임(640 기준 단위): 휘두르기 직전 preMs 동안 바라보는 반대쪽으로 backPx 뺌 → 진행 stepFrom~stepTo 동안 바라보는 쪽으로 내딛기(옆면 stepSide, 정면·뒷면 stepFrontBack) → 끝나면(recoverMs 동안) 제자리",
     "thetaFrom": -40,
     "thetaTo": 125,
     "ease": 2,
     "latFrontBack": 0.15,
     "latSide": 0,
-    "bodySwitchTheta": 60,
+    "poseSwingTheta": 5,
+    "poseStrikeTheta": 80,
     "hitTheta": 60,
     "depthK": 0.5,
-    "recoverMs": 90
+    "recoverMs": 90,
+    "lean": { "preMs": 60, "backPx": 6, "stepSide": 10, "stepFrontBack": 6, "stepFrom": 0.3, "stepTo": 0.8 }
   },
   "trail": {
     "_설명": "휘두르기 궤적 모양(CLAUDE.md '궤적 모양'). 좌표는 640×720 몸 그림 기준(옆면은 왼쪽을 보는 그림, 오른쪽은 좌우 반전). 크기는 무기 tipFromGrip / refTip 배로, scaleAbout(내려치기 주먹 자리)을 중심으로 늘고 줄어듦. side: 타원 호(center, rx, ry, 각도 from→to, 바깥 테두리에서 안쪽으로 thickness), front·back: 사선 직선(from→to, 굵기 thickness). peakAt=가장 두꺼운 곳(진행 비율), tailPart=시작 쪽 흐려지는 꼬리 비율, whiten=바깥(직선은 가운데)으로 갈수록 흰색 쪽으로 밝아지는 정도, alphaMax·alphaPower=진하기(안쪽 0 → 바깥 1, 비율^power × max), edgeWidth=또렷한 바깥 테두리 굵기(맵 픽셀), behind=몸 뒤에 그림",
@@ -43,7 +45,7 @@
     "front": { "shape": "line", "from": [180, -10], "to": [430, 600], "thickness": 56, "scaleAbout": [360, 464], "behind": false },
     "back": { "shape": "line", "from": [470, -60], "to": [370, 470], "thickness": 56, "scaleAbout": [430, 390], "behind": true }
   },
-  "_attach": "무기 쥐는 점(옷별, 640×720 자세 그림 기준, 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x로). hold·hold_step은 들고 서 있기·걷기의 쥐는 점과 방향(theta, lat), raise·strike는 휘두를 때 주먹(방향은 swing에서 계산). 값이 없는 옷은 무기를 들어도 주먹으로 침",
+  "_attach": "무기 쥐는 점(옷별, 640×720 자세 그림 기준, 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x로). hold·hold_step은 들고 서 있기·걷기의 쥐는 점과 방향(theta, lat), raise·swing·strike는 휘두를 때 주먹(방향은 swing에서 계산). 값이 없는 옷은 무기를 들어도 주먹으로 침",
   "attach": {
     "outfit1_hotot": {
       "hold": {
@@ -57,6 +59,7 @@
         "back": { "grip": [450, 386], "theta": 10, "lat": -0.12 }
       },
       "raise": { "front": { "grip": [150, 160] }, "side": { "grip": [214, 136] }, "back": { "grip": [480, 160] } },
+      "swing": { "front": { "grip": [184, 210] }, "side": { "grip": [116, 224] }, "back": { "grip": [456, 210] } },
       "strike": { "front": { "grip": [360, 464] }, "side": { "grip": [210, 480] }, "back": { "grip": [430, 390] } }
     }
   }

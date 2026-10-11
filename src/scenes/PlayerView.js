@@ -3,7 +3,7 @@
 // 무기를 들면 몸 그림을 hold(서 있기)·hold_step(걷기)으로 바꾸고 무기를 늘 손에 쥠.
 // 무기 방향은 3D로 계산해 화면에 투영(weaponPose.js), 쥐는 점은 지금 보이는 몸 그림의 주먹에 고정.
 // 그리는 순서: (칼이 몸 뒤면 칼) → 몸 → (칼이 몸 앞이면 칼) → 손 덮개(주먹만 오린 그림).
-// 자세 그림(punch·hold·raise·strike)은 640×720, 몸 가운데 x=320.
+// 자세 그림(punch·hold·raise·swing·strike)은 640×720, 몸 가운데 x=320.
 
 import { createShadow } from './shadow.js';
 import { HpBar } from '../ui/hpBar.js';
@@ -15,7 +15,7 @@ const POSE_CANVAS_CENTER_X = 320;
 const POSE_CANVAS_WIDTH = 640;
 const DIR_NAME = { down: 'front', up: 'back', left: 'side', right: 'side' };
 // 몸 그림 이름 → data/weapons.json attach 의 자세 이름
-const ATTACH_POSE = { hold: 'hold', holdStep: 'hold_step', holdStepAlt: 'hold_step', raise: 'raise', strike: 'strike' };
+const ATTACH_POSE = { hold: 'hold', holdStep: 'hold_step', holdStepAlt: 'hold_step', raise: 'raise', swing: 'swing', strike: 'strike' };
 
 export class PlayerView {
   constructor(scene, playerCfg, canvasSpec, shadowCfg, hpBarCfg) {
@@ -74,9 +74,11 @@ export class PlayerView {
     return { grip, tip, angle: pr.angle, length: pr.length, behind: pr.behind };
   }
 
-  // 휘두르는 중 theta에서 보이는 몸 그림 (bodySwitchTheta까지 raise, 그 뒤 strike)
+  // 휘두르는 중 theta에서 보이는 몸 그림 (raise → swing → strike)
   swingPose(theta) {
-    return theta < this.weapon.swing.bodySwitchTheta ? 'raise' : 'strike';
+    const s = this.weapon.swing;
+    if (theta < s.poseSwingTheta) return 'raise';
+    return theta < s.poseStrikeTheta ? 'swing' : 'strike';
   }
 
   // 휘두르기 lat (정면·뒷면 / 옆면)
@@ -108,12 +110,20 @@ export class PlayerView {
     this.hand.setScale(s);
   }
 
-  // action: null | 'punch' | { theta } (무기 휘두르는 중)
-  update(deltaMs, x, y, facing, moving, action = null) {
+  // action: null | 'punch' | { theta, lean } (무기 휘두르는 중, lean = 몸 전체를 바라보는 쪽으로 옮기는 거리, 640 기준)
+  update(deltaMs, x0, y0, facing, moving, action = null) {
     if (!this.frames) return;
     const punching = action === 'punch';
     const swing = action && typeof action === 'object' && this.weapon ? action : null;
     const holding = !!this.weapon && !punching;
+    // 몸 전체 움직임(휘두르기 직전 뒤로 빼기 → 내딛기 → 제자리): 몸·무기·손·그림자를 함께 옮김
+    let x = x0;
+    let y = y0;
+    if (swing && swing.lean) {
+      const k = swing.lean * this.unit();
+      x += { left: -k, right: k }[facing] || 0;
+      y += { up: -k, down: k }[facing] || 0;
+    }
     const set = facing === 'up' ? this.frames.up : facing === 'down' ? this.frames.down : this.frames.side;
 
     let frameName = holding ? 'hold' : 'stand';
