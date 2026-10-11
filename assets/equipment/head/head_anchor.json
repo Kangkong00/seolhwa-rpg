@@ -1,0 +1,831 @@
+{
+ "_설명": "머리 장비를 몸 그림에 붙이는 위치(모자 종류와 무관, 옷·자세별). 머리 장비 그림은 서 있기 캔버스(400×720) 기준으로 그려져 있음. 장비 그림의 from 점을 몸 그림 캔버스의 to 점에 맞추고, rotDeg(시계 방향 +)만큼 돌리고 scale배 함. 서 있기·걷기는 그대로 겹침(from=to). 기획 쪽이 tools/art/hood.py로 자동 측정",
+ "outfit1_hotot/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/back_hold": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   322.0,
+   193.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/back_hold_step": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   321.0,
+   194.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.99
+ },
+ "outfit1_hotot/back_punch": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   344.0,
+   194.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/back_raise": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   344.0,
+   185.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.01
+ },
+ "outfit1_hotot/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/back_strike": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   339.0,
+   185.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.01
+ },
+ "outfit1_hotot/back_swing": {
+  "from": [
+   201.0,
+   193.0
+  ],
+  "to": [
+   344.0,
+   185.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.01
+ },
+ "outfit1_hotot/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/front_hold": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   319.5,
+   175.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/front_hold_step": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   316.5,
+   175.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.99
+ },
+ "outfit1_hotot/front_punch": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   301.5,
+   175.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/front_raise": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   295.5,
+   167.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.02
+ },
+ "outfit1_hotot/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/front_strike": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   314.5,
+   167.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.02
+ },
+ "outfit1_hotot/front_swing": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   295.5,
+   167.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.02
+ },
+ "outfit1_hotot/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/side_hold": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   328.0,
+   212.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/side_hold_step": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   328.0,
+   214.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/side_punch": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   313.0,
+   214.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit1_hotot/side_raise": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   327.0,
+   204.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.02
+ },
+ "outfit1_hotot/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit1_hotot/side_strike": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   344.0,
+   204.5
+  ],
+  "rotDeg": -1.0,
+  "scale": 1.01
+ },
+ "outfit1_hotot/side_swing": {
+  "from": [
+   201.0,
+   212.5
+  ],
+  "to": [
+   296.0,
+   205.5
+  ],
+  "rotDeg": -1.0,
+  "scale": 1.02
+ },
+ "outfit2_mumyeong/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit2_mumyeong/back_punch": {
+  "from": [
+   198.5,
+   192.5
+  ],
+  "to": [
+   320.5,
+   198.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.98
+ },
+ "outfit2_mumyeong/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit2_mumyeong/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit2_mumyeong/front_punch": {
+  "from": [
+   197.0,
+   175.0
+  ],
+  "to": [
+   317.0,
+   173.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.98
+ },
+ "outfit2_mumyeong/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit2_mumyeong/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit2_mumyeong/side_punch": {
+  "from": [
+   201.5,
+   208.0
+  ],
+  "to": [
+   312.5,
+   211.0
+  ],
+  "rotDeg": -1.0,
+  "scale": 0.97
+ },
+ "outfit2_mumyeong/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/back_punch": {
+  "from": [
+   199.0,
+   193.5
+  ],
+  "to": [
+   304.0,
+   192.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.97
+ },
+ "outfit3_dopo/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/front_punch": {
+  "from": [
+   197.0,
+   175.0
+  ],
+  "to": [
+   316.0,
+   179.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.96
+ },
+ "outfit3_dopo/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit3_dopo/side_punch": {
+  "from": [
+   204.0,
+   205.5
+  ],
+  "to": [
+   310.0,
+   219.5
+  ],
+  "rotDeg": 6.0,
+  "scale": 0.96
+ },
+ "outfit3_dopo/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/back_punch": {
+  "from": [
+   198.0,
+   193.0
+  ],
+  "to": [
+   325.0,
+   180.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 0.99
+ },
+ "outfit4_cheollik/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/front_punch": {
+  "from": [
+   196.5,
+   175.0
+  ],
+  "to": [
+   325.5,
+   175.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit4_cheollik/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit4_cheollik/side_punch": {
+  "from": [
+   199.0,
+   208.0
+  ],
+  "to": [
+   323.0,
+   209.0
+  ],
+  "rotDeg": -1.0,
+  "scale": 1.0
+ },
+ "outfit4_cheollik/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/back_punch": {
+  "from": [
+   198.0,
+   193.5
+  ],
+  "to": [
+   298.0,
+   193.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit5_dujeonggap/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/front_punch": {
+  "from": [
+   198.5,
+   175.0
+  ],
+  "to": [
+   303.5,
+   176.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit5_dujeonggap/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit5_dujeonggap/side_punch": {
+  "from": [
+   199.5,
+   208.0
+  ],
+  "to": [
+   311.5,
+   207.0
+  ],
+  "rotDeg": 1.0,
+  "scale": 0.98
+ },
+ "outfit5_dujeonggap/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/back": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/back_punch": {
+  "from": [
+   199.0,
+   192.5
+  ],
+  "to": [
+   351.0,
+   191.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit6_sinseon/back_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/front": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/front_punch": {
+  "from": [
+   197.0,
+   175.0
+  ],
+  "to": [
+   328.0,
+   178.0
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit6_sinseon/front_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/side": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ },
+ "outfit6_sinseon/side_punch": {
+  "from": [
+   202.0,
+   207.5
+  ],
+  "to": [
+   324.0,
+   209.5
+  ],
+  "rotDeg": -0.0,
+  "scale": 1.0
+ },
+ "outfit6_sinseon/side_step": {
+  "from": [
+   200,
+   200
+  ],
+  "to": [
+   200,
+   200
+  ],
+  "rotDeg": 0,
+  "scale": 1
+ }
+}
