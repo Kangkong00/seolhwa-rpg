@@ -42,3 +42,9 @@ export function createMonsterShadow(scene, shadowCfg, monsterHeight) {
   const m = shadowCfg.monster;
   return createShadow(scene, shadowCfg, monsterHeight * m.widthRatio, monsterHeight * m.heightRatio, m.alpha);
 }
+
+// 빛 고리 등 다른 연출에서도 같은 부드러운 타원 그림을 씀
+export const SHADOW_TEXTURE = TEXTURE_KEY;
+export function ensureShadowTexture(scene, softness = 0.6) {
+  ensureTexture(scene, softness);
+}

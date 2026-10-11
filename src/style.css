@@ -228,7 +228,8 @@ html, body {
 }
 
 /* ---------- 장비창·가방 (src/ui/equipmentPanel.js) ---------- */
-#equip-panel {
+#equip-panel,
+#npc-panel {
   position: fixed;
   left: 50%;
   top: calc(env(safe-area-inset-top) + 8px);
@@ -250,7 +251,8 @@ html, body {
   user-select: none;
 }
 
-#equip-panel[hidden] {
+#equip-panel[hidden],
+#npc-panel[hidden] {
   display: none;
 }
 
@@ -343,4 +345,313 @@ html, body {
 .equip-info {
   font-size: 11px;
   opacity: 0.7;
+}
+
+/* 아이콘 그림이 아직 없는 물건: 이름 첫 글자 칸 */
+.icon-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #f3ead6;
+  background: rgba(120, 80, 40, 0.75);
+  border: 1px solid rgba(243, 234, 214, 0.4);
+  border-radius: 8px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.equip-cell .count {
+  position: absolute;
+  right: 4px;
+  top: 30px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+  max-width: none;
+}
+
+.equip-cell {
+  position: relative;
+}
+
+/* ---------- 왼쪽 위 레벨·체력·경험치·엽전 (src/ui/statusPanel.js) ---------- */
+#status {
+  position: fixed;
+  left: calc(env(safe-area-inset-left) + 10px);
+  top: calc(env(safe-area-inset-top) + 8px);
+  z-index: 20;
+  width: 150px;
+  padding: 5px 8px 6px;
+  color: #f3ead6;
+  background: rgba(20, 16, 10, 0.55);
+  border: 1px solid rgba(243, 234, 214, 0.25);
+  border-radius: 8px;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.st-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.st-level {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.st-coins {
+  color: #ffd98a;
+}
+
+.st-hp {
+  position: relative;
+  height: 10px;
+  background: #1a1410;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.st-hp-fill {
+  height: 100%;
+  width: 100%;
+  background: #5fd35f;
+  transition: width 0.15s;
+}
+
+.st-hp-text {
+  position: absolute;
+  inset: 0;
+  font-size: 9px;
+  line-height: 10px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 2px #000;
+}
+
+.st-exp {
+  height: 3px;
+  margin-top: 3px;
+  background: #1a1410;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.st-exp-fill {
+  height: 100%;
+  width: 0;
+  background: #ffd34d;
+  transition: width 0.2s;
+}
+
+/* ---------- 무예 버튼 (공격 버튼 둘레, src/ui/skillButtons.js) ---------- */
+.skill-btn {
+  position: fixed;
+  z-index: 15;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  font: inherit;
+  font-size: 22px;
+  font-weight: bold;
+  color: #f3ead6;
+  background: rgba(60, 40, 25, 0.6);
+  border: 2px solid rgba(243, 234, 214, 0.45);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.skill-btn:nth-child(1) {
+  right: calc(env(safe-area-inset-right) + 122px);
+  bottom: calc(env(safe-area-inset-bottom) + 44px);
+}
+
+.skill-btn:nth-child(2) {
+  right: calc(env(safe-area-inset-right) + 99px);
+  bottom: calc(env(safe-area-inset-bottom) + 99px);
+}
+
+.skill-btn:nth-child(3) {
+  right: calc(env(safe-area-inset-right) + 44px);
+  bottom: calc(env(safe-area-inset-bottom) + 122px);
+}
+
+.skill-btn.locked {
+  opacity: 0.3;
+}
+
+.skill-btn .cd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.skill-btn .cd-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
+  pointer-events: none;
+}
+
+.skill-btn.cooling {
+  color: rgba(243, 234, 214, 0.5);
+}
+
+.skill-btn:active {
+  transform: scale(0.94);
+}
+
+.skill-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+#skill-buttons[hidden] {
+  display: none;
+}
+
+/* ---------- 사람(NPC) 창 (src/ui/npcPanel.js) ---------- */
+.npc-text {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 2px 0 8px;
+  padding: 7px 9px;
+  background: rgba(243, 234, 214, 0.08);
+  border-radius: 8px;
+}
+
+.npc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.npc-actions button,
+.npc-row,
+.npc-count button {
+  font: inherit;
+  font-size: 13px;
+  color: #f3ead6;
+  background: rgba(70, 48, 30, 0.7);
+  border: 1px solid rgba(243, 234, 214, 0.4);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 4px 12px;
+}
+
+.npc-actions button.primary,
+.npc-count button.primary {
+  background: rgba(150, 90, 30, 0.85);
+}
+
+.npc-actions button:disabled,
+.npc-row:disabled,
+.npc-count button:disabled {
+  opacity: 0.4;
+}
+
+.npc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.npc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.npc-row img,
+.npc-row .icon-text {
+  width: 36px;
+  height: 36px;
+  font-size: 17px;
+  flex: none;
+}
+
+.npc-row .row-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.npc-row .row-sub {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.npc-row .row-right {
+  font-size: 12px;
+  color: #ffd98a;
+  white-space: nowrap;
+}
+
+.npc-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.npc-count .num {
+  min-width: 70px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.npc-empty {
+  font-size: 12px;
+  opacity: 0.7;
+  padding: 6px 2px;
+}
+
+/* ---------- 잠깐 뜨는 알림 ---------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 52px);
+  transform: translateX(-50%);
+  z-index: 40;
+  max-width: 70vw;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #f3ead6;
+  background: rgba(20, 16, 10, 0.85);
+  border: 1px solid rgba(243, 234, 214, 0.3);
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  text-align: center;
+}
+
+#toast.show {
+  opacity: 1;
 }

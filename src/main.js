@@ -25,13 +25,17 @@ async function boot() {
   lockPageGestures();
   const loading = document.getElementById('loading');
 
-  const [game, outfits, monsters, weapons, sounds, items] = await Promise.all([
+  const [game, outfits, monsters, weapons, sounds, items, economy, skills, npcs, quests] = await Promise.all([
     fetchJson('data/game.json'),
     fetchJson('data/outfits.json'),
     fetchJson('data/monsters.json'),
     fetchJson('data/weapons.json'),
     fetchJson('data/sounds.json'),
     fetchJson('data/items.json'),
+    fetchJson('data/economy.json'),
+    fetchJson('data/skills.json'),
+    fetchJson('data/npcs.json'),
+    fetchJson('data/quests.json'),
   ]);
   // 머리 장비 위치(옷·자세별, 모자 종류와 무관)
   const headAnchors = await fetchJson(items.headAnchors);
@@ -109,6 +113,10 @@ async function boot() {
     weapons,
     items,
     headAnchors,
+    economy,
+    skills,
+    npcs,
+    questsData: quests,
     sfx,
     mapId,
     mapJson,

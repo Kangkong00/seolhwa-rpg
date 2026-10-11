@@ -44,6 +44,8 @@ export class Joystick {
   onDown(e) {
     if (this.pointerId !== null) return;
     e.preventDefault();
+    // 조이스틱 자리에 있는 사람(NPC) 등을 누른 것이면 조이스틱 대신 그쪽으로 (tapHandler가 true를 돌려줌)
+    if (this.tapHandler && this.tapHandler(e.clientX, e.clientY)) return;
     this.pointerId = e.pointerId;
     this.base.classList.add('active');
     this.setBase(e.clientX, e.clientY);

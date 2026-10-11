@@ -75,6 +75,33 @@ const SYNTH = {
     tone(ctx, out, t + 0.36, 0.08, { type: 'sine', f0: 110 * p, f1: 60 * p, peak: 0.8, attack: 0.002 });
     noise(ctx, out, t + 0.36, 0.05, { type: 'lowpass', f0: 600, q: 0.7, peak: 0.4, attack: 0.002 });
   },
+  // 레벨업: 올라가는 짧은 가락(도·미·솔·도)
+  levelUp(ctx, out, t, p) {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      tone(ctx, out, t + i * 0.09, 0.22, { type: 'triangle', f0: f * p, peak: 0.6, attack: 0.005 });
+    });
+    tone(ctx, out, t + 0.36, 0.5, { type: 'sine', f0: 1568 * p, peak: 0.25, attack: 0.01 });
+  },
+  // 전리품 주움: 짧고 가벼운 톡
+  pickup(ctx, out, t, p) {
+    tone(ctx, out, t, 0.06, { type: 'sine', f0: 880 * p, f1: 1320 * p, peak: 0.5, attack: 0.003 });
+  },
+  // 엽전 주움·사고팔기: 쇠붙이 짤랑
+  coin(ctx, out, t, p) {
+    tone(ctx, out, t, 0.12, { type: 'sine', f0: 2400 * p, peak: 0.4, attack: 0.001 });
+    tone(ctx, out, t + 0.05, 0.16, { type: 'sine', f0: 3150 * p, peak: 0.3, attack: 0.001 });
+    tone(ctx, out, t, 0.05, { type: 'square', f0: 1800 * p, peak: 0.08, attack: 0.001 });
+  },
+  // 숨 고르기·먹기: 부드럽게 부푸는 소리
+  heal(ctx, out, t, p) {
+    tone(ctx, out, t, 0.5, { type: 'sine', f0: 392 * p, f1: 587 * p, peak: 0.45, attack: 0.12 });
+    tone(ctx, out, t + 0.05, 0.45, { type: 'sine', f0: 784 * p, f1: 1175 * p, peak: 0.15, attack: 0.12 });
+  },
+  // 무예 배움·의뢰 마침: 두 음 울림
+  learn(ctx, out, t, p) {
+    tone(ctx, out, t, 0.3, { type: 'triangle', f0: 659 * p, peak: 0.5, attack: 0.005 });
+    tone(ctx, out, t + 0.14, 0.45, { type: 'triangle', f0: 988 * p, peak: 0.5, attack: 0.005 });
+  },
   // 주인공 물림: 둔탁한 소리 + 짧은 잡음
   playerHurt(ctx, out, t, p) {
     tone(ctx, out, t, 0.12, { type: 'sine', f0: 170 * p, f1: 80 * p, peak: 0.9, attack: 0.003 });
