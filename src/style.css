@@ -226,3 +226,121 @@ html, body {
 #loading.hide {
   display: none;
 }
+
+/* ---------- 장비창·가방 (src/ui/equipmentPanel.js) ---------- */
+#equip-panel {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 8px);
+  transform: translateX(-50%);
+  z-index: 30;
+  box-sizing: border-box;
+  width: min(460px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 16px));
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 8px 10px 10px;
+  color: #f3ead6;
+  background: rgba(28, 22, 15, 0.92);
+  border: 1px solid rgba(243, 234, 214, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#equip-panel[hidden] {
+  display: none;
+}
+
+.equip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.equip-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 2px 0 4px;
+  opacity: 0.85;
+}
+
+.equip-close {
+  font: inherit;
+  font-size: 13px;
+  color: #f3ead6;
+  background: rgba(20, 16, 10, 0.6);
+  border: 1px solid rgba(243, 234, 214, 0.35);
+  border-radius: 8px;
+  min-width: 56px;
+  min-height: 36px;
+}
+
+.equip-slots,
+.equip-bag {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 66px);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.equip-slots {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(243, 234, 214, 0.2);
+}
+
+.equip-cell {
+  font: inherit;
+  width: 66px;
+  height: 70px;
+  padding: 3px 2px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: #f3ead6;
+  background: rgba(70, 48, 30, 0.55);
+  border: 1px solid rgba(243, 234, 214, 0.4);
+  border-radius: 8px;
+}
+
+.equip-cell img {
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+}
+
+.equip-cell span {
+  font-size: 10px;
+  line-height: 1.15;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 62px;
+  pointer-events: none;
+}
+
+.equip-cell.empty {
+  justify-content: center;
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.equip-cell:active {
+  transform: scale(0.95);
+  background: rgba(140, 90, 40, 0.7);
+}
+
+.equip-cell:focus:not(:focus-visible),
+.equip-close:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.equip-none,
+.equip-info {
+  font-size: 11px;
+  opacity: 0.7;
+}

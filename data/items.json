@@ -1,0 +1,31 @@
+{
+  "_설명": "아이템 정의와 시작 장비(docs/spec/equipment.md). slot=장비 칸(weapon·outfit·head·arms·feet), icon=아이콘 그림(256×256), stats=능력치(아직 미정이라 모두 0). 무기 휘두르기 값은 data/weapons.json, 옷 그림은 data/outfits.json(같은 id). head는 머리 장비 그림 폴더(front·side·back.png, topknot/ 상투 지우개)",
+  "slots": [
+    { "id": "weapon", "name": "무기" },
+    { "id": "outfit", "name": "옷" },
+    { "id": "head", "name": "머리" },
+    { "id": "arms", "name": "토시" },
+    { "id": "feet", "name": "신발" }
+  ],
+  "headAnchors": "assets/equipment/head/head_anchor.json",
+  "items": [
+    { "id": "wood_pine", "name": "소나무 목검", "slot": "weapon", "icon": "assets/items/icons/wood_pine.png", "stats": { "attack": 0 } },
+    { "id": "wood_oak", "name": "참나무 목검", "slot": "weapon", "icon": "assets/items/icons/wood_oak.png", "stats": { "attack": 0 } },
+    { "id": "wood_bakdal", "name": "박달나무 목검", "slot": "weapon", "icon": "assets/items/icons/wood_bakdal.png", "stats": { "attack": 0 } },
+    { "id": "outfit1_hotot", "name": "허름한 홑옷", "slot": "outfit", "icon": "assets/items/icons/outfit1_hotot.png", "stats": { "defense": 0 } },
+    { "id": "outfit2_mumyeong", "name": "무명옷", "slot": "outfit", "icon": "assets/items/icons/outfit2_mumyeong.png", "stats": { "defense": 0 } },
+    { "id": "outfit3_dopo", "name": "도포", "slot": "outfit", "icon": "assets/items/icons/outfit3_dopo.png", "stats": { "defense": 0 } },
+    { "id": "outfit4_cheollik", "name": "철릭", "slot": "outfit", "icon": "assets/items/icons/outfit4_cheollik.png", "stats": { "defense": 0 } },
+    { "id": "outfit5_dujeonggap", "name": "두정갑", "slot": "outfit", "icon": "assets/items/icons/outfit5_dujeonggap.png", "stats": { "defense": 0 } },
+    { "id": "outfit6_sinseon", "name": "신선복", "slot": "outfit", "icon": "assets/items/icons/outfit6_sinseon.png", "stats": { "defense": 0 } },
+    { "id": "hood_mumyeong", "name": "무명 두건", "slot": "head", "icon": "assets/items/icons/hood_mumyeong.png", "head": "assets/equipment/head/hood_mumyeong", "stats": { "defense": 0 } },
+    { "id": "toshi_mumyeong", "name": "무명 토시", "slot": "arms", "icon": "assets/items/icons/toshi_mumyeong.png", "stats": { "defense": 0 } },
+    { "id": "shoes_jipsin", "name": "짚신", "slot": "feet", "icon": "assets/items/icons/shoes_jipsin.png", "stats": { "speed": 0 } }
+  ],
+  "start": {
+    "_설명": "시험 시작 상태(저장이 없을 때). equipped=처음 낀 것(빈 문자열은 비어 있음), bag=가방. 옷 바꾸기 시험을 위해 옷 2~6도 가방에 넣어 둠(임시)",
+    "equipped": { "weapon": "", "outfit": "outfit1_hotot", "head": "", "arms": "", "feet": "" },
+    "bag": ["hood_mumyeong", "toshi_mumyeong", "shoes_jipsin", "wood_pine", "wood_oak", "wood_bakdal",
+      "outfit2_mumyeong", "outfit3_dopo", "outfit4_cheollik", "outfit5_dujeonggap", "outfit6_sinseon"]
+  }
+}

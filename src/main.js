@@ -13,7 +13,10 @@ async function fetchJson(url) {
 
 // 아이폰 사파리의 확대·당겨서 새로고침·두 손가락 제스처 막기
 function lockPageGestures() {
-  document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  // 장비창은 물건이 많아지면 위아래로 밀어 볼 수 있게 둠
+  document.addEventListener('touchmove', (e) => {
+    if (!(e.target.closest && e.target.closest('#equip-panel'))) e.preventDefault();
+  }, { passive: false });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('dblclick', (e) => e.preventDefault());
 }
@@ -22,13 +25,16 @@ async function boot() {
   lockPageGestures();
   const loading = document.getElementById('loading');
 
-  const [game, outfits, monsters, weapons, sounds] = await Promise.all([
+  const [game, outfits, monsters, weapons, sounds, items] = await Promise.all([
     fetchJson('data/game.json'),
     fetchJson('data/outfits.json'),
     fetchJson('data/monsters.json'),
     fetchJson('data/weapons.json'),
     fetchJson('data/sounds.json'),
+    fetchJson('data/items.json'),
   ]);
+  // 머리 장비 위치(옷·자세별, 모자 종류와 무관)
+  const headAnchors = await fetchJson(items.headAnchors);
   // 효과음: 첫 터치 때 켜짐 (아이폰 사파리)
   const sfx = new SoundPlayer(sounds);
   // 맵 파일은 한 번 받은 것을 다시 씀
@@ -101,6 +107,8 @@ async function boot() {
     outfits,
     monsters,
     weapons,
+    items,
+    headAnchors,
     sfx,
     mapId,
     mapJson,

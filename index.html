@@ -23,11 +23,10 @@
     <div id="joystick-base"><div id="joystick-knob"></div></div>
   </div>
 
-  <!-- 오른쪽 위 시험용 버튼: 옷, 격자 (src/ui/hud.js) -->
+  <!-- 오른쪽 위 버튼: 소리, 가방(장비창), 격자 (src/ui/hud.js) -->
   <div id="hud">
     <button id="btn-sound" type="button" aria-label="소리">소리 켬</button>
-    <button id="btn-weapon" type="button">무기</button>
-    <button id="btn-outfit" type="button">옷</button>
+    <button id="btn-bag" type="button">가방</button>
     <button id="btn-grid" type="button">격자</button>
   </div>
   <div id="fps"></div>
@@ -43,6 +42,18 @@
     <button id="ed-export" type="button">파일로 내보내기</button>
     <button id="ed-reset" type="button">원래대로</button>
     <button id="ed-close" type="button">닫기</button>
+  </div>
+
+  <!-- 장비창·가방 (src/ui/equipmentPanel.js) -->
+  <div id="equip-panel" hidden>
+    <div class="equip-head">
+      <div class="equip-title">장비</div>
+      <button class="equip-close" type="button">닫기</button>
+    </div>
+    <div class="equip-slots"></div>
+    <div class="equip-title">가방</div>
+    <div class="equip-bag"></div>
+    <div class="equip-info"></div>
   </div>
 
   <div id="rotate">

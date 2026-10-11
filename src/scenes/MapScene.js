@@ -5,7 +5,9 @@ import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
-import { loadOutfitImages, buildOutfitFrames, loadImage, downscale } from './characterFrames.js';
+import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
+import { createEquipment, equipFromBag, unequip, canUnequip } from '../core/equipment.js';
+import { EquipmentPanel } from '../ui/equipmentPanel.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
@@ -79,14 +81,10 @@ export class MapScene extends Phaser.Scene {
 
     this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow, cfg.hpBar);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
-    // 시험용 무기: 저장된 것, 없으면 swingFx.startWeapon
-    if (this.d.weaponId === undefined) {
-      this.d.weaponId = save && save.weapon !== undefined ? save.weapon : cfg.swingFx.startWeapon || '';
-    }
-    if (this.d.outfitIndex === undefined) {
-      const id = (save && save.outfit) || cfg.startOutfit;
-      this.d.outfitIndex = Math.max(0, this.d.outfits.outfits.findIndex((o) => o.id === id));
-    }
+    // 장비·가방: 저장된 것, 없으면 data/items.json의 start (맵을 옮겨도 이어짐)
+    this.itemDefs = Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
+    if (!this.d.equip) this.d.equip = createEquipment(this.itemDefs, this.d.items.start, save && save.equipment);
+    this.equip = this.d.equip;
 
     // 카메라 (1.0배 고정)
     const cam = this.cameras.main;
@@ -101,8 +99,7 @@ export class MapScene extends Phaser.Scene {
     // 시험용 버튼·격자 편집 도구는 처음 한 번만 만들고, 지금 장면으로 연결
     if (!this.d.hud) {
       this.d.hud = new Hud({
-        onOutfit: () => this.d.scene.changeOutfit(1),
-        onWeapon: () => this.d.scene.changeWeapon(),
+        onBag: () => this.d.scene.setBagOpen(!this.d.equipPanel.open),
         onSound: () => {
           this.d.sfx.setMuted(!this.d.sfx.muted);
           this.d.hud.setSoundOn(!this.d.sfx.muted);
@@ -115,6 +112,14 @@ export class MapScene extends Phaser.Scene {
         onClose: () => this.d.scene.setGridMode(false),
       });
       this.d.attackButton = new AttackButton(document.getElementById('btn-attack'));
+      this.d.equipPanel = new EquipmentPanel({
+        slots: this.d.items.slots,
+        itemDefs: this.itemDefs,
+        canUnequip,
+        onEquip: (i) => this.d.scene.equipItem(i),
+        onUnequip: (slot) => this.d.scene.unequipSlot(slot),
+        onClose: () => this.d.scene.setBagOpen(false),
+      });
       this.d.hud.setSoundOn(!this.d.sfx.muted);
       // 자동 저장: 앱이 가려질 때
       const saveNow = () => this.d.scene.save();
@@ -124,6 +129,7 @@ export class MapScene extends Phaser.Scene {
     this.hud = this.d.hud;
     this.editor = this.d.editor;
     this.attackButton = this.d.attackButton;
+    this.equipPanel = this.d.equipPanel;
     // 효과음 (Phaser 장면에 이미 'sound'가 있어 sfx 이름으로 둠)
     this.sfx = this.d.sfx;
     this.overlay = new GridOverlay(this);
@@ -131,8 +137,7 @@ export class MapScene extends Phaser.Scene {
     this.setupPainting();
     this.input.keyboard.on('keydown', (e) => {
       if (e.code === 'KeyG') this.setGridMode(!this.gridOn);
-      const n = Number(e.key);
-      if (n >= 1 && n <= this.d.outfits.outfits.length) this.setOutfit(n - 1);
+      if (e.code === 'KeyI' || e.code === 'KeyB') this.setBagOpen(!this.equipPanel.open);
     });
 
     // 몬스터
@@ -148,8 +153,8 @@ export class MapScene extends Phaser.Scene {
 
     this.fpsTimer = 0;
     cam.fadeIn(this.cfg.mapFadeMs);
-    Promise.all([this.setOutfit(this.d.outfitIndex), monsterReady]).then(async () => {
-      await this.setWeapon(this.d.weaponId);
+    if (this.equipPanel.open) this.setBagOpen(true); // 열린 채로 맵을 옮겼으면 그대로
+    Promise.all([this.refreshLook(), monsterReady]).then(() => {
       this.save();
       if (this.d.onReady) this.d.onReady();
     });
@@ -176,22 +181,65 @@ export class MapScene extends Phaser.Scene {
     return Math.min(1, (px * 1.25) / this.d.outfits.canvas.standHeight);
   }
 
-  async setOutfit(index) {
-    const list = this.d.outfits.outfits;
-    this.d.outfitIndex = ((index % list.length) + list.length) % list.length;
-    const outfit = list[this.d.outfitIndex];
-    this.hud.setOutfitLabel(outfit.name);
-    const images = await loadOutfitImages(outfit);
-    if (list[this.d.outfitIndex] !== outfit || !this.sys.isActive()) return; // 그새 다른 옷을 고르거나 맵을 옮김
+  // 낀 장비대로 겉모습을 다시 만듦: 옷 그림 + 머리 장비(상투를 지우고 얹어 몸 그림에 합침) + 무기
+  async refreshLook() {
+    const token = (this.lookToken = (this.lookToken || 0) + 1);
+    const eq = this.equip.equipped;
+    const outfit = this.d.outfits.outfits.find((o) => o.id === eq.outfit) || this.d.outfits.outfits[0];
+    const headDef = this.itemDefs[eq.head];
+    let images = await loadOutfitImages(outfit);
+    if (headDef && headDef.head) {
+      const head = await loadHeadImages(headDef, outfit, images);
+      images = wearHead(images, head, this.d.headAnchors, outfit.id);
+    }
+    if (token !== this.lookToken || !this.sys.isActive()) return; // 그새 다른 장비를 끼거나 맵을 옮김
     const scale = this.textureScale();
-    this.frames = buildOutfitFrames(this.textures, outfit, images, scale, this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight));
+    const old = this.frames;
+    const outline = this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight);
+    this.frames = buildOutfitFrames(this.textures, outfit, images, scale, outline, `${outfit.id}@${token}`);
     this.playerView.setFrames(this.frames, scale);
-    if (this.weaponDef) this.applyWeapon();
+    // 새 그림으로 바로 바꾼 뒤 옛 그림을 지움 (그리는 중인 그림을 지우지 않게)
+    this.applyWeapon();
+    this.playerView.update(0, this.pos.x, this.pos.y, this.facing, false);
+    removeOutfitFrames(this.textures, old);
+    await this.setWeapon(eq.weapon);
+    if (token !== this.lookToken || !this.sys.isActive()) return;
     this.playerView.update(0, this.pos.x, this.pos.y, this.facing, false);
   }
 
-  changeOutfit(step) {
-    this.setOutfit(this.d.outfitIndex + step);
+  // ---------- 장비창·가방 ----------
+  setBagOpen(on) {
+    if (on && this.gridOn) this.setGridMode(false);
+    this.equipPanel.setVisible(on);
+    this.hud.setBagOn(on);
+    if (on) this.equipPanel.render(this.equip);
+    // 장비창이 열려 있는 동안은 움직이거나 공격하지 않음
+    this.d.joystick.setEnabled(!on);
+    this.attackButton.setVisible(!on);
+  }
+
+  equipItem(bagIndex) {
+    if (this.swing) return; // 휘두르는 중에는 바꾸지 않음
+    const slot = equipFromBag(this.equip, this.itemDefs, bagIndex);
+    if (slot) this.afterEquipChange(slot);
+  }
+
+  unequipSlot(slot) {
+    if (this.swing) return;
+    const id = this.equip.equipped[slot];
+    if (id && !canUnequip(slot)) {
+      this.equipPanel.render(this.equip, '옷은 벗을 수 없습니다. 가방의 다른 옷을 누르면 갈아입습니다');
+      return;
+    }
+    if (unequip(this.equip, slot)) this.afterEquipChange(slot);
+  }
+
+  afterEquipChange(slot) {
+    this.equipPanel.render(this.equip);
+    if (slot === 'weapon') this.setWeapon(this.equip.equipped.weapon);
+    else if (slot === 'outfit' || slot === 'head') this.refreshLook();
+    // 토시·신발은 화면에 안 보임(능력치만, 아직 0)
+    this.save();
   }
 
   save() {
@@ -201,8 +249,7 @@ export class MapScene extends Phaser.Scene {
       x: Math.round(this.pos.x),
       y: Math.round(this.pos.y),
       facing: this.facing,
-      outfit: this.d.outfits.outfits[this.d.outfitIndex].id,
-      weapon: this.d.weaponId || '',
+      equipment: { equipped: { ...this.equip.equipped }, bag: [...this.equip.bag] },
     });
   }
 
@@ -234,13 +281,11 @@ export class MapScene extends Phaser.Scene {
     this.monsterViews.set(m.id, view);
   }
 
-  // ---------- 무기 (시험용 바꾸기 버튼: 맨손 → 소나무 → 참나무 → 박달나무) ----------
+  // ---------- 무기 (장비창의 무기 칸, 빈 칸이면 맨손) ----------
   async setWeapon(id) {
     const list = this.d.weapons.weapons;
     const def = list.find((w) => w.id === id) || null;
-    this.d.weaponId = def ? def.id : '';
     this.weaponDef = def;
-    this.hud.setWeaponLabel(def ? def.name.replace(' 목검', '') : '맨손');
     if (def) {
       const key = `weapon:${def.id}`;
       const scale = this.textureScale();
@@ -259,8 +304,7 @@ export class MapScene extends Phaser.Scene {
   // 지금 옷에 무기 붙이는 값과 휘두르기 자세가 있으면 무기를 손에, 없으면 주먹으로
   applyWeapon() {
     const def = this.weaponDef;
-    const outfit = this.d.outfits.outfits[this.d.outfitIndex];
-    const attach = def && this.d.weapons.attach[outfit.id];
+    const attach = def && this.d.weapons.attach[this.equip.equipped.outfit];
     if (def && attach && this.frames && this.frames.canSwing) {
       this.playerView.setWeapon({
         def,
@@ -275,12 +319,6 @@ export class MapScene extends Phaser.Scene {
       this.playerView.setWeapon(null);
       this.canSwing = false;
     }
-  }
-
-  changeWeapon() {
-    const ids = ['', ...this.d.weapons.weapons.map((w) => w.id)];
-    const i = ids.indexOf(this.d.weaponId || '');
-    this.setWeapon(ids[(i + 1) % ids.length]);
   }
 
   // 무기 휘두르기 시작 (칼이 앞을 지나는 순간 맞힘 판정)
@@ -481,6 +519,7 @@ export class MapScene extends Phaser.Scene {
 
   // ---------- 격자 편집 ----------
   setGridMode(on) {
+    if (on && this.equipPanel && this.equipPanel.open) this.setBagOpen(false);
     this.gridOn = on;
     this.hud.setGridOn(on);
     this.editor.setVisible(on);
@@ -549,7 +588,7 @@ export class MapScene extends Phaser.Scene {
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     const wantAttack = this.attackCooldown <= 0 && !this.swing && this.attackButton.consume();
-    if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead) {
+    if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead && !this.equipPanel.open) {
       if (this.canSwing) this.startSwing();
       else this.punch();
     }

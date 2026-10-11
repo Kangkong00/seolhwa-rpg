@@ -39,7 +39,7 @@
 - 원본: `assets/source/outfit1_hotot_raise.jpg`, `outfit1_hotot_strike.jpg`. 새 자세 그림은 머리가 서 있기보다 조금 크게 그려졌음(게임 크기에서는 거의 안 보임).
 - **궤적은 붓으로 그은 획 모양(2026-10-10 강콩), 색은 칼날 색(2026-10-11 강콩 — 먹색은 기각)**. 모양·값은 위 "궤적 모양" 참고.
 - 타격감 연출(코드): 맞는 순간 아주 짧은 멈춤(약 0.05~0.08초), 작은 타격 표시, 아주 약한 화면 흔들림, 무기별 휘두르는 속도·밀어내는 힘. 모두 `data/`에 임시값.
-- **반영됨(2026-10-11, 홑옷 + 목검)**: 무기 목록·쥐는 점·휘두르기 값은 `data/weapons.json`(`weapons`, `swing`, 옷별 `attach`의 `hold`·`hold_step`·`raise`·`strike`). 오른쪽 위 시험용 `무기` 버튼으로 맨손 → 소나무 → 참나무 → 박달나무(시작 `data/game.json` `swingFx.startWeapon`, 고른 무기는 저장됨).
+- **반영됨(2026-10-11, 홑옷 + 목검)**: 무기 목록·쥐는 점·휘두르기 값은 `data/weapons.json`(`weapons`, `swing`, 옷별 `attach`의 `hold`·`hold_step`·`raise`·`strike`). 무기는 장비창의 무기 칸으로 끼고 벗음(빈 칸이면 맨손, `docs/spec/equipment.md`). 예전 시험용 `무기`·`옷` 버튼과 `swingFx.startWeapon`·`startOutfit`은 2026-10-11 장비창으로 바꾸며 뺌.
   - 무기를 들면 몸 그림이 `hold`(서 있기)·`hold_step`(걷기: `hold_step` → `hold` → `hold_step` 다리 반전 → `hold`, 기준선 `data/outfits.json` `holdLegSplitY` 560 — 확인 필요)로 바뀌고 무기를 늘 쥠. 걷기 들썩임만큼 무기도 같이 움직임. 맨손이면 기존 그림.
   - 그리는 순서: (칼이 몸 뒤면 칼) → 몸 → (칼이 몸 앞이면 칼) → 손 덮개 `_hand`. 다리 반전 걷기 프레임은 손 덮개를 반전하지 않음.
   - 무기 방향은 위의 3D 계산·투영 그대로(`src/scenes/weaponPose.js`): θ `thetaFrom` −40 → `thetaTo` 125, `ease` 2(처음 느리고 끝으로 빠르게), lat 정면·뒷면 0.15·옆면 0, 깊이 K 0.5. 몸 그림은 3단계 raise → swing → strike(아래 "휘두르기 3단계"). 쥐는 점은 지금 보이는 몸 그림의 주먹에 고정. 칼이 `hitTheta` 60을 지나는 순간 맞힘 판정. 휘두르기 시간은 무기별 `swingMs`(소나무 200ms), 끝난 뒤 `recoverMs` 90ms 동안 strike 자세 유지.
