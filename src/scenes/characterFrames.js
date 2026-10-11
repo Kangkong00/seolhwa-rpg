@@ -36,6 +36,65 @@ export function loadOutfitImages(outfit) {
   return imageCache.get(outfit.id);
 }
 
+// ---------- 머리 장비 (docs/spec/headgear.md) ----------
+// 몸 그림 이름(손 덮개 제외): 머리 장비를 씌우는 대상
+const BODY_FILES = FILES.filter((f) => !f.endsWith('_hand'));
+const headCache = new Map();
+
+// 머리 장비 그림(front·side·back)과 이 옷의 상투 지우개(몸 그림이 있는 것만)
+// headDef: { id, head: 폴더 }. 반환: { hood: {front, side, back}, erasers: { 그림이름: img } }
+export function loadHeadImages(headDef, outfit, bodyImages) {
+  const key = `${headDef.id}|${outfit.id}`;
+  if (!headCache.has(key)) {
+    const names = BODY_FILES.filter((f) => bodyImages[f]);
+    const p = Promise.all([
+      Promise.all(['front', 'side', 'back'].map((d) => loadImage(`${headDef.head}/${d}.png`))),
+      Promise.all(names.map((f) => loadImage(`${headDef.head}/topknot/${outfit.id}/${f}.png`))),
+    ]).then(([hoods, erasers]) => {
+      const out = { hood: { front: hoods[0], side: hoods[1], back: hoods[2] }, erasers: {} };
+      names.forEach((f, i) => { out.erasers[f] = erasers[i]; });
+      return out;
+    });
+    headCache.set(key, p);
+  }
+  return headCache.get(key);
+}
+
+// 몸 그림마다 상투 지우개 부분을 지우고 머리 장비를 얹은 새 그림 묶음을 만듦(불러올 때 한 번).
+// 장비 그림의 from 점을 몸 그림의 to 점에 맞추고 rotDeg(시계 방향 +)만큼 돌리고 scale배.
+// 위치값이 없는 그림은 머리 장비 그림(400 폭)을 몸 그림 가로 가운데에 맞춰 그대로 얹음.
+// 손 덮개(_hand)는 그대로 둠 → 그리는 순서: 몸(+머리 장비) → 무기 → 손 덮개
+export function wearHead(images, head, anchors, outfitId) {
+  const out = { ...images };
+  for (const name of BODY_FILES) {
+    const body = images[name];
+    if (!body) continue;
+    const dir = name.split('_')[0];
+    const hood = head.hood[dir];
+    if (!hood) continue;
+    const c = makeCanvas(body.width, body.height);
+    const ctx = c.getContext('2d');
+    ctx.drawImage(body, 0, 0);
+    const eraser = head.erasers[name];
+    if (eraser) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.drawImage(eraser, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    const dx = (body.width - hood.width) / 2;
+    const a = anchors[`${outfitId}/${name}`] || { from: [200, 200], to: [200 + dx, 200], rotDeg: 0, scale: 1 };
+    ctx.save();
+    ctx.translate(a.to[0], a.to[1]);
+    ctx.rotate((a.rotDeg * Math.PI) / 180);
+    ctx.scale(a.scale, a.scale);
+    ctx.translate(-a.from[0], -a.from[1]);
+    ctx.drawImage(hood, 0, 0);
+    ctx.restore();
+    out[name] = c;
+  }
+  return out;
+}
+
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -125,9 +184,10 @@ export function downscale(src, scale, outline = null) {
 // 주먹 그림은 640×720(몸 가운데 x=320), 서 있기는 400×720(x=200): 둘 다 캔버스 가로 가운데가 몸 가운데라
 // 같은 기준점(가로 0.5)으로 그리면 몸이 겹침. 없으면 서 있기 그림으로 대체.
 // outline: { width(텍스처 픽셀), color, alpha } — 손 덮개(_hand)도 외곽선을 둘러 칼 위에서 주먹 테두리가 보이게
-export function buildOutfitFrames(textures, outfit, images, scale, outline = null) {
+// prefix: 텍스처 이름 앞부분(겉모습을 바꿀 때마다 새 이름으로 만들고, 바꾼 뒤 옛것을 지움 — removeOutfitFrames)
+export function buildOutfitFrames(textures, outfit, images, scale, outline = null, prefix = outfit.id) {
   const add = (name, source) => {
-    const key = `${outfit.id}/${name}`;
+    const key = `${prefix}/${name}`;
     if (textures.exists(key)) textures.remove(key);
     textures.addCanvas(key, downscale(source, scale, outline));
     return key;
@@ -190,4 +250,17 @@ export function buildOutfitFrames(textures, outfit, images, scale, outline = nul
   const sets = [down, up, side2];
   const canSwing = sets.every((s) => s.raise && s.strike && s.hold && s.holdStep);
   return { down, up, side: side2, canSwing };
+}
+
+// buildOutfitFrames로 만든 텍스처를 모두 지움
+export function removeOutfitFrames(textures, frames) {
+  if (!frames) return;
+  const keys = new Set();
+  for (const set of [frames.down, frames.up, frames.side]) {
+    for (const v of Object.values(set)) {
+      if (typeof v === 'string') keys.add(v);
+      else if (v && typeof v === 'object') for (const h of Object.values(v)) if (h) keys.add(h);
+    }
+  }
+  for (const k of keys) if (textures.exists(k)) textures.remove(k);
 }
