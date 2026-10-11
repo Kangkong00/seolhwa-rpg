@@ -51,5 +51,5 @@
 
 - **휘두르기 3단계**: 몸 그림을 `raise` → `swing`(새 그림 `{front,side,back}_swing.png`, 손 덮개 `_swing_hand.png`) → `strike`. θ < 5 raise, 5 ≤ θ < 80 swing, θ ≥ 80 strike(`data/weapons.json` `swing.poseSwingTheta`·`poseStrikeTheta`). 쥐는 점은 늘 지금 보이는 그림의 주먹 — swing 주먹: front (184,210), side (116,224), back (456,210)(`attach.outfit1_hotot.swing`). 손 덮개 순서는 그대로. 시안 `docs/swing_3frame.gif`. swing 그림이 없는 옷·방향은 raise 그림으로 대신함.
 - **몸 전체 움직임**: 휘두르기 직전 `preMs` 60ms 동안 바라보는 반대쪽으로 `backPx` 6 뺌(칼은 치켜든 채) → 진행 30~80% 동안 바라보는 쪽으로 내딛기(640 기준 옆면 10, 정면·뒷면 6) → 끝나면(`recoverMs`) 제자리. 몸·무기·손 덮개·그림자를 함께 옮기는 화면상 움직임(실제 위치는 그대로). 값은 `swing.lean`. 맞힘 판정·궤적·소리 타이밍은 칼이 돌기 시작한 뒤 기준(직전 60ms만큼 늦게 맞음).
-- **외곽선**: 캐릭터·몬스터·무기(손 덮개 포함) 테두리에 진한 갈색 `#46301e` 외곽선, 게임 화면 기준 1px(마을 그림 선 굵기와 맞춤, 시안 `docs/outline_compare.png`). 그림을 불러올 때 한 번만 만들어 둠(게임 중 성능 영향 없음). 굵기·색·진하기는 `data/game.json` `outline`(`widthPx` 0이면 끔).
+- **외곽선**: 캐릭터·몬스터·무기(손 덮개 포함) 테두리에 진한 갈색 `#46301e` 외곽선, 게임 화면 기준 0.75px(처음 1px → 2026-10-11 강콩: 아주 조금만 얇게, 반영됨. 소수도 됨. 마을 그림 선 굵기와 맞춤, 시안 `docs/outline_compare.png`). 그림을 불러올 때 한 번만 만들어 둠(게임 중 성능 영향 없음). 굵기·색·진하기는 `data/game.json` `outline`(`widthPx` 0이면 끔).
 - 휘두르는 중에 공격 버튼을 누르면 버리지 않고 끝난 뒤 나감.
