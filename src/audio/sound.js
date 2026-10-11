@@ -1,5 +1,6 @@
 // 효과음. 파일 없이 Web Audio로 코드에서 소리를 만들고, data/sounds.json에 파일 경로를 넣으면 그 파일을 씀.
 // 아이폰 사파리는 첫 터치 전에는 소리가 나지 않으므로, 첫 터치(조이스틱·버튼 포함)·키 입력 때 소리를 켬.
+// 이때 무음 모드(옆 스위치)에서도 소리가 나게 재생 모드로 바꿈(enablePlaybackMode).
 // 같은 소리가 질리지 않게 매번 높낮이를 ±pitchJitter 만큼 무작위로 바꿈.
 
 const MUTE_KEY = 'seolhwa-rpg:sound-muted';
@@ -81,6 +82,21 @@ const SYNTH = {
   },
 };
 
+// 소리 없는 짧은 WAV(0.5초, 8000Hz, 8비트 — 값 128이 무음)를 만들어 주소로 돌려줌
+function silentWavUrl() {
+  const rate = 8000;
+  const n = rate / 2;
+  const buf = new ArrayBuffer(44 + n);
+  const v = new DataView(buf);
+  const str = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  str(0, 'RIFF'); v.setUint32(4, 36 + n, true); str(8, 'WAVE');
+  str(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+  str(36, 'data'); v.setUint32(40, n, true);
+  new Uint8Array(buf, 44).fill(128);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
 export class SoundPlayer {
   constructor(cfg) {
     this.cfg = cfg;
@@ -88,6 +104,8 @@ export class SoundPlayer {
     this.master = null;
     this.buffers = {}; // 파일 소리
     this.muted = false;
+    this.playbackReady = false; // 무음 모드에서도 소리 나는 '재생' 모드로 바꿨는지
+    this.silentAudio = null;
     try {
       this.muted = window.localStorage.getItem(MUTE_KEY) === '1';
     } catch {
@@ -111,16 +129,55 @@ export class SoundPlayer {
       this.loadFiles();
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
+    this.enablePlaybackMode();
     // 아이폰: 사용자 입력 안에서 빈 소리를 한 번 내야 이후 소리가 남
     const b = this.ctx.createBuffer(1, 1, 22050);
     const s = this.ctx.createBufferSource();
     s.buffer = b;
     s.connect(this.ctx.destination);
     s.start(0);
-    if (this.ctx.state === 'running') {
+    if (this.ctx.state === 'running' && this.playbackReady) {
       for (const ev of ['touchstart', 'touchend', 'pointerdown', 'keydown']) {
         window.removeEventListener(ev, this.unlock, { capture: true });
       }
+    }
+  }
+
+  // 아이폰 무음 모드(옆 스위치)에서도 효과음이 나게 '재생' 모드로 바꿈.
+  // - navigator.audioSession이 있으면(사파리 16.4+) type = 'playback'
+  // - 없으면 소리 없는 아주 짧은 <audio>를 반복 재생 (미디어가 재생 중이면 Web Audio도 무음 스위치를 무시함)
+  // 반드시 사용자 입력(터치·키) 안에서 불러야 함. 성공할 때까지 다음 입력에서 다시 시도.
+  enablePlaybackMode() {
+    if (this.playbackReady) return;
+    try {
+      if (navigator.audioSession) {
+        navigator.audioSession.type = 'playback';
+        this.playbackReady = true;
+        return;
+      }
+    } catch {
+      // 못 바꾸면 아래 방법으로
+    }
+    if (!this.silentAudio) {
+      const a = document.createElement('audio');
+      a.src = silentWavUrl();
+      a.loop = true;
+      a.preload = 'auto';
+      a.setAttribute('playsinline', '');
+      a.setAttribute('x-webkit-airplay', 'deny');
+      this.silentAudio = a;
+      // 다른 앱으로 나가면 멈추고, 돌아오면 다시 (화면 잠금 화면에 재생 중으로 남지 않게)
+      document.addEventListener('visibilitychange', () => {
+        if (!this.playbackReady) return;
+        if (document.hidden) a.pause();
+        else a.play().catch(() => {});
+      });
+    }
+    const r = this.silentAudio.play();
+    if (r && r.then) {
+      r.then(() => { this.playbackReady = true; }).catch(() => {});
+    } else {
+      this.playbackReady = true;
     }
   }
 
