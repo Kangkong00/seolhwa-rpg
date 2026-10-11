@@ -10,7 +10,8 @@ const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step'];
 const loaded = new Map();
 
 // 몬스터 종류별 그림을 한 번만 불러와 화면 크기에 맞게 줄여 텍스처로 등록
-export function loadMonsterTextures(scene, def, canvasSpec, pixelScale) {
+// outlineFor(texScale) → 외곽선 설정(없으면 null)
+export function loadMonsterTextures(scene, def, canvasSpec, pixelScale, outlineFor = () => null) {
   const key = `${def.id}@${pixelScale}`;
   if (!loaded.has(key)) {
     const p = Promise.all(FILES.map((f) => loadImage(`${def.folder}/${f}.png`))).then((imgs) => {
@@ -20,7 +21,7 @@ export function loadMonsterTextures(scene, def, canvasSpec, pixelScale) {
         const img = imgs[i] || imgs[FILES.indexOf(f.replace('_step', ''))] || imgs[0];
         const tk = `mon:${def.id}/${f}`;
         if (scene.textures.exists(tk)) scene.textures.remove(tk);
-        scene.textures.addCanvas(tk, downscale(img, scale));
+        scene.textures.addCanvas(tk, downscale(img, scale, outlineFor(scale)));
         keys[f] = tk;
       });
       return { keys, scale };

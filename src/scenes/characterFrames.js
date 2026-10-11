@@ -5,9 +5,10 @@
 
 const FILES = ['front', 'front_step', 'back', 'back_step', 'side', 'side_step', 'front_punch', 'back_punch', 'side_punch',
   'front_raise', 'back_raise', 'side_raise', 'front_strike', 'back_strike', 'side_strike',
+  'front_swing', 'back_swing', 'side_swing',
   // 무기 든 서 있기·걷기, 무기를 쥐는 그림마다 주먹만 오린 손 덮개(_hand)
   'front_hold', 'back_hold', 'side_hold', 'front_hold_step', 'back_hold_step', 'side_hold_step',
-  ...['front', 'back', 'side'].flatMap((d) => ['hold', 'hold_step', 'raise', 'strike'].map((p) => `${d}_${p}_hand`)),
+  ...['front', 'back', 'side'].flatMap((d) => ['hold', 'hold_step', 'raise', 'swing', 'strike'].map((p) => `${d}_${p}_hand`)),
 ];
 
 export function loadImage(url) {
@@ -65,8 +66,39 @@ function mirrorLegs(img, splitY) {
   return c;
 }
 
-// 반씩 여러 번 줄여서 계단 현상 없이 축소
-export function downscale(src, scale) {
+// 외곽선: 그림 테두리 바깥에 width(텍스처 픽셀)만큼 색 테두리를 둘러 줌.
+// 그림을 같은 색 실루엣으로 바꿔 둘레 여러 방향으로 조금씩 밀어 그린 뒤 원래 그림을 위에 얹음.
+// 그림을 불러올 때 한 번만 만들어 두므로 게임 중 성능 영향 없음.
+export function addOutline(src, outline) {
+  if (!outline || !(outline.width > 0)) return src;
+  const w = src.width;
+  const h = src.height;
+  const sil = document.createElement('canvas');
+  sil.width = w;
+  sil.height = h;
+  const sctx = sil.getContext('2d');
+  sctx.drawImage(src, 0, 0);
+  sctx.globalCompositeOperation = 'source-in';
+  sctx.fillStyle = outline.color;
+  sctx.fillRect(0, 0, w, h);
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const ctx = out.getContext('2d');
+  ctx.globalAlpha = outline.alpha ?? 1;
+  const r = outline.width;
+  const n = 16;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    ctx.drawImage(sil, Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.globalAlpha = 1;
+  ctx.drawImage(src, 0, 0);
+  return out;
+}
+
+// 반씩 여러 번 줄여서 계단 현상 없이 축소 (outline이 있으면 줄인 뒤 외곽선)
+export function downscale(src, scale, outline = null) {
   const tw = Math.max(1, Math.round(src.width * scale));
   const th = Math.max(1, Math.round(src.height * scale));
   let cur = src;
@@ -85,18 +117,19 @@ export function downscale(src, scale) {
   const ctx = out.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(cur, 0, 0, tw, th);
-  return out;
+  return outline ? addOutline(out, outline) : out;
 }
 
 // Phaser 텍스처로 등록하고 방향별 프레임 키를 돌려줌
 // 반환: { down: {stand, step, stepAlt, punch}, up: {...}, side: {...} }
 // 주먹 그림은 640×720(몸 가운데 x=320), 서 있기는 400×720(x=200): 둘 다 캔버스 가로 가운데가 몸 가운데라
 // 같은 기준점(가로 0.5)으로 그리면 몸이 겹침. 없으면 서 있기 그림으로 대체.
-export function buildOutfitFrames(textures, outfit, images, scale) {
+// outline: { width(텍스처 픽셀), color, alpha } — 손 덮개(_hand)도 외곽선을 둘러 칼 위에서 주먹 테두리가 보이게
+export function buildOutfitFrames(textures, outfit, images, scale, outline = null) {
   const add = (name, source) => {
     const key = `${outfit.id}/${name}`;
     if (textures.exists(key)) textures.remove(key);
-    textures.addCanvas(key, downscale(source, scale));
+    textures.addCanvas(key, downscale(source, scale, outline));
     return key;
   };
 
@@ -132,6 +165,8 @@ export function buildOutfitFrames(textures, outfit, images, scale) {
   // 무기 든 자세(640×720): 들고 서 있기·걷기(다리 반전은 holdLegSplitY), 손 덮개
   const opt = (name) => (images[name] ? add(name, images[name]) : null);
   const addHold = (set, dir) => {
+    // 휘두르는 중간 자세(swing)가 없으면 치켜들기 그림으로 대체
+    set.swing = opt(`${dir}_swing`) || set.raise;
     const step = images[`${dir}_hold_step`];
     set.hold = opt(`${dir}_hold`);
     set.holdStep = opt(`${dir}_hold_step`);
@@ -144,6 +179,7 @@ export function buildOutfitFrames(textures, outfit, images, scale) {
       holdStep: holdStepHand,
       holdStepAlt: holdStepHand,
       raise: opt(`${dir}_raise_hand`),
+      swing: opt(`${dir}_swing_hand`),
       strike: opt(`${dir}_strike_hand`),
     };
   };
