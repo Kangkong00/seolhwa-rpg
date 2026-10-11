@@ -1,0 +1,32 @@
+{
+  "_설명": "초보 구간 1차 시험안(docs/spec/economy.md). 모두 임시값 — 해 보고 고침",
+  "levels": {
+    "_설명": "expToNext[i] = 레벨 i+1 → i+2에 필요한 경험치(1→2, 2→3, …). 목록이 끝나면 더 오르지 않음. hpPerLevel=레벨이 오를 때마다 늘어나는 최대 체력(기본은 data/game.json player.maxHp)",
+    "expToNext": [50, 110, 240, 320],
+    "hpPerLevel": 3
+  },
+  "money": {
+    "_설명": "엽전 단위: 1냥 = 10전 = 100푼. smallLimit 미만은 '35푼', 그 이상은 '1냥 2전 5푼'으로 표시",
+    "jeon": 10,
+    "nyang": 100,
+    "smallLimit": 100
+  },
+  "groundDrops": {
+    "_설명": "바닥에 떨어진 전리품·엽전. pickupRadius=이 거리(맵 픽셀) 안에 들어오면 저절로 주움, lifetimeMs=이 시간이 지나면 사라짐(끝 fadeMs 동안 깜빡이며 흐려짐), scatterPx=쓰러진 자리에서 흩어지는 거리, pickupDelayMs=떨어진 직후 이 시간 동안은 줍지 않음(튀어나오는 모습이 보이게), size=바닥에 보이는 크기",
+    "pickupRadius": 16,
+    "lifetimeMs": 30000,
+    "fadeMs": 4000,
+    "scatterPx": 12,
+    "pickupDelayMs": 350,
+    "size": 12
+  },
+  "levelUpFx": {
+    "_설명": "레벨업 연출: 글자 색·크기, 떠오르는 높이·시간, 발밑 빛 고리 색",
+    "color": "#ffe08a",
+    "stroke": "#5a3a10",
+    "fontPx": 16,
+    "floatPx": 30,
+    "floatMs": 1400,
+    "ringColor": "#ffd34d"
+  }
+}

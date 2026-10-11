@@ -1,5 +1,5 @@
 {
-  "_설명": "몬스터 그림 규격·표시 크기·돌아다니기 값·체력. hp=체력(주먹 데미지는 data/game.json attack.damage). 반격(맞은 뒤에만): chaseSpeed=쫓는 속도, biteRange=무는 거리, biteMs=무는 동작 시간, biteCooldownMs=무는 간격, biteDamage=무는 데미지, lungePx=물 때 튀어나가는 거리, giveUpDistance=이만큼 멀어지면 포기, giveUpMs=서로 안 때린 채 이 시간이 지나면 포기. sounds=맞음·쓰러짐 소리 이름(data/sounds.json). height=1376 좌표 기준 표시 키(정면 서 있기). speed=초당 이동 픽셀, restMs=[최소,최대] 쉬는 시간, walkDistance=[최소,최대] 한 번에 걷는 거리(픽셀), walkFrameMs=걷기 그림 바꾸는 간격, footBox=벽 충돌에 쓰는 발밑 상자. 움직임 값은 모두 임시값. 능력치·경험치·드랍은 아직 없음.",
+  "_설명": "몬스터 그림 규격·표시 크기·돌아다니기 값·체력. hp=체력(주먹 데미지는 data/game.json attack.damage). 반격(맞은 뒤에만): chaseSpeed=쫓는 속도, biteRange=무는 거리, biteMs=무는 동작 시간, biteCooldownMs=무는 간격, biteDamage=무는 데미지, lungePx=물 때 튀어나가는 거리, giveUpDistance=이만큼 멀어지면 포기, giveUpMs=서로 안 때린 채 이 시간이 지나면 포기. sounds=맞음·쓰러짐 소리 이름(data/sounds.json). height=1376 좌표 기준 표시 키(정면 서 있기). speed=초당 이동 픽셀, restMs=[최소,최대] 쉬는 시간, walkDistance=[최소,최대] 한 번에 걷는 거리(픽셀), walkFrameMs=걷기 그림 바꾸는 간격, footBox=벽 충돌에 쓰는 발밑 상자. 움직임 값은 모두 임시값. exp=쓰러뜨리면 받는 경험치, drops=전리품(item=아이템 id, chance=확률 0~1, count=개수), coins=엽전(chance=확률, min~max푼). 경험치·드랍은 docs/spec/economy.md 1차 시험안(모두 임시값).",
   "canvas": { "width": 640, "height": 400, "footY": 380, "standHeight": 240 },
   "monsters": [
     {
@@ -8,7 +8,15 @@
       "hp": 3, "_hp": "임시값: 주먹 1 데미지로 3대에 쓰러짐",
       "chaseSpeed": 65, "biteRange": 20, "biteMs": 240, "biteCooldownMs": 1200, "biteDamage": 1, "lungePx": 8,
       "giveUpDistance": 200, "giveUpMs": 8000,
-      "sounds": { "hit": "ratHit", "die": "ratDie" }
+      "sounds": { "hit": "ratHit", "die": "ratDie" },
+      "exp": 4,
+      "drops": [
+        { "item": "loot_rat_meat", "chance": 0.6, "count": 1 },
+        { "item": "loot_rice", "chance": 0.3, "count": 1 },
+        { "item": "loot_rat_hide", "chance": 0.15, "count": 1 },
+        { "item": "loot_rat_whisker", "chance": 0.05, "count": 1 }
+      ],
+      "coins": { "chance": 0.7, "min": 1, "max": 3 }
     },
     {
       "id": "bigrat", "name": "큰 들쥐", "folder": "assets/monsters/bigrat", "height": 36, "_확인필요": "키 36: 들쥐보다 조금만 크게(권장값, 아이폰에서 보고 조정)",
@@ -17,7 +25,14 @@
       "hp": 3, "_hp": "임시값: 개발 단계 '같은 조건' 원칙에 따라 들쥐와 같게 둠(확인 필요)",
       "chaseSpeed": 65, "biteRange": 20, "biteMs": 240, "biteCooldownMs": 1200, "biteDamage": 1, "lungePx": 8,
       "giveUpDistance": 200, "giveUpMs": 8000,
-      "sounds": { "hit": "ratHit", "die": "ratDie" }
+      "sounds": { "hit": "ratHit", "die": "ratDie" },
+      "exp": 15,
+      "drops": [
+        { "item": "loot_rat_meat", "chance": 1, "count": 2 },
+        { "item": "loot_rat_hide", "chance": 0.5, "count": 1 },
+        { "item": "loot_rat_tooth", "chance": 0.3, "count": 1 }
+      ],
+      "coins": { "chance": 1, "min": 5, "max": 10 }
     }
   ]
 }

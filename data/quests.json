@@ -1,0 +1,16 @@
+{
+  "_설명": "의뢰(대화로만, 시간 제한 없음). need=가져와야 하는 것(드리면 가방에서 빠짐), reward=보상(coins 푼, items). offer=맡기 전 말, accept=맡는 단추, progress=하는 중 말({have}/{need}는 가진 개수/필요 개수), turnIn=드리는 단추, done=드린 순간 말, after=다 끝난 뒤 말. 모두 임시",
+  "quests": [
+    {
+      "id": "chief_rats", "giver": "chief", "name": "곳간 들쥐",
+      "offer": "곳간 뒤 쥐구멍으로 들쥐가 들끓네. 쥐고기 10개만 가져다주게.",
+      "accept": "맡겠습니다",
+      "progress": "쥐고기는 구했는가? ({have}/{need})",
+      "turnIn": "쥐고기 10개 드리기",
+      "done": "고맙네! 약소하지만 받아 두게. 몸이 좀 붙으면 우물가의 늙은 군관을 찾아가 보게.",
+      "after": "몸이 좀 붙으면 우물가의 늙은 군관을 찾아가 보게. 무예를 가르쳐 줄 걸세.",
+      "need": { "loot_rat_meat": 10 },
+      "reward": { "coins": 20, "items": { "food_riceball": 3 } }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, icon=그림이 나오기 전 대신 쓰는 한자, key=PC 단축키. 효과 값은 kind별. 모두 임시값",
+  "skills": [
+    {
+      "id": "power_slash", "name": "힘껏 베기", "icon": "斬", "key": "1", "kind": "powerSlash",
+      "desc": "앞으로 한 번 크게 벰. 데미지 2배, 밀어내기 2배",
+      "requires": { "level": 2 }, "cost": { "coins": 30, "items": { "loot_rat_meat": 5 } }, "cooldownMs": 6000,
+      "damageMul": 2, "knockbackMul": 2, "hitStopMul": 2.5, "trailWidthMul": 1.7, "shakeMul": 2
+    },
+    {
+      "id": "breath", "name": "숨 고르기", "icon": "息", "key": "2", "kind": "heal",
+      "desc": "제자리에서 숨을 골라 최대 체력의 30%를 되찾음",
+      "requires": { "level": 3 }, "cost": { "coins": 60, "items": { "loot_rice": 5 } }, "cooldownMs": 30000,
+      "healRatio": 0.3, "glowColor": "#bfe8ff", "glowMs": 900
+    },
+    {
+      "id": "whirl", "name": "휘돌려 베기", "icon": "旋", "key": "3", "kind": "spin",
+      "desc": "몸 둘레를 한 바퀴 베어 주변 몬스터를 모두 때림",
+      "requires": { "level": 5 }, "cost": { "coins": 150, "items": { "loot_rat_hide": 5, "loot_rat_tooth": 2 } }, "cooldownMs": 10000,
+      "radius": 42, "spinMs": 480, "hitAt": 0.5, "damageMul": 1, "knockbackPx": 12, "trailColor": "", "trailWidth": 7
+    }
+  ]
+}

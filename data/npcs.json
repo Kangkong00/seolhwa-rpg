@@ -1,0 +1,40 @@
+{
+  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, outfit=그림이 나오기 전 임시로 쓰는 옷 서 있기 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(푼), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
+  "tapRadius": 22,
+  "npcs": [
+    {
+      "id": "gungwan", "name": "늙은 군관", "map": "village", "x": 640, "y": 412, "facing": "down", "outfit": "outfit3_dopo",
+      "menu": ["learn", "talk"],
+      "greeting": "젊은이, 칼 쥐는 법은 아는가?",
+      "lines": ["군에서 물러난 지 오래지만, 몸이 기억하는 무예는 아직 남아 있지.", "무예는 공짜로 가르치지 않네. 엽전과, 몸으로 구해 온 것을 가져오게.", "몸이 먼저 붙어야 무예도 붙는 법이야. 들쥐라도 잡아 보게."]
+    },
+    {
+      "id": "jumo", "name": "주모", "map": "village", "x": 880, "y": 408, "facing": "down", "outfit": "outfit3_dopo",
+      "menu": ["buy", "sell", "talk"],
+      "greeting": "어서 와요. 배고프면 주먹밥이라도 하나 들고 가요.",
+      "shop": { "buys": ["loot_rat_meat", "loot_rice"], "sells": [{ "id": "food_riceball", "price": 5 }] },
+      "lines": ["쥐고기도 푹 고면 먹을 만해요. 가져오면 사 줄게요.", "곳간 쌀을 쥐들이 다 물어 갔다지 뭐예요."]
+    },
+    {
+      "id": "yakbang", "name": "약방 영감", "map": "village", "x": 1180, "y": 242, "facing": "down", "outfit": "outfit3_dopo",
+      "menu": ["buy", "sell", "talk"],
+      "greeting": "어디 다친 데는 없고?",
+      "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth"], "sells": [{ "id": "med_tangyak", "price": 20 }] },
+      "lines": ["쥐수염이며 쥐 앞니며, 약재로 쓰는 데가 다 있지.", "탕약 한 사발이면 웬만한 상처는 금세 아물어."]
+    },
+    {
+      "id": "gatbachi", "name": "갖바치", "map": "village", "x": 1250, "y": 395, "facing": "down", "outfit": "outfit3_dopo",
+      "menu": ["sell", "talk"],
+      "greeting": "가죽 있으면 가져와. 값은 쳐 줄 테니.",
+      "shop": { "buys": ["loot_rat_hide"], "sells": [] },
+      "lines": ["쥐가죽은 작아도 쓸 데가 많아. 짚신 코에 덧대기도 하고.", "짚신이야 곧 짜 둘 거야. 조금만 기다려."]
+    },
+    {
+      "id": "chief", "name": "촌장", "map": "village", "x": 735, "y": 228, "facing": "down", "outfit": "outfit3_dopo",
+      "menu": ["talk"],
+      "greeting": "허허, 처음 보는 얼굴이로군.",
+      "quest": "chief_rats",
+      "lines": ["이 마을도 예전 같지 않네.", "우물가 늙은 군관은 보기보다 대단한 사람이야."]
+    }
+  ]
+}

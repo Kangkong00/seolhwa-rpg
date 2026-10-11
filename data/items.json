@@ -1,5 +1,5 @@
 {
-  "_설명": "아이템 정의와 시작 장비(docs/spec/equipment.md). slot=장비 칸(weapon·outfit·head·arms·feet), icon=아이콘 그림(256×256), stats=능력치(아직 미정이라 모두 0). 무기 휘두르기 값은 data/weapons.json, 옷 그림은 data/outfits.json(같은 id). head는 머리 장비 그림 폴더(front·side·back.png, topknot/ 상투 지우개)",
+  "_설명": "아이템 정의와 시작 장비(docs/spec/equipment.md). slot=장비 칸(weapon·outfit·head·arms·feet), icon=아이콘 그림(256×256), stats=능력치(아직 미정이라 모두 0). stack=true면 가방 한 칸에 겹침(×개수), sellPrice=가게에 팔 때 받는 푼, use=가방에서 누르면 먹음(heal=체력 회복량, healFull=체력 전부). 아이콘 그림이 아직 없으면 iconText(없으면 이름 첫 글자) 글자 칸으로 보임. 무기 휘두르기 값은 data/weapons.json, 옷 그림은 data/outfits.json(같은 id). head는 머리 장비 그림 폴더(front·side·back.png, topknot/ 상투 지우개)",
   "slots": [
     { "id": "weapon", "name": "무기" },
     { "id": "outfit", "name": "옷" },
@@ -20,10 +20,18 @@
     { "id": "outfit6_sinseon", "name": "신선복", "slot": "outfit", "icon": "assets/items/icons/outfit6_sinseon.png", "stats": { "defense": 0 } },
     { "id": "hood_mumyeong", "name": "무명 두건", "slot": "head", "icon": "assets/items/icons/hood_mumyeong.png", "head": "assets/equipment/head/hood_mumyeong", "stats": { "defense": 0 } },
     { "id": "toshi_mumyeong", "name": "무명 토시", "slot": "arms", "icon": "assets/items/icons/toshi_mumyeong.png", "stats": { "defense": 0 } },
-    { "id": "shoes_jipsin", "name": "짚신", "slot": "feet", "icon": "assets/items/icons/shoes_jipsin.png", "stats": { "speed": 0 } }
+    { "id": "shoes_jipsin", "name": "짚신", "slot": "feet", "icon": "assets/items/icons/shoes_jipsin.png", "stats": { "speed": 0 } },
+    { "id": "loot_rat_meat", "name": "쥐고기", "iconText": "고기", "slot": "", "icon": "assets/items/icons/loot_rat_meat.png", "stack": true, "sellPrice": 2 },
+    { "id": "loot_rice", "name": "쌀 한 줌", "iconText": "쌀", "slot": "", "icon": "assets/items/icons/loot_rice.png", "stack": true, "sellPrice": 3 },
+    { "id": "loot_rat_hide", "name": "쥐가죽", "iconText": "가죽", "slot": "", "icon": "assets/items/icons/loot_rat_hide.png", "stack": true, "sellPrice": 6 },
+    { "id": "loot_rat_whisker", "name": "쥐수염", "iconText": "수염", "slot": "", "icon": "assets/items/icons/loot_rat_whisker.png", "stack": true, "sellPrice": 10 },
+    { "id": "loot_rat_tooth", "name": "쥐 앞니", "iconText": "앞니", "slot": "", "icon": "assets/items/icons/loot_rat_tooth.png", "stack": true, "sellPrice": 15 },
+    { "id": "food_riceball", "name": "주먹밥", "iconText": "밥", "slot": "", "icon": "assets/items/icons/food_riceball.png", "stack": true, "use": { "heal": 3 } },
+    { "id": "med_tangyak", "name": "탕약", "iconText": "약", "slot": "", "icon": "assets/items/icons/med_tangyak.png", "stack": true, "use": { "healFull": true } }
   ],
   "start": {
-    "_설명": "시험 시작 상태(저장이 없을 때). equipped=처음 낀 것(빈 문자열은 비어 있음), bag=가방. 옷 바꾸기 시험을 위해 옷 2~6도 가방에 넣어 둠(임시)",
+    "_설명": "시험 시작 상태(저장이 없을 때). equipped=처음 낀 것(빈 문자열은 비어 있음), bag=가방, coins=처음 엽전(푼). 옷 바꾸기 시험을 위해 옷 2~6도 가방에 넣어 둠(임시)",
+    "coins": 0,
     "equipped": { "weapon": "", "outfit": "outfit1_hotot", "head": "", "arms": "", "feet": "" },
     "bag": ["hood_mumyeong", "toshi_mumyeong", "shoes_jipsin", "wood_pine", "wood_oak", "wood_bakdal",
       "outfit2_mumyeong", "outfit3_dopo", "outfit4_cheollik", "outfit5_dujeonggap", "outfit6_sinseon"]
