@@ -75,15 +75,21 @@ const SYNTH = {
     tone(ctx, out, t + 0.36, 0.08, { type: 'sine', f0: 110 * p, f1: 60 * p, peak: 0.8, attack: 0.002 });
     noise(ctx, out, t + 0.36, 0.05, { type: 'lowpass', f0: 600, q: 0.7, peak: 0.4, attack: 0.002 });
   },
-  // 레벨업: 맑은 종소리 두 번(높은 종이 뒤따름). 종은 배음이 정수배가 아니라 1 : 2.76 : 5.4 정도
+  // 레벨업 화음: 편종처럼 맑은 종이 위로 올라가며 쌓임(도·미·솔·도·미). 종은 배음이 1 : 2.76 : 5.4 정도
   levelUp(ctx, out, t, p) {
     const bell = (t0, f, peak, dur) => {
-      [[1, 1], [2.76, 0.45], [5.4, 0.22], [8.93, 0.1]].forEach(([r, a]) => {
+      [[1, 1], [2.76, 0.4], [5.4, 0.18], [8.93, 0.08]].forEach(([r, a]) => {
         tone(ctx, out, t0, dur / Math.sqrt(r), { type: 'sine', f0: f * r * p, peak: peak * a, attack: 0.003 });
       });
     };
-    bell(t, 880, 0.7, 1.4);
-    bell(t + 0.16, 1318, 0.55, 1.6);
+    [523, 659, 784, 1047, 1319].forEach((f, i) => bell(t + i * 0.11, f, 0.42, 1.6));
+  },
+  // 레벨업 첫 소리: 낮은 징 한 번(둥 — 살짝 맥놀이하는 낮은 소리 + 치는 잡음)
+  levelGong(ctx, out, t, p) {
+    tone(ctx, out, t, 1.8, { type: 'sine', f0: 98 * p, f1: 92 * p, peak: 0.8, attack: 0.01 });
+    tone(ctx, out, t, 1.6, { type: 'sine', f0: 101 * p, f1: 95 * p, peak: 0.5, attack: 0.01 });
+    tone(ctx, out, t, 1.1, { type: 'sine', f0: 196 * p * 1.48, peak: 0.18, attack: 0.02 });
+    noise(ctx, out, t, 0.08, { type: 'lowpass', f0: 500, q: 0.7, peak: 0.5, attack: 0.002 });
   },
   // 전리품 주움: 짧고 가벼운 톡
   pickup(ctx, out, t, p) {

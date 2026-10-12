@@ -62,6 +62,15 @@ export class MonsterView {
     } else {
       this.walkTime = 0;
     }
+    // 레벨업 충격파 등으로 밀려나 보이기(그림만, 실제 위치는 그대로)
+    if (this.push) {
+      this.push.t += dtMs;
+      const k = Math.min(1, this.push.t / this.push.ms);
+      const e = Math.sin(Math.PI * k) * (1 - k * 0.3);
+      ox += this.push.dx * e;
+      oy += this.push.dy * e;
+      if (k >= 1) this.push = null;
+    }
     const key = this.textures.keys[step ? `${base}_step` : base];
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
     this.sprite.setFlipX(m.facing === 'right');
@@ -70,6 +79,11 @@ export class MonsterView {
     this.shadow.setPosition(m.x + ox, m.y + oy);
     const showBar = this.hpBarCfg.monsterShowAlways || m.hp < m.maxHp || m.aggro;
     this.hpBar.set(m.x, m.y - this.def.height - this.hpBarCfg.gap, m.hp / m.maxHp, showBar);
+  }
+
+  // 그림만 (dx, dy)만큼 밀렸다가 돌아옴
+  nudge(dx, dy, ms) {
+    this.push = { dx, dy, ms, t: 0 };
   }
 
   // 맞았을 때: 하얗게 번쩍

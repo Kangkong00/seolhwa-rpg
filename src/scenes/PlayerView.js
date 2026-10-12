@@ -37,6 +37,14 @@ export class PlayerView {
     this.weapon = null; // { def, key, canvas, attach, swing, textureScale }
     this.weaponSprite = scene.add.image(0, 0, '__DEFAULT').setVisible(false);
     this.lastWeapon = null;
+    // 금빛으로 은은하게 빛남(레벨업): 몸 그림을 색칠해 더하기로 겹침
+    this.glow = scene.add.image(0, 0, '__DEFAULT').setOrigin(0.5, canvasSpec.footY / canvasSpec.height).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this.glowState = null;
+  }
+
+  setGlow(color, alpha, ms) {
+    this.glow.setTint(Phaser.Display.Color.HexStringToColor(color).color).setTintMode(Phaser.TintModes.FILL);
+    this.glowState = { alpha, ms, t: 0 };
   }
 
   // 무기 들기(null이면 맨손). attach: 이 옷의 쥐는 점, swing: data/weapons.json swing
@@ -155,6 +163,20 @@ export class PlayerView {
     // 발 위치로 앞뒤 순서를 정함 (지붕 조각의 baseY와 비교됨)
     this.sprite.setDepth(y);
     this.hpBar.set(x, y - this.cfg.height - this.hpBarCfg.gap, this.hpRatio);
+    if (this.glowState) {
+      const gs = this.glowState;
+      gs.t += deltaMs;
+      const k = gs.t / gs.ms;
+      if (k >= 1) {
+        this.glowState = null;
+        this.glow.setVisible(false);
+      } else {
+        // 금방 밝아졌다가 천천히 사그라듦, 살짝 일렁임
+        const a = gs.alpha * Math.min(1, k * 6) * (1 - k) * (0.85 + 0.15 * Math.sin(gs.t / 60));
+        if (this.glow.texture.key !== key) this.glow.setTexture(key);
+        this.glow.setVisible(true).setAlpha(a).setFlipX(flip).setScale(this.sprite.scaleX, this.sprite.scaleY).setPosition(x, y - lift).setDepth(y + 0.015);
+      }
+    }
 
     // 무기: 들고 있으면 늘 손에. 걷는 동안 몸이 들썩이는 만큼 같이 (쥐는 점을 y - lift 기준으로)
     if (holding) {

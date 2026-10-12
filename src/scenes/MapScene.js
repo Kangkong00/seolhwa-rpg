@@ -18,9 +18,11 @@ import { NpcPanel } from '../ui/npcPanel.js';
 import { Toast } from '../ui/toast.js';
 import { NpcView, loadNpcTextures } from './NpcView.js';
 import { NpcMenu } from './npcMenu.js';
-import { DropView } from './dropView.js';
+import { DropView, makeDropTexture } from './dropView.js';
+import { PickupFeed } from './pickupFeed.js';
 import { josa } from '../ui/josa.js';
-import { floatText, levelUpFx, edgeGlow, breathFx, SpinTrail } from './progressFx.js';
+import { floatText, breathFx, SpinTrail } from './progressFx.js';
+import { levelUpFx } from './levelUpFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
@@ -89,6 +91,7 @@ export class MapScene extends Phaser.Scene {
     this.knock = { dir: null, left: 0 }; // 물려서 밀려나는 중
     this.assistSlide = null; // 맞히기 도움으로 다가가는 중 { dir, left, speed }
     this.hpFill = null; // 레벨업 체력바 차오름
+    this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
     this.dead = false;
     // 레벨·경험치, 배운 무예, 의뢰: 저장된 것(맵을 옮겨도 이어짐)
     const eco = this.d.economy;
@@ -113,9 +116,8 @@ export class MapScene extends Phaser.Scene {
     this.portalArmed = !this.portalAt(this.pos.x, this.pos.y);
 
     this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow, cfg.hpBar);
-    // 가려지면 가려진 부분에만 옅은 윤곽 (몸·무기·손 덮개)
-    const pv = this.playerView;
-    this.ghost = new OcclusionGhost(this, this.mapObjects, [pv.weaponSprite, pv.sprite, pv.hand], cfg.occlusionGhost);
+    // 가려지면 가려진 부분에만 진한 윤곽선 (몸이 실제로 minCovered 넘게 가려졌을 때만)
+    this.ghost = new OcclusionGhost(this, this.mapObjects, this.playerView.sprite, cfg.occlusionGhost);
     this.events.once('shutdown', () => this.ghost.destroy());
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     // 장비·가방: 저장된 것, 없으면 data/items.json의 start (맵을 옮겨도 이어짐)
@@ -158,7 +160,7 @@ export class MapScene extends Phaser.Scene {
         onClose: () => this.d.scene.setBagOpen(false),
       });
       this.d.status = new StatusPanel(document.getElementById('status'));
-      this.d.toast = new Toast(document.getElementById('toast'));
+      this.d.toast = new Toast(document.getElementById('toast'), this.d.economy.textFx.toastHoldMs);
       this.d.npcPanel = new NpcPanel(document.getElementById('npc-panel'));
       this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id));
       // 조이스틱 자리(왼쪽)에 선 사람을 눌러도 창이 뜨게
@@ -199,6 +201,7 @@ export class MapScene extends Phaser.Scene {
 
     // 바닥에 떨어진 전리품·엽전 (맵을 옮기면 사라짐)
     this.ground = new GroundDrops(this.d.economy.groundDrops);
+    this.pickupFeed = new PickupFeed(this, this.d.economy.textFx, this.d.getPixelRatio());
     this.dropViews = new Map();
     this.prepareIconTextures();
     // 마을 사람(NPC): 이 맵에 선 사람만
@@ -327,7 +330,8 @@ export class MapScene extends Phaser.Scene {
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     const got = this.player.hp - before;
-    if (got > 0) floatText(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, `+${got}`, { color: '#9dff9d', stroke: '#123512' }, this.d.getPixelRatio());
+    const tf = this.d.economy.textFx;
+    if (got > 0) floatText(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, `+${got}`, { color: '#9dff9d', stroke: '#123512', holdMs: tf.pickupHoldMs, fadeMs: tf.pickupFadeMs }, this.d.getPixelRatio());
     this.refreshStatus();
   }
 
@@ -684,7 +688,8 @@ export class MapScene extends Phaser.Scene {
     if (def.exp) this.gainExp(def.exp);
     const entries = rollDrops(def);
     for (const d of this.ground.spawn(target.x, target.y, entries, this.map.grid)) {
-      this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio(), this.cfg.shadow));
+      const key = `drop:${d.coins ? 'coins' : d.item}`;
+      this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio(), this.cfg.shadow, key, this.dropTexRes()));
     }
   }
 
@@ -693,17 +698,16 @@ export class MapScene extends Phaser.Scene {
     const before = this.progress.level;
     const gained = addExp(this.progress, amount, eco.levels);
     if (gained > 0) {
-      // 레벨업: 최대 체력 +hpPerLevel, 체력 가득(체력바가 차오름), 연출(docs/spec/economy.md '레벨업 연출')
+      // 레벨업: 최대 체력 +hpPerLevel, 체력 가득(체력바가 차오름), 연출(docs/spec/economy.md '2차 다듬기 — 레벨업 연출')
       const fx = eco.levelUpFx;
       const fromHp = this.player.hp;
+      const oldMax = this.player.maxHp;
       this.player.maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, eco.levels);
       this.player.hp = this.player.maxHp;
       this.hpFill = { from: fromHp, t: 0, ms: fx.hpFillMs };
-      levelUpFx(this, this.pos.x, this.pos.y, this.cfg.player.height, this.progress.level, fx, this.d.getPixelRatio());
-      this.sfx.play('levelUp');
-      // 아주 짧은 멈춤 + 화면 가장자리 은은한 금빛
-      this.hitStopMs = Math.max(this.hitStopMs, fx.pauseMs);
-      edgeGlow(fx.edgeColor, fx.edgeMs);
+      // 멈칫: slowMs 동안 게임이 slowScale 배속으로 느려짐(조작은 그대로 됨)
+      this.slowMo = { left: fx.slowMs, scale: fx.slowScale };
+      levelUpFx(this, () => this.pos, this.cfg.player.height, this.progress.level, this.player.maxHp - oldMax, fx, this.d.getPixelRatio());
       // 이번에 새로 배울 수 있게 된 무예가 있으면 한 줄 알림
       const now = this.progress.level;
       const opened = this.skills.some((s) => {
@@ -720,24 +724,23 @@ export class MapScene extends Phaser.Scene {
   updateDrops(dt) {
     const alive = !this.dead && !this.transitioning;
     const { picked, expired } = this.ground.update(dt, alive ? this.pos : null);
-    const pr = this.d.getPixelRatio();
-    const headY = this.pos.y - this.cfg.player.height - 4;
-    picked.forEach((d, i) => {
+    // 줍기 알림: 머리 위에 쌓이고 같은 물건은 합침(`쥐고기 +3`, `5푼`)
+    picked.forEach((d) => {
       const view = this.dropViews.get(d.id);
       this.dropViews.delete(d.id);
       if (view) view.pickup(this.pos.x, this.pos.y - this.cfg.player.height * 0.4);
-      const y = headY - i * 10;
       if (d.coins) {
         this.equip.coins += d.coins;
         this.sfx.play('coin');
-        floatText(this, this.pos.x, y, `+${this.coinsText(d.coins)}`, { color: '#ffd98a', stroke: '#3a2408', fontPx: 10 }, pr);
+        this.pickupFeed.add('coins', d.coins, (n) => this.coinsText(n), { color: '#ffd98a', stroke: '#3a2408' });
       } else {
         addItem(this.equip, this.itemDefs, d.item, d.n);
         this.sfx.play('pickup');
         const name = this.itemDefs[d.item].name;
-        floatText(this, this.pos.x, y, d.n > 1 ? `+${name} ×${d.n}` : `+${name}`, { color: '#f3ead6', stroke: '#2a1c10', fontPx: 10 }, pr);
+        this.pickupFeed.add(d.item, d.n, (n) => `${name} +${n}`, { color: '#f3ead6', stroke: '#2a1c10' });
       }
     });
+    this.pickupFeed.update(dt, this.pos.x, this.pos.y - this.cfg.player.height - 8);
     if (picked.length) {
       this.refreshStatus();
       if (this.equipPanel.open) this.renderBag();
@@ -747,21 +750,44 @@ export class MapScene extends Phaser.Scene {
       this.dropViews.delete(d.id);
       if (view) view.destroy();
     }
-    for (const v of this.dropViews.values()) v.update();
+    // 이름 글자: 서로 가까우면 하나만
+    const shown = [];
+    const near = this.d.economy.groundDrops.labelOverlapPx;
+    for (const v of this.dropViews.values()) {
+      v.update();
+      const clash = shown.some((o) => Math.abs(o.x - v.d.x) < near && Math.abs(o.y - v.d.y) < near * 0.5);
+      v.setLabelVisible(!clash);
+      if (!clash) shown.push(v.d);
+    }
+  }
+
+  // 바닥 아이콘 텍스처: 맵 1픽셀당 텍스처 픽셀(화면 배율의 1.5배로 또렷하게)
+  dropTexRes() {
+    return this.pixelScale() * 1.5;
   }
 
   // 바닥 물건 아이콘(그림이 있는 것만, 없으면 글자 칸)
   async prepareIconTextures() {
     if (this.d.iconsLoaded) return;
     this.d.iconsLoaded = true;
-    const size = this.d.economy.groundDrops.size * this.pixelScale() * 2;
+    // 바닥용: 테두리(크림색 + 진한 갈색, 드문 것은 금색)를 두른 아이콘을 한 번 만들어 둠
+    const gd = this.d.economy.groundDrops;
     const list = this.d.items.items.filter((it) => it.stack).map((it) => [it.id, it.icon]);
-    list.push(['coins', this.d.economy.groundDrops.coinIcon]);
+    list.push(['coins', gd.coinIcon]);
     await Promise.all(list.map(async ([id, path]) => {
       const img = await loadImage(path);
-      const key = `icon:${id}`;
-      if (img && !this.textures.exists(key)) this.textures.addCanvas(key, downscale(img, Math.min(1, size / img.width)));
+      if (img && this.sys.isActive()) makeDropTexture(this, `drop:${id}`, img, gd, this.dropTexRes(), (gd.rareItems || []).includes(id));
     }));
+  }
+
+  // 둘레 r 안의 몬스터와 그 그림(레벨업 충격파로 밀려나 보이기)
+  monsterViewsNear(x, y, r) {
+    const out = [];
+    for (const m of this.spawner.monsters) {
+      const v = this.monsterViews.get(m.id);
+      if (v && Math.hypot(m.x - x, m.y - y) <= r) out.push([m, v]);
+    }
+    return out;
   }
 
   // ---------- 무예 ----------
@@ -986,7 +1012,13 @@ export class MapScene extends Phaser.Scene {
       this.hitStopMs -= delta;
       return;
     }
-    const dt = Math.min(delta, 50); // 앱 전환 직후 큰 delta로 순간이동하지 않게
+    // 앱 전환 직후 큰 delta로 순간이동하지 않게. 레벨업 멈칫 동안은 느리게
+    let dt = Math.min(delta, 50);
+    if (this.slowMo) {
+      dt *= this.slowMo.scale;
+      this.slowMo.left -= delta;
+      if (this.slowMo.left <= 0) this.slowMo = null;
+    }
     const p = this.cfg.player;
     // 공격: 쿨다운이 끝났고 버튼(스페이스)이 눌려 있으면 주먹
     this.attackCooldown = Math.max(0, this.attackCooldown - dt);
@@ -1037,9 +1069,8 @@ export class MapScene extends Phaser.Scene {
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
     this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || (this.punchMs > 0 ? 'punch' : null));
-    // 물건 조각 뒤로 가려지면 옅은 윤곽 (캐릭터 둘레: 칼끝까지 넉넉히)
-    const h = this.cfg.player.height;
-    this.ghost.update(this.pos.y, { x0: this.pos.x - h * 0.8, x1: this.pos.x + h * 0.8, y0: this.pos.y - h * 1.5, y1: this.pos.y + 4 });
+    // 물건 조각 뒤로 가려지면 가려진 부분에 윤곽선
+    this.ghost.update(this.pos.y);
 
     // 몬스터
     const target = { x: this.pos.x, y: this.pos.y, alive: !this.dead && !this.transitioning };

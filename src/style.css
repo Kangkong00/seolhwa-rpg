@@ -662,31 +662,131 @@ html, body {
   border: 1px solid rgba(243, 234, 214, 0.3);
   border-radius: 16px;
   opacity: 0;
-  transition: opacity 0.25s;
+  transition: opacity 0.6s;
   pointer-events: none;
   text-align: center;
 }
 
 #toast.show {
   opacity: 1;
+  transition: opacity 0.15s;
 }
 
-/* ---------- 레벨업: 화면 가장자리 금빛 ---------- */
-#edge-glow {
+/* ---------- 레벨업 연출 (src/scenes/levelUpFx.js) ---------- */
+/* 가장자리 어둡게(멈칫) */
+#vignette {
   position: fixed;
   inset: 0;
   z-index: 12;
   pointer-events: none;
   opacity: 0;
-  box-shadow: inset 0 0 70px 18px var(--edge-color, rgba(255, 205, 80, 0.55));
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 45%, var(--vg-color, rgba(10, 6, 2, 0.6)) 100%);
 }
 
-#edge-glow.show {
-  animation: edge-glow var(--edge-ms, 900ms) ease-out;
+#vignette.show {
+  animation: lu-vignette var(--vg-ms, 900ms) ease-out;
 }
 
-@keyframes edge-glow {
+@keyframes lu-vignette {
   0% { opacity: 0; }
-  25% { opacity: 1; }
+  20% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* 화면 가운데 붓글씨: 왼쪽부터 써지듯 나타나 머물렀다 흐려짐 */
+#levelup-banner {
+  position: fixed;
+  left: 50%;
+  top: 27%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  pointer-events: none;
+  text-align: center;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+#levelup-banner.show {
+  animation: lu-banner calc(var(--lb-write, 600ms) + var(--lb-hold, 2500ms) + var(--lb-fade, 600ms)) linear forwards;
+}
+
+@keyframes lu-banner {
+  0% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.lb-title {
+  font-family: var(--lb-font, 'LevelUpBrush'), 'Apple SD Gothic Neo', serif;
+  font-size: 68px;
+  line-height: 1;
+  color: #1d1206;
+  -webkit-text-stroke: 1.5px #ffd75e;
+  /* 먹 번짐 + 금빛 */
+  text-shadow: 0 0 6px rgba(29, 18, 6, 0.85), 0 0 14px rgba(29, 18, 6, 0.5), 0 0 22px rgba(255, 200, 80, 0.75);
+  clip-path: inset(-20% 100% -20% -10%);
+}
+
+#levelup-banner.show .lb-title {
+  animation: lu-write var(--lb-write, 600ms) cubic-bezier(0.45, 0, 0.3, 1) forwards;
+}
+
+#levelup-banner.big5 .lb-title {
+  -webkit-text-stroke-color: #ff9a4a;
+  text-shadow: 0 0 6px rgba(29, 18, 6, 0.85), 0 0 16px rgba(29, 18, 6, 0.5), 0 0 30px rgba(255, 120, 60, 0.85);
+}
+
+@keyframes lu-write {
+  from { clip-path: inset(-20% 100% -20% -10%); }
+  to { clip-path: inset(-20% -10% -20% -10%); }
+}
+
+.lb-level {
+  margin-top: 4px;
+  font-family: 'Apple SD Gothic Neo', serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffe08a;
+  text-shadow: 0 0 3px #3a2408, 0 0 2px #3a2408, 0 0 10px rgba(255, 200, 80, 0.7);
+  opacity: 0;
+}
+
+.lb-hp {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #fff6dc;
+  text-shadow: 0 0 3px #2a1c10, 0 0 2px #2a1c10;
+  opacity: 0;
+}
+
+#levelup-banner.show .lb-level,
+#levelup-banner.show .lb-hp {
+  animation: lu-sub 400ms ease-out forwards;
+  animation-delay: calc(var(--lb-write, 600ms) * 0.8);
+}
+
+@keyframes lu-sub {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 10의 배수 레벨: 화면 전체에 금빛 물결이 한 번 지나감 */
+#gold-wave {
+  position: fixed;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(100deg, rgba(0, 0, 0, 0) 30%, var(--gw-color, rgba(255, 215, 90, 0.4)) 50%, rgba(0, 0, 0, 0) 70%);
+  background-size: 300% 100%;
+}
+
+#gold-wave.show {
+  animation: lu-wave var(--gw-ms, 1400ms) ease-in-out;
+}
+
+@keyframes lu-wave {
+  0% { opacity: 1; background-position: 100% 0; }
+  100% { opacity: 1; background-position: 0% 0; }
+}
+
