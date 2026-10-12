@@ -27,8 +27,36 @@ for o in json.load(open(G+'data/outfits.json'))['outfits']:
     im=Image.open(G+o['folder']+'/front.png').convert('RGBA')
     a=np.array(im)[...,3]; top=np.where(a.max(1)>0)[0][0]
     icons[o['id']]=fit(im.crop((0,top+256,400,690)),o['id'])
+# 흰 물건(쌀·주먹밥·사발)은 안쪽 흰색을 지우면 구멍이 나므로, 테두리에서 이어진 배경만 지움
+from scipy import ndimage
+from PIL import ImageFilter
+def cutout_border(img,box):
+    im=img.convert('RGB').crop(box); a=np.array(im).astype(int)
+    mn=a.min(2); sp=a.max(2)-mn
+    white=(mn>236)&(sp<14)
+    lab,n=ndimage.label(white)
+    edge=set(np.unique(np.concatenate([lab[0],lab[-1],lab[:,0],lab[:,-1]])))-{0}
+    bg=np.isin(lab,list(edge)); bg|=ndimage.binary_dilation(bg,iterations=1)&(mn>222)&(sp<22)
+    fg=~bg; l2,n2=ndimage.label(fg)
+    if n2>1:
+        sz=ndimage.sum(fg,l2,range(1,n2+1)); fg=np.isin(l2,1+np.where(sz>=0.02*sz.max())[0])
+    al=Image.fromarray((fg*255).astype('uint8')).filter(ImageFilter.GaussianBlur(0.6))
+    out=im.convert('RGBA'); out.putalpha(al); return out.crop(out.getbbox())
+# 전리품·엽전·먹을거리 8개 (Flow 4x2 시트)
+ls=Image.open(G+'assets/source/items_loot_sheet.webp')
+cw,ch=ls.width//4,ls.height//2
+for i,n in enumerate(['loot_rat_meat','loot_rice','loot_rat_hide','loot_rat_whisker','loot_rat_tooth','coins','food_riceball','med_tangyak']):
+    cx,cy=(i%4)*cw,(i//4)*ch
+    f=cutout_border if n in ('loot_rice','food_riceball','med_tangyak') else cutout
+    bx=(cx,cy+(60 if n=='med_tangyak' else 0),cx+cw,cy+ch)  # 탕약: 위쪽 김은 아이콘에서 뺌
+    c=f(ls,bx)
+    if n=='med_tangyak':  # 사발 테두리 위에 붙은 김 조각 지우기(밝고 색이 옅은 픽셀, 위쪽 띠)
+        a=np.array(c); h=a.shape[0]; top=a[:int(h*0.14)]
+        rgb=top[...,:3].astype(int); pale=(rgb.min(2)>200)&((rgb.max(2)-rgb.min(2))<25)
+        top[pale,3]=0; a[:int(h*0.14)]=top; c=Image.fromarray(a); c=c.crop(c.getbbox())
+    icons[n]=fit(c,n)
 # preview on slot frames, at game-ish sizes
-P=Image.new('RGB',(6*150+20,330*2),(40,32,26)); D=ImageDraw.Draw(P)
+P=Image.new('RGB',(6*150+20,330*4),(40,32,26)); D=ImageDraw.Draw(P)
 for i,(k,c) in enumerate(icons.items()):
     x=20+(i%6)*150; yo=(i//6)*330
     D.rectangle((x,20+yo,x+128,148+yo),fill=(70,56,44),outline=(150,120,80),width=2)
