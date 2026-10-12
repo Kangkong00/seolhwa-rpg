@@ -21,12 +21,27 @@
     "size": 12
   },
   "levelUpFx": {
-    "_설명": "레벨업 연출: 글자 색·크기, 떠오르는 높이·시간, 발밑 빛 고리 색",
+    "_설명": "레벨업 연출(docs/spec/economy.md '레벨업 연출', 그림 없이 코드로). 글자: font=붓글씨 글꼴(assets/fonts), color·stroke=글자 색·테두리, fontPx=`레벨 업!` 크기, subFontPx=`레벨 N` 크기, floatPx·floatMs=떠오르는 높이·시간. ringColor=발밑 금빛 고리. pillarColor·pillarMs·pillarWidth·pillarHeight=몸을 감싸며 아래에서 위로 솟는 빛기둥(높이는 키의 배수). sparkleCount·sparkleColor·sparkleMs·sparkleRise=떠오르는 반짝이. hpFillMs=체력바가 가득 차오르는 시간. pauseMs=레벨업 순간 멈춤. edgeColor·edgeMs=화면 가장자리 금빛. newSkillText=새로 배울 수 있는 무예가 생겼을 때 알림",
+    "font": "LevelUpBrush",
     "color": "#ffe08a",
     "stroke": "#5a3a10",
-    "fontPx": 16,
-    "floatPx": 30,
-    "floatMs": 1400,
-    "ringColor": "#ffd34d"
+    "fontPx": 30,
+    "subFontPx": 17,
+    "floatPx": 26,
+    "floatMs": 1800,
+    "ringColor": "#ffd34d",
+    "pillarColor": "#ffd75e",
+    "pillarMs": 800,
+    "pillarWidth": 30,
+    "pillarHeight": 1.7,
+    "sparkleCount": 9,
+    "sparkleColor": "#fff3b0",
+    "sparkleMs": 1100,
+    "sparkleRise": 46,
+    "hpFillMs": 700,
+    "pauseMs": 100,
+    "edgeColor": "rgba(255, 205, 80, 0.55)",
+    "edgeMs": 900,
+    "newSkillText": "늙은 군관에게 새 무예를 배울 수 있습니다"
   }
 }

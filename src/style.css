@@ -1,3 +1,10 @@
+/* 레벨업 글자용 붓글씨 글꼴(필요한 글자만 뽑음, assets/fonts/README.md) */
+@font-face {
+  font-family: 'LevelUpBrush';
+  src: url('../assets/fonts/levelup_brush.woff2') format('woff2');
+  font-display: block;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -654,4 +661,24 @@ html, body {
 
 #toast.show {
   opacity: 1;
+}
+
+/* ---------- 레벨업: 화면 가장자리 금빛 ---------- */
+#edge-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: inset 0 0 70px 18px var(--edge-color, rgba(255, 205, 80, 0.55));
+}
+
+#edge-glow.show {
+  animation: edge-glow var(--edge-ms, 900ms) ease-out;
+}
+
+@keyframes edge-glow {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
 }

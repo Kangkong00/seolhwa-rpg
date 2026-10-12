@@ -75,12 +75,15 @@ const SYNTH = {
     tone(ctx, out, t + 0.36, 0.08, { type: 'sine', f0: 110 * p, f1: 60 * p, peak: 0.8, attack: 0.002 });
     noise(ctx, out, t + 0.36, 0.05, { type: 'lowpass', f0: 600, q: 0.7, peak: 0.4, attack: 0.002 });
   },
-  // 레벨업: 올라가는 짧은 가락(도·미·솔·도)
+  // 레벨업: 맑은 종소리 두 번(높은 종이 뒤따름). 종은 배음이 정수배가 아니라 1 : 2.76 : 5.4 정도
   levelUp(ctx, out, t, p) {
-    [523, 659, 784, 1047].forEach((f, i) => {
-      tone(ctx, out, t + i * 0.09, 0.22, { type: 'triangle', f0: f * p, peak: 0.6, attack: 0.005 });
-    });
-    tone(ctx, out, t + 0.36, 0.5, { type: 'sine', f0: 1568 * p, peak: 0.25, attack: 0.01 });
+    const bell = (t0, f, peak, dur) => {
+      [[1, 1], [2.76, 0.45], [5.4, 0.22], [8.93, 0.1]].forEach(([r, a]) => {
+        tone(ctx, out, t0, dur / Math.sqrt(r), { type: 'sine', f0: f * r * p, peak: peak * a, attack: 0.003 });
+      });
+    };
+    bell(t, 880, 0.7, 1.4);
+    bell(t + 0.16, 1318, 0.55, 1.6);
   },
   // 전리품 주움: 짧고 가벼운 톡
   pickup(ctx, out, t, p) {

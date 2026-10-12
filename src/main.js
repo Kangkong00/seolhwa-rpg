@@ -39,6 +39,8 @@ async function boot() {
   ]);
   // 머리 장비 위치(옷·자세별, 모자 종류와 무관)
   const headAnchors = await fetchJson(items.headAnchors);
+  // 레벨업 붓글씨 글꼴을 미리 받아 둠(못 받으면 기본 글꼴로 그려짐)
+  if (document.fonts && document.fonts.load) document.fonts.load(`30px ${economy.levelUpFx.font}`, '레벨 업!').catch(() => {});
   // 효과음: 첫 터치 때 켜짐 (아이폰 사파리)
   const sfx = new SoundPlayer(sounds);
   // 맵 파일은 한 번 받은 것을 다시 씀

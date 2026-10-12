@@ -4,7 +4,7 @@ import { Grid } from '../core/grid.js';
 import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
-import { findTarget, hitMonster, hitPlayer } from '../core/combat.js';
+import { findTarget, hitMonster, hitPlayer, aimAssist } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem } from '../core/equipment.js';
 import { createProgress, addExp, expToNext, maxHpFor } from '../core/progress.js';
@@ -20,7 +20,7 @@ import { NpcView, loadNpcTextures } from './NpcView.js';
 import { NpcMenu } from './npcMenu.js';
 import { DropView } from './dropView.js';
 import { josa } from '../ui/josa.js';
-import { floatText, levelUpFx, breathFx, SpinTrail } from './progressFx.js';
+import { floatText, levelUpFx, edgeGlow, breathFx, SpinTrail } from './progressFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
@@ -84,6 +84,8 @@ export class MapScene extends Phaser.Scene {
     this.swing = null; // 무기 휘두르는 중: { weapon, t, hitDone, trail }
     this.hitStopMs = 0; // 맞는 순간 아주 짧게 멈춤
     this.knock = { dir: null, left: 0 }; // 물려서 밀려나는 중
+    this.assistSlide = null; // 맞히기 도움으로 다가가는 중 { dir, left, speed }
+    this.hpFill = null; // 레벨업 체력바 차오름
     this.dead = false;
     // 레벨·경험치, 배운 무예, 의뢰: 저장된 것(맵을 옮겨도 이어짐)
     const eco = this.d.economy;
@@ -327,10 +329,19 @@ export class MapScene extends Phaser.Scene {
     return formatCoins(v, this.d.economy.money);
   }
 
+  // 레벨업 직후에는 체력바가 예전 체력에서 가득으로 차오름(hpFill)
+  shownHp() {
+    const f = this.hpFill;
+    if (!f) return this.player.hp;
+    const k = Math.min(1, f.t / f.ms);
+    const e = 1 - (1 - k) * (1 - k);
+    return Math.round(f.from + (this.player.hp - f.from) * e);
+  }
+
   refreshStatus() {
     this.statusPanel.set({
       level: this.progress.level,
-      hp: this.player.hp,
+      hp: this.shownHp(),
       maxHp: this.player.maxHp,
       exp: this.progress.exp,
       need: expToNext(this.progress, this.d.economy.levels),
@@ -633,6 +644,33 @@ export class MapScene extends Phaser.Scene {
     this.afterHit(target, result);
   }
 
+  // ---------- 맞히기 도움 ----------
+  // 둘레 assistRadius 안 몬스터 쪽으로 몸을 돌리고, 닿지 않으면 assistStepPx까지 다가가 침.
+  // 무기는 휘두르는 동안(맞힘 판정 전에) 미끄러지듯 다가가고, 주먹은 바로 맞으므로 한 번에 다가감.
+  attackWithAssist(mods) {
+    const a = this.cfg.attack;
+    const w = this.canSwing ? this.weaponDef : null;
+    const res = aimAssist(this.pos, this.facing, this.spawner.monsters, {
+      radius: a.assistRadius || 0,
+      reach: w ? w.reach : a.reach,
+      width: w ? w.width : a.width,
+      maxStep: a.assistStepPx || 0,
+    });
+    this.facing = res.facing;
+    this.dir = null;
+    if (res.step > 0) {
+      if (w) {
+        this.assistSlide = { dir: res.facing, left: res.step, speed: res.step / Math.max(1, a.assistSlideMs || 1) };
+      } else {
+        const m = moveStep(this.map.grid, this.pos, res.facing, res.step, this.cfg.player.footBox, 0);
+        this.pos.x = m.x;
+        this.pos.y = m.y;
+      }
+    }
+    if (w) this.startSwing(mods);
+    else this.punch(mods);
+  }
+
   // ---------- 쓰러뜨림: 경험치·전리품 ----------
   onMonsterKilled(target) {
     const def = this.monsterDefs[target.type];
@@ -645,15 +683,27 @@ export class MapScene extends Phaser.Scene {
 
   gainExp(amount) {
     const eco = this.d.economy;
+    const before = this.progress.level;
     const gained = addExp(this.progress, amount, eco.levels);
     if (gained > 0) {
-      // 레벨업: 최대 체력 +hpPerLevel, 체력 가득, 연출(글자 + 빛 + 소리)
+      // 레벨업: 최대 체력 +hpPerLevel, 체력 가득(체력바가 차오름), 연출(docs/spec/economy.md '레벨업 연출')
+      const fx = eco.levelUpFx;
+      const fromHp = this.player.hp;
       this.player.maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, eco.levels);
       this.player.hp = this.player.maxHp;
-      this.playerView.setHp(1);
-      levelUpFx(this, this.pos.x, this.pos.y, this.cfg.player.height, this.progress.level, eco.levelUpFx, this.d.getPixelRatio());
+      this.hpFill = { from: fromHp, t: 0, ms: fx.hpFillMs };
+      levelUpFx(this, this.pos.x, this.pos.y, this.cfg.player.height, this.progress.level, fx, this.d.getPixelRatio());
       this.sfx.play('levelUp');
-      this.toast.show(`레벨 ${this.progress.level}! 최대 체력 ${this.player.maxHp}`);
+      // 아주 짧은 멈춤 + 화면 가장자리 은은한 금빛
+      this.hitStopMs = Math.max(this.hitStopMs, fx.pauseMs);
+      edgeGlow(fx.edgeColor, fx.edgeMs);
+      // 이번에 새로 배울 수 있게 된 무예가 있으면 한 줄 알림
+      const now = this.progress.level;
+      const opened = this.skills.some((s) => {
+        const lv = (s.requires && s.requires.level) || 1;
+        return lv > before && lv <= now && !this.learned.includes(s.id);
+      });
+      if (opened) this.toast.show(fx.newSkillText, 3500);
       this.save();
     }
     this.refreshStatus();
@@ -717,8 +767,7 @@ export class MapScene extends Phaser.Scene {
     if (!this.cooldowns.ready(id)) return;
     if (this.swing || this.spin || this.punchMs > 0) return;
     if (sk.kind === 'powerSlash') {
-      if (this.canSwing) this.startSwing(sk);
-      else this.punch(sk);
+      this.attackWithAssist(sk);
     } else if (sk.kind === 'heal') {
       if (this.player.hp >= this.player.maxHp) {
         this.toast.show('체력이 가득합니다');
@@ -938,8 +987,7 @@ export class MapScene extends Phaser.Scene {
     this.cooldowns.update(dt);
     const wantAttack = this.attackCooldown <= 0 && !this.swing && !this.spin && this.attackButton.consume();
     if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead && !this.equipPanel.open && !this.npcPanel.open) {
-      if (this.canSwing) this.startSwing();
-      else this.punch();
+      this.attackWithAssist(null);
     }
     const spinPose = this.spin ? this.updateSpin(dt) : null;
     const swingPose = this.swing ? this.updateSwing(dt) : spinPose;
@@ -957,6 +1005,16 @@ export class MapScene extends Phaser.Scene {
       this.pos.x = res.x;
       this.pos.y = res.y;
       this.knock.left = res.moved ? this.knock.left - step : 0;
+    }
+    // 맞히기 도움으로 다가가는 중 (벽은 통과 안 함)
+    if (this.assistSlide) {
+      const s = this.assistSlide;
+      const step = Math.min(s.left, s.speed * dt);
+      const res = moveStep(this.map.grid, this.pos, s.dir, step, p.footBox, 0);
+      this.pos.x = res.x;
+      this.pos.y = res.y;
+      s.left = res.moved ? s.left - step : 0;
+      if (s.left <= 0.01) this.assistSlide = null;
     }
     if (this.dir && !this.dead) {
       this.facing = this.dir;
@@ -987,6 +1045,12 @@ export class MapScene extends Phaser.Scene {
       if (view) view.update(dt, m);
     }
 
+    // 레벨업 체력바 차오름
+    if (this.hpFill) {
+      this.hpFill.t += dt;
+      if (this.hpFill.t >= this.hpFill.ms || this.player.hp < this.hpFill.from) this.hpFill = null;
+      this.playerView.setHp(this.shownHp() / this.player.maxHp);
+    }
     // 왼쪽 위 표시·무예 버튼(바뀐 것만 다시 그림)
     this.refreshStatus();
     this.refreshSkills();
