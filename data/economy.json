@@ -12,13 +12,17 @@
     "smallLimit": 100
   },
   "groundDrops": {
-    "_설명": "바닥에 떨어진 전리품·엽전. pickupRadius=이 거리(맵 픽셀) 안에 들어오면 저절로 주움, lifetimeMs=이 시간이 지나면 사라짐(끝 fadeMs 동안 깜빡이며 흐려짐), scatterPx=쓰러진 자리에서 흩어지는 거리, pickupDelayMs=떨어진 직후 이 시간 동안은 줍지 않음(튀어나오는 모습이 보이게), size=바닥에 보이는 크기",
+    "_설명": "바닥에 떨어진 전리품·엽전. pickupRadius=이 거리(맵 픽셀) 안에 들어오면 저절로 주움, lifetimeMs=이 시간이 지나면 사라짐(끝 fadeMs 동안 깜빡이며 흐려짐), scatterPx=쓰러진 자리에서 흩어지는 거리, pickupDelayMs=떨어진 직후 이 시간 동안은 줍지 않음(튀어나오는 모습이 보이게), size=바닥에 보이는 크기(아이콘), coinIcon=엽전 아이콘 그림, shadowWidth·shadowHeight·shadowAlpha=발밑 그림자",
     "pickupRadius": 16,
     "lifetimeMs": 30000,
     "fadeMs": 4000,
     "scatterPx": 12,
     "pickupDelayMs": 350,
-    "size": 12
+    "size": 14,
+    "coinIcon": "assets/items/icons/coins.png",
+    "shadowWidth": 11,
+    "shadowHeight": 4,
+    "shadowAlpha": 0.3
   },
   "levelUpFx": {
     "_설명": "레벨업 연출(docs/spec/economy.md '레벨업 연출', 그림 없이 코드로). 글자: font=붓글씨 글꼴(assets/fonts), color·stroke=글자 색·테두리, fontPx=`레벨 업!` 크기, subFontPx=`레벨 N` 크기, floatPx·floatMs=떠오르는 높이·시간. ringColor=발밑 금빛 고리. pillarColor·pillarMs·pillarWidth·pillarHeight=몸을 감싸며 아래에서 위로 솟는 빛기둥(높이는 키의 배수). sparkleCount·sparkleColor·sparkleMs·sparkleRise=떠오르는 반짝이. hpFillMs=체력바가 가득 차오르는 시간. pauseMs=레벨업 순간 멈춤. edgeColor·edgeMs=화면 가장자리 금빛. newSkillText=새로 배울 수 있는 무예가 생겼을 때 알림",

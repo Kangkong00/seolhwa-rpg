@@ -118,3 +118,8 @@
 - **의뢰**: 촌장 `대화` → 맡기 → 쥐고기 10개가 모이면 `쥐고기 10개 드리기` → 20푼 + 주먹밥 3개, 늙은 군관 안내. 끝난 뒤에는 안내 말만.
 - **자동 저장**: 레벨·경험치(`progress`), 엽전(`equipment.coins`), 가방 겹침(`equipment.bag: [{ id, n }]`), 배운 무예(`skills`), 의뢰 상태(`quests`). 체력과 무예 기다리는 시간은 저장하지 않음(다시 열면 가득).
 - 아이콘 그림(전리품 5종·주먹밥·탕약)이 `assets/items/icons/<id>.png`로 들어오면 코드 수정 없이 그 그림으로 바뀜(엽전은 코드 그림).
+
+### 아이콘 반영 (2026-10-12)
+
+- 전리품 5종·주먹밥·탕약 아이콘(`assets/items/icons/<id>.png`, `data/items.json` 경로 그대로)과 엽전 `coins.png`가 들어와 글자 칸 대신 아이콘으로 보임: 가방·가게 창(코드 수정 없이 자동), 바닥에 떨어진 물건(14px, 발밑 작은 그림자 — `data/economy.json` `groundDrops`의 `size`·`coinIcon`·`shadowWidth`·`shadowHeight`·`shadowAlpha`), 화면 왼쪽 위 엽전 표시(아이콘 + 글자).
+- 그림을 못 받으면 예전처럼 글자 칸(`iconText`)·코드로 그린 동전으로 보임.

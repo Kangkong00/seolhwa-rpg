@@ -1,24 +1,27 @@
-// 바닥에 떨어진 전리품·엽전 그림. 아이콘 그림이 있으면 그것을, 없으면 iconText 글자 칸, 엽전은 구멍 뚫린 동전.
+// 바닥에 떨어진 전리품·엽전 그림. 아이콘 그림(엽전은 coins.png)을 작게, 발밑에 작은 그림자.
+// 그림을 못 받았으면 iconText 글자 칸, 엽전은 코드로 그린 구멍 뚫린 동전.
 // 쓰러진 자리에서 튀어나와 떨어지고, 사라지기 전 깜빡이며 흐려짐. 주우면 주인공 쪽으로 빨려 들며 사라짐.
+import { createShadow } from './shadow.js';
 
 const FONT = '-apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
 
 export class DropView {
   // d: GroundDrops의 한 물건, def: 아이템 정의(엽전이면 null), cfg: data/economy.json groundDrops
-  constructor(scene, d, def, cfg, pixelRatio) {
+  constructor(scene, d, def, cfg, pixelRatio, shadowCfg) {
     this.scene = scene;
     this.d = d;
     this.cfg = cfg;
     const s = cfg.size;
-    const iconKey = def && `icon:${def.id}`;
-    if (d.coins) {
+    const iconKey = d.coins ? 'icon:coins' : def && `icon:${def.id}`;
+    this.shadow = shadowCfg ? createShadow(scene, shadowCfg, cfg.shadowWidth, cfg.shadowHeight, cfg.shadowAlpha).setPosition(d.x, d.y) : null;
+    if (iconKey && scene.textures.exists(iconKey)) {
+      this.obj = scene.add.image(0, 0, iconKey).setDisplaySize(s, s);
+    } else if (d.coins) {
       const g = scene.add.graphics();
       g.fillStyle(0x8a5a1a, 1).fillCircle(0, 0, s * 0.42);
       g.fillStyle(0xe6b84a, 1).fillCircle(0, 0, s * 0.36);
       g.fillStyle(0x6b4512, 1).fillRect(-s * 0.1, -s * 0.1, s * 0.2, s * 0.2);
       this.obj = g;
-    } else if (iconKey && scene.textures.exists(iconKey)) {
-      this.obj = scene.add.image(0, 0, iconKey).setDisplaySize(s, s);
     } else {
       const c = scene.add.container(0, 0);
       const label = def ? def.iconText || def.name.charAt(0) : '?';
@@ -48,12 +51,14 @@ export class DropView {
     if (left < this.cfg.fadeMs) {
       const k = left / this.cfg.fadeMs;
       this.obj.setAlpha((0.35 + 0.65 * Math.abs(Math.sin(this.d.age / 120))) * Math.max(0.2, k));
+      if (this.shadow) this.shadow.setAlpha(this.cfg.shadowAlpha * Math.max(0.2, k));
     }
   }
 
   // 주웠을 때: 주인공 쪽으로 빨려 들며 사라짐
   pickup(tx, ty) {
     this.scene.tweens.killTweensOf(this.obj);
+    if (this.shadow) this.shadow.destroy();
     this.scene.tweens.add({
       targets: this.obj,
       x: tx,
@@ -68,6 +73,7 @@ export class DropView {
 
   destroy() {
     this.scene.tweens.killTweensOf(this.obj);
+    if (this.shadow) this.shadow.destroy();
     this.obj.destroy();
   }
 }
