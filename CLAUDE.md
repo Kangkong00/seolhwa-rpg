@@ -56,6 +56,7 @@ docs/          문서 사본
 | [docs/spec/headgear.md](docs/spec/headgear.md) | 머리 장비(두건 → 모자 → 관) 그림·옷·자세별 위치(`head_anchor.json`)·상투 지우개, 붙이는 법 |
 | [docs/spec/equipment.md](docs/spec/equipment.md) | 장비 칸 5개, 초반 아이템 목록, 아이템 아이콘(`assets/items/icons/`), 최소 장비창·가방 |
 | [docs/spec/economy.md](docs/spec/economy.md) | 초보 구간 1차 시험안: 경험치·레벨, 전리품(쥐고기 등)·엽전(푼·전·냥), 무예 3종(늙은 군관), 가게 사고팔기, 길잡이 의뢰 |
+| [docs/spec/beginner_area.md](docs/spec/beginner_area.md) | 초보 구간 구성: 들쥐굴 1~3층·족제비굴, 레벨 표(15까지), 새 몬스터(굴 들쥐·곳간 쥐왕·족제비) 수치, 새 전리품·귀환 부적, 마을 사람 그림 |
 | [docs/spec/combat.md](docs/spec/combat.md) | 때리기(맞히기·히트), 싸움 규칙(맞으면 반격·포기), 주인공 체력·체력바 |
 | [docs/spec/monsters.md](docs/spec/monsters.md) | 몬스터 그림 규격, 들쥐·큰 들쥐 크기, 돌아다니기, 몬스터 구역(`spawnZones`) |
 | [docs/spec/maps.md](docs/spec/maps.md) | 마을·들쥐굴 그림, 격자·지붕 가림(`occluders`), 맵 이동(`portals`)·던전 입구 표시, 닭장 마당 길 |
@@ -93,6 +94,8 @@ docs/          문서 사본
 - [x] 전리품·엽전·주먹밥·탕약 아이콘 8개 준비됨(`assets/items/icons/`) — 바닥·가방·가게에서 글자 대신 아이콘
 - [x] 앞뒤 가림 v2: 조각을 아틀라스 1장으로 교체(`docs/spec/maps.md` "v2"), 윤곽은 우선 끄고 다시 만들기 — 2026-10-12 강콩: 사각형으로 가려짐·하얗게 보임
 - [x] 2차 다듬기(`docs/spec/economy.md` "2차 다듬기"): 바닥 전리품 크게·테두리·이름, 글자 연출 오래, 레벨업 크게
+- [ ] 레벨 표를 15까지 늘리기(`docs/spec/beginner_area.md` "레벨 표") — 지금 5에서 멈춤(2026-10-12 강콩). 그림 필요 없음, 바로
+- [ ] (기획 쪽 그림 준비 중) 들쥐굴 2·3층, 족제비굴, 쥐왕·족제비, 마을 사람 5명, 아이콘 8개 — 올라오면 반영
 - [ ] 옷 2~6 무기 자세 그림: 미룸(나중에 옷마다 3장, 들고 걷기는 합성)
 
 ## 작업 규칙
