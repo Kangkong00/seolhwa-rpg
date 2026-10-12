@@ -21,6 +21,16 @@ function lockPageGestures() {
   document.addEventListener('dblclick', (e) => e.preventDefault());
 }
 
+// 투명한 webp를 그릴 수 있는지(1×1 반투명 무손실 webp를 읽어 봄)
+function supportsWebpAlpha() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img.width === 1 && img.height === 1);
+    img.onerror = () => resolve(false);
+    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
+  });
+}
+
 async function boot() {
   lockPageGestures();
   const loading = document.getElementById('loading');
@@ -45,14 +55,16 @@ async function boot() {
   const sfx = new SoundPlayer(sounds);
   // 맵 파일은 한 번 받은 것을 다시 씀
   const mapCache = new Map();
-  // 물건 조각 목록(objects)이 있으면 함께 받아 objectsData로 붙임(파일로 내보낼 때는 빠지게 숨은 값으로)
+  // 물건 조각 목록(objects)이 있으면 함께 받아 objectsData로 붙임(파일로 내보낼 때는 빠지게 숨은 값으로).
+  // 조각 그림은 아틀라스 한 장: webp 투명을 못 그리는 기기면 같은 내용의 png로
+  const webpAlpha = supportsWebpAlpha();
   const fetchMap = (id) => {
     if (!mapCache.has(id)) {
       mapCache.set(id, fetchJson(`data/maps/${id}.json`).then(async (json) => {
         if (typeof json.objects === 'string') {
           const data = await fetchJson(json.objects);
-          const folder = json.objects.replace(/\.json$/, '');
-          Object.defineProperty(json, 'objectsData', { value: { folder, ...data }, enumerable: false });
+          const image = (await webpAlpha) || !data.imagePng ? data.image : data.imagePng;
+          Object.defineProperty(json, 'objectsData', { value: { ...data, image }, enumerable: false });
         }
         return json;
       }));

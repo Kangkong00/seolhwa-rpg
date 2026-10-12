@@ -43,10 +43,12 @@
     "assistSlideMs": 50
   },
   "occlusionGhost": {
-    "_설명": "내 캐릭터가 물건 조각(앞뒤 가림) 뒤로 가려지면 가려진 부분에만 윤곽을 옅게 비춤. enabled=켜고 끄기, color=색, alpha=진하기(0~1). 몬스터는 하지 않음",
-    "enabled": true,
-    "color": "#ffffff",
-    "alpha": 0.3
+    "_설명": "내 캐릭터가 물건 조각(앞뒤 가림) 뒤로 가려지면 가려진 부분에만 윤곽선(docs/spec/maps.md 'v2'). enabled=켜고 끄기(2026-10-12 우선 끔), color=윤곽선 색, alpha=진하기(0~1), widthPx=굵기(맵 픽셀), minCovered=몸이 조각 픽셀로 이 비율 넘게 가려졌을 때만 보임. 몬스터는 하지 않음",
+    "enabled": false,
+    "color": "#3a2a1a",
+    "alpha": 0.6,
+    "widthPx": 2,
+    "minCovered": 0.25
   },
   "outline": {
     "_설명": "캐릭터·몬스터·무기 외곽선(마을 그림 선 굵기와 맞추려는 것). widthPx=굵기(게임 화면 기준, 맵 1픽셀 = 아이폰에서 2점, 소수 가능), color=색, alpha=진하기. 그림을 불러올 때 한 번 만들어 둠. widthPx 0이면 외곽선 없음",
@@ -66,13 +68,14 @@
     "splashMs": 260
   },
   "hitFx": {
-    "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, damageFontPx=데미지 숫자 크기, damageColor·damageStroke=숫자 색·테두리, floatPx·floatMs=숫자가 떠오르는 높이·시간, deathMs=쓰러져 사라지는 시간",
+    "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, damageFontPx=데미지 숫자 크기, damageColor·damageStroke=숫자 색·테두리, floatPx=숫자가 떠오르는 높이, damageHoldMs·damageFadeMs=숫자가 그대로 보이는 시간(그동안 떠오름)·흐려지는 시간, deathMs=쓰러져 사라지는 시간",
     "flashMs": 90,
     "damageFontPx": 13,
     "damageColor": "#ffffff",
     "damageStroke": "#3a1a10",
     "floatPx": 20,
-    "floatMs": 650,
+    "damageHoldMs": 1000,
+    "damageFadeMs": 400,
     "deathMs": 400
   },
   "playerHit": {
