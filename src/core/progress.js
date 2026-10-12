@@ -34,3 +34,8 @@ export function addExp(p, amount, cfg) {
   }
   return gained;
 }
+
+// 레벨마다 데미지 +damagePerLevel(소수는 쌓아 두고 정수 부분만): 레벨 1은 0
+export function damageBonus(level, cfg) {
+  return Math.floor((level - 1) * (cfg.damagePerLevel || 0) + 1e-9);
+}

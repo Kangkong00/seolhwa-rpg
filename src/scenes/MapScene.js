@@ -7,7 +7,7 @@ import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer, aimAssist } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem } from '../core/equipment.js';
-import { createProgress, addExp, expToNext, maxHpFor } from '../core/progress.js';
+import { createProgress, addExp, expToNext, maxHpFor, damageBonus } from '../core/progress.js';
 import { rollDrops, GroundDrops } from '../core/loot.js';
 import { Cooldowns } from '../core/skills.js';
 import { formatCoins } from '../core/money.js';
@@ -602,7 +602,7 @@ export class MapScene extends Phaser.Scene {
     const m = mods || {};
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, w.reach, w.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, w.damage * (m.damageMul || 1), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
+    const result = hitMonster(target, this.facing, (w.damage + this.levelDamage()) * (m.damageMul || 1), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
     const def = this.monsterDefs[target.type];
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
     const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
@@ -644,7 +644,7 @@ export class MapScene extends Phaser.Scene {
 
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, a.reach, a.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, a.damage * (m.damageMul || 1), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
+    const result = hitMonster(target, this.facing, (a.damage + this.levelDamage()) * (m.damageMul || 1), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
     const def = this.monsterDefs[target.type];
     this.sfx.play('punchHit');
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
@@ -680,6 +680,11 @@ export class MapScene extends Phaser.Scene {
     }
     if (w) this.startSwing(mods);
     else this.punch(mods);
+  }
+
+  // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
+  levelDamage() {
+    return damageBonus(this.progress.level, this.d.economy.levels);
   }
 
   // ---------- 쓰러뜨림: 경험치·전리품 ----------
@@ -862,7 +867,7 @@ export class MapScene extends Phaser.Scene {
     const fx = this.cfg.hitFx;
     const sfx = this.cfg.swingFx;
     const w = this.canSwing ? this.weaponDef : null;
-    const base = w ? w.damage : this.cfg.attack.damage;
+    const base = (w ? w.damage : this.cfg.attack.damage) + this.levelDamage();
     const hits = this.spawner.monsters.filter((m) => m.hp > 0 && Math.hypot(m.x - this.pos.x, m.y - this.pos.y) <= sk.radius);
     for (const target of hits) {
       const dx = target.x - this.pos.x;
