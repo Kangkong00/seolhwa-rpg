@@ -29,15 +29,18 @@
     "deadZone": 0.25
   },
   "attack": {
-    "_설명": "주먹 지르기(모두 임시값). damage=한 대 데미지, cooldownMs=공격 간격(버튼을 누르고 있으면 이 간격으로 계속), punchMs=주먹 자세 유지 시간, stepPx=주먹 지를 때 앞으로 내딛는 거리, reach=앞으로 닿는 거리, width=맞힐 수 있는 폭, knockbackPx=맞은 몬스터가 밀려나는 거리, stunMs=맞은 몬스터가 멈칫하는 시간",
+    "_설명": "주먹 지르기(모두 임시값). damage=한 대 데미지, cooldownMs=공격 간격(버튼을 누르고 있으면 이 간격으로 계속), punchMs=주먹 자세 유지 시간, stepPx=주먹 지를 때 앞으로 내딛는 거리, reach=앞으로 닿는 거리, width=맞힐 수 있는 폭(무기는 data/weapons.json의 reach·width), knockbackPx=맞은 몬스터가 밀려나는 거리, stunMs=맞은 몬스터가 멈칫하는 시간. 맞히기 도움(공격·무예 공통): assistRadius=이 거리 안에 몬스터가 있으면 그쪽(반격 중인 몬스터 먼저, 4방향 중 가까운 축)으로 몸을 돌림, assistStepPx=몸을 돌려도 닿지 않으면 이만큼까지 다가가 침(벽 통과 안 함), assistSlideMs=다가가는 시간(무기 휘두를 때)",
     "damage": 1,
     "cooldownMs": 400,
     "punchMs": 150,
     "stepPx": 3,
-    "reach": 30,
-    "width": 28,
+    "reach": 38,
+    "width": 40,
     "knockbackPx": 8,
-    "stunMs": 300
+    "stunMs": 300,
+    "assistRadius": 56,
+    "assistStepPx": 12,
+    "assistSlideMs": 50
   },
   "outline": {
     "_설명": "캐릭터·몬스터·무기 외곽선(마을 그림 선 굵기와 맞추려는 것). widthPx=굵기(게임 화면 기준, 맵 1픽셀 = 아이폰에서 2점, 소수 가능), color=색, alpha=진하기. 그림을 불러올 때 한 번 만들어 둠. widthPx 0이면 외곽선 없음",

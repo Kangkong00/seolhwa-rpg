@@ -1,21 +1,21 @@
 {
-  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, swingMs=휘두르기 시간(칼이 thetaFrom→thetaTo로 도는 시간), cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=궤적 색(칼날 색)",
+  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, swingMs=휘두르기 시간(칼이 thetaFrom→thetaTo로 도는 시간), cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀, 맞히기 도움이 다가갈 때도 이 거리 기준), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=궤적 색(칼날 색)",
   "canvas": { "width": 240, "height": 960, "gripX": 120, "gripY": 800 },
   "weapons": [
     {
       "id": "wood_pine", "name": "소나무 목검", "image": "assets/weapons/wood_pine.png", "tipFromGrip": 420,
       "damage": 2, "swingMs": 200, "cooldownMs": 450,
-      "reach": 42, "width": 34, "knockbackPx": 10, "stunMs": 320, "stepPx": 3, "trailColor": "#e4cb97"
+      "reach": 48, "width": 44, "knockbackPx": 10, "stunMs": 320, "stepPx": 3, "trailColor": "#e4cb97"
     },
     {
       "id": "wood_oak", "name": "참나무 목검", "image": "assets/weapons/wood_oak.png", "tipFromGrip": 430,
       "damage": 2, "swingMs": 210, "cooldownMs": 470,
-      "reach": 44, "width": 34, "knockbackPx": 12, "stunMs": 340, "stepPx": 3, "trailColor": "#745943"
+      "reach": 48, "width": 44, "knockbackPx": 12, "stunMs": 340, "stepPx": 3, "trailColor": "#745943"
     },
     {
       "id": "wood_bakdal", "name": "박달나무 목검", "image": "assets/weapons/wood_bakdal.png", "tipFromGrip": 442,
       "damage": 3, "swingMs": 220, "cooldownMs": 500,
-      "reach": 46, "width": 36, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#7a5245"
+      "reach": 48, "width": 44, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#7a5245"
     }
   ],
   "swing": {
