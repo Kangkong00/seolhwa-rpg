@@ -45,8 +45,18 @@ async function boot() {
   const sfx = new SoundPlayer(sounds);
   // 맵 파일은 한 번 받은 것을 다시 씀
   const mapCache = new Map();
+  // 물건 조각 목록(objects)이 있으면 함께 받아 objectsData로 붙임(파일로 내보낼 때는 빠지게 숨은 값으로)
   const fetchMap = (id) => {
-    if (!mapCache.has(id)) mapCache.set(id, fetchJson(`data/maps/${id}.json`));
+    if (!mapCache.has(id)) {
+      mapCache.set(id, fetchJson(`data/maps/${id}.json`).then(async (json) => {
+        if (typeof json.objects === 'string') {
+          const data = await fetchJson(json.objects);
+          const folder = json.objects.replace(/\.json$/, '');
+          Object.defineProperty(json, 'objectsData', { value: { folder, ...data }, enumerable: false });
+        }
+        return json;
+      }));
+    }
     return mapCache.get(id);
   };
   // 마지막으로 있던 맵에서 시작 (없거나 못 읽으면 startMap)

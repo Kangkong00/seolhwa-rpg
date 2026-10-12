@@ -25,7 +25,7 @@ import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
-import { createOccluders } from './occluders.js';
+import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
 import { PortalFx } from './portalFx.js';
 import { showDamage } from './damageText.js';
 import { AttackButton } from '../ui/attackButton.js';
@@ -49,6 +49,8 @@ export class MapScene extends Phaser.Scene {
   preload() {
     this.mapKey = `map:${this.d.mapId}`;
     if (!this.textures.exists(this.mapKey)) this.load.image(this.mapKey, this.d.mapJson.image);
+    // 물건 조각(앞뒤 가림)
+    preloadMapObjects(this, this.d.mapId, this.d.mapJson.objectsData);
   }
 
   create() {
@@ -59,7 +61,8 @@ export class MapScene extends Phaser.Scene {
 
     // 맵 그림이 좌표계보다 크면(고해상도 그림) 좌표계 크기로 줄여 그림
     this.add.image(0, 0, this.mapKey).setOrigin(0, 0).setDisplaySize(this.map.width, this.map.height).setDepth(-1);
-    this.occluders = createOccluders(this, this.mapKey, this.map.occluders, this.map.width, this.map.height);
+    // 물건 조각: 마을 그림과 같은 자리에 겹쳐 놓고 깊이 = baseY (발이 baseY보다 북쪽이면 가려짐)
+    this.mapObjects = createMapObjects(this, this.d.mapId, this.d.mapJson.objectsData);
     // 던전 입구 표시: 빛나는 테두리 + 가까이 가면 이름표
     this.portalFx = this.map.portals.map((p) => new PortalFx(this, p, cfg.portalFx, this.d.getPixelRatio()));
 
@@ -110,6 +113,10 @@ export class MapScene extends Phaser.Scene {
     this.portalArmed = !this.portalAt(this.pos.x, this.pos.y);
 
     this.playerView = new PlayerView(this, cfg.player, this.d.outfits.canvas, cfg.shadow, cfg.hpBar);
+    // 가려지면 가려진 부분에만 옅은 윤곽 (몸·무기·손 덮개)
+    const pv = this.playerView;
+    this.ghost = new OcclusionGhost(this, this.mapObjects, [pv.weaponSprite, pv.sprite, pv.hand], cfg.occlusionGhost);
+    this.events.once('shutdown', () => this.ghost.destroy());
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     // 장비·가방: 저장된 것, 없으면 data/items.json의 start (맵을 옮겨도 이어짐)
     this.itemDefs = Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
@@ -677,7 +684,7 @@ export class MapScene extends Phaser.Scene {
     if (def.exp) this.gainExp(def.exp);
     const entries = rollDrops(def);
     for (const d of this.ground.spawn(target.x, target.y, entries, this.map.grid)) {
-      this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio()));
+      this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio(), this.cfg.shadow));
     }
   }
 
@@ -748,9 +755,11 @@ export class MapScene extends Phaser.Scene {
     if (this.d.iconsLoaded) return;
     this.d.iconsLoaded = true;
     const size = this.d.economy.groundDrops.size * this.pixelScale() * 2;
-    await Promise.all(this.d.items.items.filter((it) => it.stack).map(async (it) => {
-      const img = await loadImage(it.icon);
-      const key = `icon:${it.id}`;
+    const list = this.d.items.items.filter((it) => it.stack).map((it) => [it.id, it.icon]);
+    list.push(['coins', this.d.economy.groundDrops.coinIcon]);
+    await Promise.all(list.map(async ([id, path]) => {
+      const img = await loadImage(path);
+      const key = `icon:${id}`;
       if (img && !this.textures.exists(key)) this.textures.addCanvas(key, downscale(img, Math.min(1, size / img.width)));
     }));
   }
@@ -1028,12 +1037,9 @@ export class MapScene extends Phaser.Scene {
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
     this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || (this.punchMs > 0 ? 'punch' : null));
-    // 지붕·나무 조각은 캐릭터 발이 그 조각의 가로 범위(hideX) 안에 있을 때만 앞뒤를 따짐.
-    // 범위 밖(건물 옆)에서는 항상 캐릭터가 위에 그려져, 처마 끝에 몸이 잘리지 않음.
-    for (const occ of this.occluders) {
-      const inRange = this.pos.x >= occ.hideX[0] && this.pos.x <= occ.hideX[1];
-      occ.image.setDepth(inRange ? occ.baseY : -0.5);
-    }
+    // 물건 조각 뒤로 가려지면 옅은 윤곽 (캐릭터 둘레: 칼끝까지 넉넉히)
+    const h = this.cfg.player.height;
+    this.ghost.update(this.pos.y, { x0: this.pos.x - h * 0.8, x1: this.pos.x + h * 0.8, y0: this.pos.y - h * 1.5, y1: this.pos.y + 4 });
 
     // 몬스터
     const target = { x: this.pos.x, y: this.pos.y, alive: !this.dead && !this.transitioning };

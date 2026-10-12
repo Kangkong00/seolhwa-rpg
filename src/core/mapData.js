@@ -14,7 +14,8 @@ export function parseMap(json) {
     // 몬스터 구역: { monster, count, respawnMs, x, y, w, h }
     spawnZones: (json.spawnZones || []).map((z) => ({ ...z })),
     noSpawnNearPortal: json.noSpawnNearPortal || 0,
-    occluders: json.occluders.map((o) => ({ ...o })),
+    // 물건 조각(앞뒤 가림): 화면 쪽이 objects 파일을 받아 붙여 줌(objectsData), 없으면 빈 목록
+    objects: json.objectsData ? json.objectsData.objects.map((o) => ({ ...o })) : [],
     grid,
   };
 }

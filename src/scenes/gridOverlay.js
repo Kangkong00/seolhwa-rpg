@@ -1,4 +1,4 @@
-// 격자 보기: 못 가는 칸(빨강), 가림 조각 테두리(파랑), 가림 기준선 baseY(노랑),
+// 격자 보기: 못 가는 칸(빨강), 물건 조각 테두리(파랑), 조각의 발 기준선 baseY(노랑),
 // 맵 이동 지점(초록), 몬스터 구역(보라).
 
 export class GridOverlay {
@@ -12,7 +12,7 @@ export class GridOverlay {
   }
 
   draw(grid, map) {
-    const { occluders, portals, spawnZones } = map;
+    const { objects, portals, spawnZones } = map;
     const g = this.g;
     const s = grid.cellSize;
     g.clear();
@@ -36,15 +36,12 @@ export class GridOverlay {
       }
     }
 
-    for (const o of occluders) {
-      g.lineStyle(1.5, 0x3399ff, 0.9);
-      if (o.shape === 'ellipse') g.strokeEllipse(o.x + o.w / 2, o.y + o.h / 2, o.w, o.h);
-      else if (o.shape === 'poly') g.strokePoints(o.points.map(([x, y]) => ({ x, y })), true);
-      else g.strokeRect(o.x, o.y, o.w, o.h);
-      // 노란 선: baseY (가로 길이 = 가려지는 범위 hideX)
-      const [hx0, hx1] = o.hideX || [o.x, o.x + o.w];
+    for (const o of objects) {
+      g.lineStyle(1, 0x3399ff, 0.7);
+      g.strokeRect(o.x, o.y, o.w, o.h);
+      // 노란 선: baseY (발이 이 선보다 북쪽이면 조각이 앞에 그려짐)
       g.lineStyle(1.5, 0xffdd00, 0.9);
-      g.lineBetween(hx0, o.baseY, hx1, o.baseY);
+      g.lineBetween(o.x, o.baseY, o.x + o.w, o.baseY);
     }
 
     g.lineStyle(2, 0x33ff66, 1);

@@ -42,6 +42,12 @@
     "assistStepPx": 12,
     "assistSlideMs": 50
   },
+  "occlusionGhost": {
+    "_설명": "내 캐릭터가 물건 조각(앞뒤 가림) 뒤로 가려지면 가려진 부분에만 윤곽을 옅게 비춤. enabled=켜고 끄기, color=색, alpha=진하기(0~1). 몬스터는 하지 않음",
+    "enabled": true,
+    "color": "#ffffff",
+    "alpha": 0.3
+  },
   "outline": {
     "_설명": "캐릭터·몬스터·무기 외곽선(마을 그림 선 굵기와 맞추려는 것). widthPx=굵기(게임 화면 기준, 맵 1픽셀 = 아이폰에서 2점, 소수 가능), color=색, alpha=진하기. 그림을 불러올 때 한 번 만들어 둠. widthPx 0이면 외곽선 없음",
     "widthPx": 0.75,
