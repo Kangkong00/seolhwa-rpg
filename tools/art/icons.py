@@ -11,7 +11,7 @@ def fit(im,name):
     im=im.crop(im.getbbox()); s=(N-2*PAD)/max(im.size)
     im=im.resize((round(im.width*s),round(im.height*s)),Image.LANCZOS)
     c=Image.new('RGBA',(N,N),(0,0,0,0)); c.alpha_composite(im,((N-im.width)//2,(N-im.height)//2)); c.save(OUT+name+'.png',optimize=True); return c
-sheet=Image.open(G+'assets/source/items_toshi_jipsin_sheet.jpg')
+sheet=Image.open(G+'assets/source/v3/items_toshi_jipsin_sheet.webp')
 W=sheet.width
 icons={}
 icons['toshi_mumyeong']=fit(cutout(sheet,(0,0,W//2,sheet.height)),'toshi_mumyeong')
@@ -43,7 +43,7 @@ def cutout_border(img,box):
     al=Image.fromarray((fg*255).astype('uint8')).filter(ImageFilter.GaussianBlur(0.6))
     out=im.convert('RGBA'); out.putalpha(al); return out.crop(out.getbbox())
 # 전리품·엽전·먹을거리 8개 (Flow 4x2 시트)
-ls=Image.open(G+'assets/source/items_loot_sheet.webp')
+ls=Image.open(G+'assets/source/v3/items_loot_sheet.webp')
 cw,ch=ls.width//4,ls.height//2
 for i,n in enumerate(['loot_rat_meat','loot_rice','loot_rat_hide','loot_rat_whisker','loot_rat_tooth','coins','food_riceball','med_tangyak']):
     cx,cy=(i%4)*cw,(i//4)*ch
@@ -55,8 +55,32 @@ for i,n in enumerate(['loot_rat_meat','loot_rice','loot_rat_hide','loot_rat_whis
         rgb=top[...,:3].astype(int); pale=(rgb.min(2)>200)&((rgb.max(2)-rgb.min(2))<25)
         top[pale,3]=0; a[:int(h*0.14)]=top; c=Image.fromarray(a); c=c.crop(c.getbbox())
     icons[n]=fit(c,n)
+# 새 아이콘 8개(v3, 4x2 시트): 족제비 전리품 3·쥐왕 꿰미 / 귀환 부적·무예 3
+# Flow가 족제비 고기는 쥐고기, 쥐왕 꿰미는 엽전과 똑같이 그려서 임시로 색을 바꿔 구별(다시 그리면 교체)
+import colorsys
+def recolor(c,fn):
+    a=np.array(c).astype(float)/255; out=a.copy()
+    for y,x in zip(*np.nonzero(a[...,3]>0)):
+        out[y,x,:3]=fn(*a[y,x,:3])
+    return Image.fromarray((out*255).clip(0,255).astype(np.uint8))
+def meat_dark(r,g,b):   # 붉은 살코기만 더 짙은 갈색빛으로(잎·끈은 그대로)
+    h,l,s_=colorsys.rgb_to_hls(r,g,b)
+    if (h<0.04 or h>0.9) and s_>0.25: return colorsys.hls_to_rgb(0.02,l*0.72,s_*0.8)
+    return (r,g,b)
+def gold(r,g,b):        # 엽전을 금빛으로
+    h,l,s_=colorsys.rgb_to_hls(r,g,b)
+    if s_>0.12 and not (0.05<h<0.14 and l>0.6): return colorsys.hls_to_rgb(0.12,min(1,l*1.12),min(1,s_*1.3+0.15))
+    return (r,g,b)
+i2=Image.open(G+'assets/source/v3/items_icons2_sheet.webp')
+cw,ch=i2.width//4,i2.height//2
+for i,n in enumerate(['loot_weasel_meat','loot_weasel_hide','loot_hwangmo','loot_ratking_coins','item_return_charm','skill_power_slash','skill_breath','skill_whirl']):
+    cx,cy=(i%4)*cw,(i//4)*ch
+    c=cutout(i2,(cx,cy,cx+cw,cy+ch))
+    if n=='loot_weasel_meat': c=recolor(c,meat_dark)
+    if n=='loot_ratking_coins': c=recolor(c,gold)
+    icons[n]=fit(c,n)
 # preview on slot frames, at game-ish sizes
-P=Image.new('RGB',(6*150+20,330*4),(40,32,26)); D=ImageDraw.Draw(P)
+P=Image.new("RGB",(6*150+20,330*((len(icons)+5)//6)),(40,32,26)); D=ImageDraw.Draw(P)
 for i,(k,c) in enumerate(icons.items()):
     x=20+(i%6)*150; yo=(i//6)*330
     D.rectangle((x,20+yo,x+128,148+yo),fill=(70,56,44),outline=(150,120,80),width=2)
