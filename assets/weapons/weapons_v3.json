@@ -1,0 +1,14 @@
+{
+"wood_pine": {
+"tipFromGrip": 420,
+"note": "칼끝을 옛 그림과 같은 높이에 맞춤 — weapons.json tipFromGrip 그대로"
+},
+"wood_oak": {
+"tipFromGrip": 430,
+"note": "칼끝을 옛 그림과 같은 높이에 맞춤 — weapons.json tipFromGrip 그대로"
+},
+"wood_bakdal": {
+"tipFromGrip": 442,
+"note": "칼끝을 옛 그림과 같은 높이에 맞춤 — weapons.json tipFromGrip 그대로"
+}
+}

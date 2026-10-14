@@ -55,6 +55,7 @@ def wear(bodyp,hoodA):
 tiles=[]
 for outfit in sorted(os.listdir(R)):
     for f in sorted(os.listdir(R+outfit)):
+        if not f.endswith('.png'): continue
         n=f[:-4]
         if n.endswith('_hand') or n.endswith('_topknot'): continue
         d=n.split('_')[0]

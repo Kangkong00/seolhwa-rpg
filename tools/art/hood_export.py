@@ -11,6 +11,7 @@ masks=pickle.load(open(S+'masks.pkl','rb'))
 anchor={"_설명":"머리 장비를 몸 그림에 붙이는 위치(모자 종류와 무관, 옷·자세별). 머리 장비 그림은 서 있기 캔버스(400×720) 기준으로 그려져 있음. 장비 그림의 from 점을 몸 그림 캔버스의 to 점에 맞추고, rotDeg(시계 방향 +)만큼 돌리고 scale배 함. 서 있기·걷기는 그대로 겹침(from=to). 기획 쪽이 tools/art/hood.py로 자동 측정"}
 for outfit in sorted(os.listdir(G+'assets/characters')):
     for f in sorted(os.listdir(G+f'assets/characters/{outfit}')):
+        if not f.endswith('.png'): continue
         n=f[:-4]
         if n.endswith('_hand'): continue
         k=f'{outfit}/{n}'
