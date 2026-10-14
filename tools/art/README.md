@@ -24,3 +24,17 @@
 | 머리 장비(두건) | `hood_cut.py` → `hood_align.py`(+`topknot.py`) → `hood_export.py` | ① 홑옷에 씌운 3방향 시트를 원본 홑옷 시트와 픽셀 비교 + 천 색으로 두건만 오림(피부는 절대 안 가져옴, 작은 구멍 메움) ② 자세마다 서 있기 머리를 찾아 위치·회전·크기 측정 ③ 두건 윗선 위로 나온 상투만 지우는 마스크(주먹·팔은 남김) ④ `assets/equipment/head/`로 내보냄. 새 모자도 같은 순서 |
 | 아이템 아이콘 | `icons.py` | 256×256 투명, 여백 18px. Flow 아이템 시트는 반으로 나눠 `cutout`, 두건은 뒷면 그림, 목검은 45도 눕힘, 옷은 서 있기 정면 목 아래 |
 | 마을 물건 조각(앞뒤 가림) v2 | `village_objects.py` | 원본 마을 vs Flow 빈 바닥판 색 차이(풀↔흙 바뀜 제외) → 물건, 격자로 픽셀별 발 기준선(자기 그림 아래끝+4를 넘지 않게) → 8px 올림·최빈값 다듬기 → 아틀라스 1장 `assets/maps/village_objects.webp` + `village_objects_atlas.json` + 목록 `village_objects.json`. 시험: 아래 comp_atlas 방식으로 24곳 합성해 눈으로 확인 |
+
+## 새 그림체(v3, 2026-10-14) — 원본 `assets/source/v3/`
+
+| 무엇 | 도구 |
+|---|---|
+| 옷 6종 서 있기·걷기·주먹 | `v3_chars.py` |
+| 홑옷 무기 자세·손 덮개·쥐는 점·목검 | `v3_weapons.py`(쥐는 점은 작업 폴더 `grips_v3.json`; 목검은 실행 뒤 칼끝을 옛 높이 380/370/358에 맞춰 옮김) |
+| 두건 | `hood_cut_v3.py` → `hood_align.py` → `hood_export.py` |
+| 몬스터 | `v3_monsters.py`(꼬리로 붙은 그림은 가장 얇은 세로줄에서 자름) |
+| 마을 사람 | `v3_npcs.py` |
+| 아이콘 | `icons.py` |
+| 맵·반짝이 지우기 | `v3_maps.py` |
+| 물건 조각 | `village_objects_v3.py [맵 id]` |
+| 던전 격자 초안 | `grid_draft.py`, `grid_draft_v3.py` |
