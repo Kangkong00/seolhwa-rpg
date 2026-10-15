@@ -65,6 +65,7 @@ docs/          문서 사본
 | [docs/spec/sound.md](docs/spec/sound.md) | 효과음(코드로 만든 소리, 파일로 바꾸는 방법, 아이폰 첫 터치) |
 | [docs/plan.md](docs/plan.md) | 개발 계획서 사본(최신본은 위 링크) |
 | [docs/handover_planning.md](docs/handover_planning.md) | 기획 대화 인수인계서(역할 나누기, 강콩과 일하는 방식, Flow 요령, 다음 할 일) |
+| [docs/handover_code.md](docs/handover_code.md) | **Claude Code 인수인계서**(새 Claude Code 대화는 이것부터): 일하는 방식, 커밋·배포, 코드 지도, 시험하는 법(`tools/test/`)과 함정, 남은 일·알려진 문제 |
 | `docs/*.png`, `docs/*.gif` | 기획 쪽 합성 시안(휘두르기, 궤적, 외곽선 비교, 마을 길 등). 각 spec 파일에서 어느 시안인지 적어 둠 |
 | `tools/art/` | 기획 쪽 그림 가공 도구(오리기·손 덮개·시안 만들기). 게임 코드가 아님 — Claude Code는 고치지 않음 |
 
