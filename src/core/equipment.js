@@ -25,6 +25,13 @@ export function createEquipment(itemDefs, start, saved = null) {
   }
   const coins = Number(src.coins ?? start.coins ?? 0);
   state.coins = Number.isFinite(coins) && coins > 0 ? Math.floor(coins) : 0;
+  // 한 번만 주는 선물(start.grants): 아직 안 받았으면 넣어 줌(예전 저장에도)
+  state.grants = Array.isArray(src.grants) ? src.grants.filter((g) => typeof g === 'string') : [];
+  for (const g of start.grants || []) {
+    if (state.grants.includes(g.id)) continue;
+    for (const [id, n] of Object.entries(g.items || {})) if (known(id)) addItem(state, itemDefs, id, n);
+    state.grants.push(g.id);
+  }
   return state;
 }
 
@@ -60,11 +67,13 @@ export function removeItem(state, id, n = 1) {
   return true;
 }
 
-// 가방의 index번째 장비를 낌. 그 칸에 끼던 것은 가방의 같은 자리로. 반환: 바뀐 칸 이름 또는 null(장비가 아님)
-export function equipFromBag(state, itemDefs, index) {
+// 가방의 index번째 장비를 낌. 그 칸에 끼던 것은 가방의 같은 자리로.
+// level을 주면 def.level보다 낮을 때 끼지 않음. 반환: 바뀐 칸 이름 또는 null(장비가 아님·레벨 모자람)
+export function equipFromBag(state, itemDefs, index, level = Infinity) {
   const e = state.bag[index];
   const def = e && itemDefs[e.id];
   if (!def || !SLOTS.includes(def.slot)) return null;
+  if (def.level && level < def.level) return null;
   const old = state.equipped[def.slot];
   state.equipped[def.slot] = e.id;
   if (old) state.bag[index] = { id: old, n: 1 };

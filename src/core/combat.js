@@ -33,6 +33,7 @@ export function findTarget(pos, facing, monsters, reach, width) {
 // 맞히기: 체력을 깎고, 맞은 방향으로 밀려나게 함 (실제 이동은 monsters.js의 updateMonster에서 벽을 피해 조금씩)
 // 반환: { damage, killed }
 export function hitMonster(m, facing, damage, knockbackPx, stunMs) {
+  damage = Math.max(1, Math.round(damage)); // 무예 배율로 소수가 되면 반올림(최소 1)
   m.hp = Math.max(0, m.hp - damage);
   m.knockDir = facing;
   m.knockLeft = knockbackPx;

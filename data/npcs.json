@@ -20,7 +20,7 @@
       "id": "yakbang", "name": "약방 영감", "map": "village", "x": 1180, "y": 242, "facing": "down", "image": "assets/npcs/yakbang/front.png",
       "menu": ["buy", "sell", "talk"],
       "greeting": "어디 다친 데는 없고?",
-      "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth"], "sells": [{ "id": "med_tangyak", "price": 20 }] },
+      "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth"], "sells": [{ "id": "med_tangyak", "price": 20 }, { "id": "item_return_charm", "price": 10 }] },
       "lines": ["쥐수염이며 쥐 앞니며, 약재로 쓰는 데가 다 있지.", "탕약 한 사발이면 웬만한 상처는 금세 아물어."]
     },
     {

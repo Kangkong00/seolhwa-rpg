@@ -1,5 +1,5 @@
 {
-  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, swingMs=휘두르기 시간(칼이 thetaFrom→thetaTo로 도는 시간), cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀, 맞히기 도움이 다가갈 때도 이 거리 기준), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=궤적 색(칼날 색)",
+  "_설명": "무기 목록·휘두르기 값(모두 임시값). 그림 규격: 240×960, 칼끝이 위, 쥐는 점(gripX, gripY). tipFromGrip=쥐는 점에서 칼끝까지(그림 픽셀), damage=한 대 데미지, swingMs=휘두르기 시간(칼이 thetaFrom→thetaTo로 도는 시간), cooldownMs=공격 간격, reach·width=맞히는 거리·폭(맵 픽셀, 맞히기 도움이 다가갈 때도 이 거리 기준), knockbackPx=밀어내는 힘, stunMs=멈칫, stepPx=내딛기, trailColor=궤적 색(칼날 색), tint=그림 물들임(새 무기 그림이 오기 전 임시). 새 무기 3종(녹슨 쇠칼·무쇠 환도·청강 환도)은 docs/spec/feedback_1015.md 7 — reach는 칼이 길어진 만큼 조금 늘림(임시)",
   "canvas": { "width": 240, "height": 960, "gripX": 120, "gripY": 800 },
   "weapons": [
     {
@@ -16,6 +16,21 @@
       "id": "wood_bakdal", "name": "박달나무 목검", "image": "assets/weapons/wood_bakdal.png", "tipFromGrip": 442,
       "damage": 3, "swingMs": 220, "cooldownMs": 500,
       "reach": 48, "width": 44, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#7a5245"
+    },
+    {
+      "id": "iron_rusty", "name": "녹슨 쇠칼", "image": "assets/weapons/wood_pine.png", "tint": "#8f979f", "_tint": "그림이 오기 전 목검 그림을 회색으로 물들여 임시로 씀(그림이 오면 image를 바꾸고 tint를 지움)", "tipFromGrip": 460,
+      "damage": 4, "swingMs": 230, "cooldownMs": 520,
+      "reach": 50, "width": 44, "knockbackPx": 14, "stunMs": 360, "stepPx": 4, "trailColor": "#c9b8a6"
+    },
+    {
+      "id": "iron_hwando", "name": "무쇠 환도", "image": "assets/weapons/wood_pine.png", "tint": "#9aa2aa", "tipFromGrip": 480,
+      "damage": 5, "swingMs": 220, "cooldownMs": 500,
+      "reach": 52, "width": 44, "knockbackPx": 15, "stunMs": 360, "stepPx": 4, "trailColor": "#dfe4ea"
+    },
+    {
+      "id": "steel_hwando", "name": "청강 환도", "image": "assets/weapons/wood_pine.png", "tint": "#b4c2d0", "tipFromGrip": 500,
+      "damage": 7, "swingMs": 210, "cooldownMs": 480,
+      "reach": 54, "width": 44, "knockbackPx": 16, "stunMs": 380, "stepPx": 4, "trailColor": "#e9f3ff"
     }
   ],
   "swing": {
