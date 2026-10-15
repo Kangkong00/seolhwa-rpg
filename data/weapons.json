@@ -41,26 +41,26 @@
     "alphaMax": 0.95,
     "alphaPower": 1.2,
     "edgeWidth": 1,
-    "side": { "shape": "arc", "center": [215, 350], "rx": 400, "ry": 328, "fromDeg": -80, "toDeg": -232, "thickness": 250, "scaleAbout": [210, 480], "behind": false },
-    "front": { "shape": "line", "from": [180, -10], "to": [430, 600], "thickness": 56, "scaleAbout": [360, 464], "behind": false },
-    "back": { "shape": "line", "from": [470, -60], "to": [370, 470], "thickness": 56, "scaleAbout": [430, 390], "behind": true }
+    "side": { "shape": "arc", "center": [232, 329], "rx": 400, "ry": 328, "fromDeg": -80, "toDeg": -232, "thickness": 250, "scaleAbout": [227, 459], "behind": false },
+    "front": { "shape": "line", "from": [155, -6], "to": [405, 604], "thickness": 56, "scaleAbout": [335, 468], "behind": false },
+    "back": { "shape": "line", "from": [426, -75], "to": [326, 455], "thickness": 56, "scaleAbout": [386, 375], "behind": true }
   },
   "_attach": "무기 쥐는 점(옷별, 640×720 자세 그림 기준, 옆면은 왼쪽을 보는 그림 기준 — 오른쪽은 코드가 x를 640−x로). hold·hold_step은 들고 서 있기·걷기의 쥐는 점과 방향(theta, lat), raise·swing·strike는 휘두를 때 주먹(방향은 swing에서 계산). 값이 없는 옷은 무기를 들어도 주먹으로 침",
   "attach": {
     "outfit1_hotot": {
       "hold": {
-        "front": { "grip": [200, 420], "theta": 15, "lat": -0.12 },
-        "side": { "grip": [200, 414], "theta": 20, "lat": 0 },
-        "back": { "grip": [436, 414], "theta": 10, "lat": -0.12 }
+        "front": { "grip": [200, 417], "theta": 15, "lat": -0.12 },
+        "side": { "grip": [218, 418], "theta": 20, "lat": 0 },
+        "back": { "grip": [400, 405], "theta": 10, "lat": -0.12 }
       },
       "hold_step": {
-        "front": { "grip": [224, 424], "theta": 15, "lat": -0.12 },
-        "side": { "grip": [210, 420], "theta": 20, "lat": 0 },
-        "back": { "grip": [450, 386], "theta": 10, "lat": -0.12 }
+        "front": { "grip": [226, 406], "theta": 15, "lat": -0.12 },
+        "side": { "grip": [226, 417], "theta": 20, "lat": 0 },
+        "back": { "grip": [450, 390], "theta": 10, "lat": -0.12 }
       },
-      "raise": { "front": { "grip": [150, 160] }, "side": { "grip": [214, 136] }, "back": { "grip": [480, 160] } },
-      "swing": { "front": { "grip": [184, 210] }, "side": { "grip": [116, 224] }, "back": { "grip": [456, 210] } },
-      "strike": { "front": { "grip": [360, 464] }, "side": { "grip": [210, 480] }, "back": { "grip": [430, 390] } }
+      "raise": { "front": { "grip": [151, 172] }, "side": { "grip": [214, 147] }, "back": { "grip": [482, 173] } },
+      "swing": { "front": { "grip": [182, 216] }, "side": { "grip": [131, 232] }, "back": { "grip": [462, 212] } },
+      "strike": { "front": { "grip": [335, 468] }, "side": { "grip": [227, 459] }, "back": { "grip": [386, 375] } }
     }
   }
 }

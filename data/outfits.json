@@ -1,12 +1,12 @@
 {
-  "_설명": "옷 목록과 캐릭터 그림 규격. legSplitY=정면·뒷면 걷기에서 이 높이(캔버스 기준) 아래 다리만 좌우 반전. 옷 아랫단 바로 아래로 맞춤. holdLegSplitY=무기 든 걷기(hold_step, 640×720)의 다리 반전 기준선(약 560, 확인 필요).",
+  "_설명": "옷 목록과 캐릭터 그림 규격. legSplitY=정면·뒷면 걷기에서 이 높이(캔버스 기준) 아래 다리만 좌우 반전. 옷 아랫단 바로 아래로 맞춤. holdLegSplitY=무기 든 걷기(hold_step, 640×720)의 다리 반전 기준선. 2026-10-14 새 그림체 값(docs/spec/newstyle.md, 걷기에서 옷자락에 걸리면 몇 px 조정).",
   "canvas": { "width": 400, "height": 720, "footY": 700, "standHeight": 640 },
   "outfits": [
-    { "id": "outfit1_hotot", "name": "허름한 홑옷", "folder": "assets/characters/outfit1_hotot", "legSplitY": 555, "holdLegSplitY": 560 },
-    { "id": "outfit2_mumyeong", "name": "무명옷", "folder": "assets/characters/outfit2_mumyeong", "legSplitY": 590 },
-    { "id": "outfit3_dopo", "name": "도포", "folder": "assets/characters/outfit3_dopo", "legSplitY": 592 },
-    { "id": "outfit4_cheollik", "name": "철릭", "folder": "assets/characters/outfit4_cheollik", "legSplitY": 612 },
-    { "id": "outfit5_dujeonggap", "name": "두정갑", "folder": "assets/characters/outfit5_dujeonggap", "legSplitY": 600 },
-    { "id": "outfit6_sinseon", "name": "신선복", "folder": "assets/characters/outfit6_sinseon", "legSplitY": 600 }
+    { "id": "outfit1_hotot", "name": "허름한 홑옷", "folder": "assets/characters/outfit1_hotot", "legSplitY": 552, "holdLegSplitY": 545 },
+    { "id": "outfit2_mumyeong", "name": "무명옷", "folder": "assets/characters/outfit2_mumyeong", "legSplitY": 596 },
+    { "id": "outfit3_dopo", "name": "도포", "folder": "assets/characters/outfit3_dopo", "legSplitY": 601 },
+    { "id": "outfit4_cheollik", "name": "철릭", "folder": "assets/characters/outfit4_cheollik", "legSplitY": 633 },
+    { "id": "outfit5_dujeonggap", "name": "두정갑", "folder": "assets/characters/outfit5_dujeonggap", "legSplitY": 593 },
+    { "id": "outfit6_sinseon", "name": "신선복", "folder": "assets/characters/outfit6_sinseon", "legSplitY": 599 }
   ]
 }
