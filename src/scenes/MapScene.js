@@ -16,7 +16,7 @@ import { StatusPanel } from '../ui/statusPanel.js';
 import { SkillButtons } from '../ui/skillButtons.js';
 import { NpcPanel } from '../ui/npcPanel.js';
 import { Toast } from '../ui/toast.js';
-import { NpcView, loadNpcTextures } from './NpcView.js';
+import { NpcView, loadNpcTexture } from './NpcView.js';
 import { NpcMenu } from './npcMenu.js';
 import { DropView, makeDropTexture } from './dropView.js';
 import { PickupFeed } from './pickupFeed.js';
@@ -66,7 +66,9 @@ export class MapScene extends Phaser.Scene {
     // 물건 조각: 마을 그림과 같은 자리에 겹쳐 놓고 깊이 = baseY (발이 baseY보다 북쪽이면 가려짐)
     this.mapObjects = createMapObjects(this, this.d.mapId, this.d.mapJson.objectsData);
     // 던전 입구 표시: 빛나는 테두리 + 가까이 가면 이름표
+    this.unlocked = new Set();
     this.portalFx = this.map.portals.map((p) => new PortalFx(this, p, cfg.portalFx, this.d.getPixelRatio()));
+    this.portalFx.forEach((fx, i) => fx.setVisible(this.portalOpen(this.map.portals[i])));
 
     // 주인공 상태 (위치는 발끝 기준). 맵 이동으로 왔으면 도착 지점, 아니면 저장 위치, 없으면 맵의 시작 위치
     const save = loadSave();
@@ -311,8 +313,19 @@ export class MapScene extends Phaser.Scene {
     if (slot) this.afterEquipChange(slot);
   }
 
-  // 먹을 것(주먹밥·탕약): 체력 회복
+  // 먹을 것(주먹밥·탕약): 체력 회복 / 귀환 부적: 마을 성황당 앞으로
   eatItem(bagIndex, def) {
+    if (def.use.returnTo) {
+      if (this.transitioning || this.dead) return;
+      useFromBag(this.equip, this.itemDefs, bagIndex);
+      this.setBagOpen(false);
+      this.sfx.play('learn');
+      this.toast.show(`${josa(def.name, '을', '를')} 썼습니다`);
+      this.save();
+      const r = def.use.returnTo;
+      this.travel(r.map, { x: r.x, y: r.y, facing: r.facing || 'down' });
+      return;
+    }
     if (this.player.hp >= this.player.maxHp) {
       this.renderBag('체력이 가득합니다');
       return;
@@ -368,21 +381,15 @@ export class MapScene extends Phaser.Scene {
   async prepareNpcs() {
     const list = this.d.npcs.npcs.filter((n) => n.map === this.d.mapId);
     if (!list.length) return;
-    const scale = this.textureScale();
-    const outline = this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight);
+    const canvas = this.d.npcs.imageCanvas;
+    const outlineFor = (sc) => this.outlineFor(sc, canvas.displayHeight, canvas.refHeight);
     for (const npc of list) {
-      const outfit = this.d.outfits.outfits.find((o) => o.id === npc.outfit) || this.d.outfits.outfits[0];
-      const keys = await loadNpcTextures(this, outfit, scale, outline);
+      const tex = await loadNpcTexture(this, npc, canvas, this.pixelScale(), outlineFor);
       if (!this.sys.isActive()) return;
-      this.npcViews.push(new NpcView(this, npc, keys, {
-        canvasSpec: this.d.outfits.canvas,
-        height: this.cfg.player.height,
-        texScale: scale,
-        shadowCfg: this.cfg.shadow,
-        pixelRatio: this.d.getPixelRatio(),
-      }));
+      this.npcViews.push(new NpcView(this, npc, tex, { canvas, shadowCfg: this.cfg.shadow, pixelRatio: this.d.getPixelRatio() }));
     }
   }
+
 
   // 맵 좌표로 사람을 눌렀는지 보고, 눌렀으면 창을 엶
   tapNpcAt(wx, wy) {
@@ -690,6 +697,16 @@ export class MapScene extends Phaser.Scene {
   // ---------- 쓰러뜨림: 경험치·전리품 ----------
   onMonsterKilled(target) {
     const def = this.monsterDefs[target.type];
+    // 우두머리를 쓰러뜨리면 잠긴 출구가 열림(빛나기 시작)
+    this.map.portals.forEach((p, i) => {
+      if (p.unlockOnKill === target.type && !this.unlocked.has(p.id)) {
+        this.unlocked.add(p.id);
+        this.portalFx[i].setVisible(true);
+        const label = p.label || p.name;
+        // '마을로'처럼 이미 '로'로 끝나면 그대로
+        this.toast.show(`${label.endsWith('로') ? label : josa(label, '으로', '로')} 가는 길이 열렸습니다`, 3000);
+      }
+    });
     if (def.exp) this.gainExp(def.exp);
     const entries = rollDrops(def);
     for (const d of this.ground.spawn(target.x, target.y, entries, this.map.grid)) {
@@ -903,7 +920,7 @@ export class MapScene extends Phaser.Scene {
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     this.playerView.flash(ph.flashColor, ph.flashMs);
     showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, { ...this.cfg.hitFx, damageColor: '#ffb0a0' }, this.d.getPixelRatio());
-    this.knock = { dir: bite.dir, left: ph.knockbackPx };
+    this.knock = { dir: bite.dir, left: bite.knockbackPx ?? ph.knockbackPx }; // 쥐왕 돌진은 더 많이 밀려남
     if (result.killed) this.die();
   }
 
@@ -924,8 +941,33 @@ export class MapScene extends Phaser.Scene {
   }
 
   // ---------- 맵 이동 ----------
+  // 잠긴 이동 지점(unlockOnKill: 그 몬스터를 쓰러뜨려야 열림 — 쥐왕의 방 '마을로')은 열리기 전엔 없는 것과 같음
+  portalOpen(p) {
+    return !p.unlockOnKill || (this.unlocked && this.unlocked.has(p.id));
+  }
+
   portalAt(x, y) {
-    return this.map.portals.find((p) => x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) || null;
+    return this.map.portals.find((p) => this.portalOpen(p) && x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) || null;
+  }
+
+  // 다른 맵(또는 같은 맵의 다른 자리)으로: 어두워졌다가 도착 자리에서 밝아짐
+  travel(mapId, arrive) {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    this.save();
+    const cam = this.cameras.main;
+    const next = this.d.fetchMap(mapId);
+    cam.fadeOut(this.cfg.mapFadeMs, 0, 0, 0);
+    cam.once('camerafadeoutcomplete', async () => {
+      try {
+        const mapJson = await next;
+        this.scene.restart({ ...this.d, mapId, mapJson, arrive });
+      } catch (err) {
+        console.error(err);
+        this.transitioning = false;
+        cam.fadeIn(this.cfg.mapFadeMs);
+      }
+    });
   }
 
   checkPortal() {

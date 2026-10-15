@@ -53,9 +53,17 @@ export class PortalFx {
     this.scene = scene;
   }
 
+  // 잠긴 출구(쥐왕을 쓰러뜨려야 열림)는 열리기 전엔 보이지 않음
+  setVisible(v) {
+    this.visible = v;
+    this.glow.setVisible(v);
+    if (!v && this.label) this.label.setAlpha(0);
+    if (!v) this.labelShown = false;
+  }
+
   // 주인공 발 위치로 이름표를 보였다 숨김
   update(px, py) {
-    if (!this.label) return;
+    if (!this.label || this.visible === false) return;
     const near = Math.hypot(px - this.center.x, py - this.center.y) <= this.cfg.labelDistance;
     if (near === this.labelShown) return;
     this.labelShown = near;

@@ -6,9 +6,11 @@
   "cellSize": 8,
   "spawn": {"x": 690, "y": 470},
   "portals": [
-    {"id": "to_rat_1", "name": "곳간 옆 쥐구멍(들쥐굴로)", "label": "들쥐굴", "x": 320, "y": 150, "w": 40, "h": 16, "fx": {"shape": "ellipse", "x": 328, "y": 137, "w": 28, "h": 20}, "to": "dungeon_rat_1", "arrive": {"x": 690, "y": 696, "facing": "down"}}
+    {"id": "to_rat_1", "name": "곳간 옆 쥐구멍(들쥐굴로)", "label": "들쥐굴", "x": 320, "y": 150, "w": 40, "h": 16, "fx": {"shape": "ellipse", "x": 328, "y": 137, "w": 28, "h": 20}, "to": "dungeon_rat_1", "arrive": {"x": 690, "y": 696, "facing": "down"}},
+    {"id": "to_weasel_1", "name": "닭장 마당 안쪽 닭장 옆(족제비굴로)", "label": "족제비굴", "x": 1192, "y": 482, "w": 58, "h": 24, "fx": {"shape": "ellipse", "x": 1190, "y": 480, "w": 62, "h": 28}, "to": "dungeon_weasel_1", "arrive": {"x": 690, "y": 690, "facing": "up"}}
   ],
-  "spawnZones": [],
+  "spawnZones": [
+  ],
   "objects": "assets/maps/village_objects.json",
   "blocked": [
     "#########################################..........#########################################################################################################################",
