@@ -10,5 +10,17 @@
 "wood_bakdal": {
 "tipFromGrip": 442,
 "note": "칼끝을 옛 그림과 같은 높이에 맞춤 — weapons.json tipFromGrip 그대로"
+},
+"iron_rusty": {
+"tipFromGrip": 460,
+"note": "Flow 47 쇠칼 시트, 칼끝 = 800 − tipFromGrip (tools/art/v3_iron.py)"
+},
+"iron_hwando": {
+"tipFromGrip": 480,
+"note": "Flow 47 쇠칼 시트, 칼끝 = 800 − tipFromGrip (tools/art/v3_iron.py)"
+},
+"steel_hwando": {
+"tipFromGrip": 500,
+"note": "Flow 47 쇠칼 시트, 칼끝 = 800 − tipFromGrip (tools/art/v3_iron.py)"
 }
 }

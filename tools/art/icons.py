@@ -18,7 +18,7 @@ icons['toshi_mumyeong']=fit(cutout(sheet,(0,0,W//2,sheet.height)),'toshi_mumyeon
 icons['shoes_jipsin']=fit(cutout(sheet,(W//2,0,W,sheet.height)),'shoes_jipsin')
 hood=Image.open(G+'assets/equipment/head/hood_mumyeong/back.png')
 icons['hood_mumyeong']=fit(hood,'hood_mumyeong')
-for w in ['wood_pine','wood_oak','wood_bakdal']:
+for w in ['wood_pine','wood_oak','wood_bakdal','iron_rusty','iron_hwando','steel_hwando']:
     im=Image.open(G+f'assets/weapons/{w}.png').convert('RGBA')
     icons[w]=fit(im.rotate(-45,resample=Image.BICUBIC,expand=True),w)
 # 옷: 서 있기 정면에서 목 아래~발목(얼굴 빼고 옷만)
