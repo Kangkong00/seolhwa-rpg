@@ -79,6 +79,10 @@ for i,n in enumerate(['loot_weasel_meat','loot_weasel_hide','loot_hwangmo','loot
     if n=='loot_weasel_meat': c=recolor(c,meat_dark)
     if n=='loot_ratking_coins': c=recolor(c,gold)
     icons[n]=fit(c,n)
+# 46번(2026-10-15): 족제비 고기·쥐왕 꿰미 다시 그림 → 색 바꾼 임시본 대신
+i3=Image.open(G+'assets/source/v3/items_icons3_sheet.jpg'); hw=i3.width//2
+icons['loot_weasel_meat']=fit(cutout(i3,(0,0,hw,i3.height)),'loot_weasel_meat')
+icons['loot_ratking_coins']=fit(cutout(i3,(hw,0,i3.width,i3.height)),'loot_ratking_coins')
 # preview on slot frames, at game-ish sizes
 P=Image.new("RGB",(6*150+20,330*((len(icons)+5)//6)),(40,32,26)); D=ImageDraw.Draw(P)
 for i,(k,c) in enumerate(icons.items()):

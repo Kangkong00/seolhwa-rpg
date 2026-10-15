@@ -57,6 +57,7 @@ docs/          문서 사본
 | [docs/spec/equipment.md](docs/spec/equipment.md) | 장비 칸 5개, 초반 아이템 목록, 아이템 아이콘(`assets/items/icons/`), 최소 장비창·가방 |
 | [docs/spec/economy.md](docs/spec/economy.md) | 초보 구간 1차 시험안: 경험치·레벨, 전리품(쥐고기 등)·엽전(푼·전·냥), 무예 3종(늙은 군관), 가게 사고팔기, 길잡이 의뢰 |
 | [docs/spec/newstyle.md](docs/spec/newstyle.md) | **새 그림체 전환 반영(2026-10-14)**: 바뀐 그림·새 그림(쥐왕·족제비·마을 사람·새 맵 3·아이콘 8) 목록, Claude Code가 바꿀 값(legSplitY·쥐는 점·궤적 이동·새 맵 입구) |
+| [docs/spec/feedback_1015.md](docs/spec/feedback_1015.md) | 2026-10-15 강콩 피드백: 무예 연출(휘돌려 베기 지속형), 데미지 숫자, 걸음 125, 귀환 단추, 아이템 정보창, 능력치(공격력·방어력·걸음) 임시값, 새 무기 3종 |
 | [docs/spec/beginner_area.md](docs/spec/beginner_area.md) | 초보 구간 구성: 들쥐굴 1~3층·족제비굴, 레벨 표(15까지), 새 몬스터(굴 들쥐·곳간 쥐왕·족제비) 수치, 새 전리품·귀환 부적, 마을 사람 그림 |
 | [docs/spec/combat.md](docs/spec/combat.md) | 때리기(맞히기·히트), 싸움 규칙(맞으면 반격·포기), 주인공 체력·체력바 |
 | [docs/spec/monsters.md](docs/spec/monsters.md) | 몬스터 그림 규격, 들쥐·큰 들쥐 크기, 돌아다니기, 몬스터 구역(`spawnZones`) |
@@ -99,6 +100,8 @@ docs/          문서 사본
 - [x] 새 그림체 그림 올라옴(2026-10-14): 옷 6종·홑옷 무기 자세·두건·목검·들쥐·마을·들쥐굴 1층·아이콘은 파일만 바뀜
 - [x] 새 그림체 값 반영(`docs/spec/newstyle.md` "Claude Code가 바꿀 값" 1~2): legSplitY, 홑옷 쥐는 점, 궤적 이동 — 강콩 아이폰 확인 필요
 - [x] 초보 구간 확장(`docs/spec/newstyle.md` 3~6 + `beginner_area.md`): 굴 들쥐·쥐왕·족제비, 마을 사람 그림, 새 전리품·귀환 부적·무예 아이콘, 들쥐굴 2·3층·족제비굴(격자 초안 `docs/map_drafts/`) — 2026-10-15 반영(`newstyle.md` "반영됨"). 새 맵 격자는 초안이라 어긋난 곳은 격자 편집으로, 족제비굴 입구 자리 확인 필요
+- [ ] 2026-10-15 피드백(`docs/spec/feedback_1015.md` 1~6): 무예 연출, 데미지 숫자, 걸음 속도, 귀환 단추, 아이템 정보창, 능력치 — 그림 필요 없음, 바로
+- [ ] 새 무기 3종·대장장이(`feedback_1015.md` 7): 그림(Flow 47·48) 기다림. 수치·정보창은 먼저 넣어도 됨
 - [ ] 옷 2~6 무기 자세 그림: 미룸(나중에 옷마다 3장, 들고 걷기는 합성)
 
 ## 작업 규칙
