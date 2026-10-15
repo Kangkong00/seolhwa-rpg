@@ -11,6 +11,15 @@ export class SkillButtons {
       b.className = 'skill-btn locked';
       b.setAttribute('aria-label', s.name);
       b.textContent = s.icon;
+      // 아이콘 그림(못 받으면 한자 글자 그대로)
+      if (s.image) {
+        const img = document.createElement('img');
+        img.src = s.image;
+        img.alt = '';
+        img.draggable = false;
+        img.className = 'skill-img';
+        img.addEventListener('load', () => { b.firstChild.textContent = ''; b.prepend(img); }, { once: true });
+      }
       const cd = document.createElement('div');
       cd.className = 'cd';
       const t = document.createElement('div');

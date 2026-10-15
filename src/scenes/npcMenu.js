@@ -114,7 +114,7 @@ export class NpcMenu {
   sell(message = '') {
     const { itemDefs, equip } = this.s;
     const shop = this.npc.shop;
-    const ids = [...new Set(equip.bag.map((e) => e.id))].filter((id) => shopBuysItem(shop, id));
+    const ids = [...new Set(equip.bag.map((e) => e.id))].filter((id) => shopBuysItem(shop, id, itemDefs[id]));
     const wants = (shop.buys || []).map((id) => itemDefs[id] && itemDefs[id].name).filter(Boolean).join(', ');
     this.panel.render({
       title: `${this.npc.name} · 팔기`,
@@ -178,7 +178,7 @@ export class NpcMenu {
         const c = canLearn(sk, progress, equip, learned, itemDefs);
         const req = `레벨 ${(sk.requires && sk.requires.level) || 1} · ${this.costText(sk)}`;
         return {
-          icon: charIcon(sk.icon),
+          icon: sk.image ? itemIcon({ icon: sk.image, name: sk.icon, iconText: sk.icon }) : charIcon(sk.icon),
           label: sk.name,
           sub: known ? `배움 · ${sk.desc}` : c.ok ? `${req} · 배울 수 있음` : `${req} · 모자람: ${c.reasons.join(', ')}`,
           right: known ? '배움' : '',
@@ -189,7 +189,7 @@ export class NpcMenu {
             this.s.sfx.play('learn');
             this.changed();
             this.s.refreshSkills();
-            this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 ${sk.icon} 단추로 쓰게.`);
+            this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 무예 단추로 쓰게.`);
           },
         };
       }),

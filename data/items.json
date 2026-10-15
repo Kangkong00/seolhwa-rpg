@@ -1,5 +1,5 @@
 {
-  "_설명": "아이템 정의와 시작 장비(docs/spec/equipment.md). slot=장비 칸(weapon·outfit·head·arms·feet), icon=아이콘 그림(256×256), stats=능력치(아직 미정이라 모두 0). stack=true면 가방 한 칸에 겹침(×개수), sellPrice=가게에 팔 때 받는 푼, use=가방에서 누르면 먹음(heal=체력 회복량, healFull=체력 전부). 아이콘 그림이 아직 없으면 iconText(없으면 이름 첫 글자) 글자 칸으로 보임. 무기 휘두르기 값은 data/weapons.json, 옷 그림은 data/outfits.json(같은 id). head는 머리 장비 그림 폴더(front·side·back.png, topknot/ 상투 지우개)",
+  "_설명": "아이템 정의와 시작 장비(docs/spec/equipment.md). slot=장비 칸(weapon·outfit·head·arms·feet), icon=아이콘 그림(256×256), stats=능력치(아직 미정이라 모두 0). stack=true면 가방 한 칸에 겹침(×개수), sellPrice=가게에 팔 때 받는 푼, use=가방에서 누르면 씀(heal=체력 회복량, healFull=체력 전부, returnTo=그 맵·자리로 돌아감 — 귀환 부적). anyShop=어느 가게든 사 줌(쥐왕의 엽전 꿰미). 아이콘 그림이 아직 없으면 iconText(없으면 이름 첫 글자) 글자 칸으로 보임. 무기 휘두르기 값은 data/weapons.json, 옷 그림은 data/outfits.json(같은 id). head는 머리 장비 그림 폴더(front·side·back.png, topknot/ 상투 지우개)",
   "slots": [
     { "id": "weapon", "name": "무기" },
     { "id": "outfit", "name": "옷" },
@@ -26,6 +26,11 @@
     { "id": "loot_rat_hide", "name": "쥐가죽", "iconText": "가죽", "slot": "", "icon": "assets/items/icons/loot_rat_hide.png", "stack": true, "sellPrice": 6 },
     { "id": "loot_rat_whisker", "name": "쥐수염", "iconText": "수염", "slot": "", "icon": "assets/items/icons/loot_rat_whisker.png", "stack": true, "sellPrice": 10 },
     { "id": "loot_rat_tooth", "name": "쥐 앞니", "iconText": "앞니", "slot": "", "icon": "assets/items/icons/loot_rat_tooth.png", "stack": true, "sellPrice": 15 },
+    { "id": "loot_weasel_meat", "name": "족제비 고기", "iconText": "고기", "slot": "", "icon": "assets/items/icons/loot_weasel_meat.png", "stack": true, "sellPrice": 5 },
+    { "id": "loot_weasel_hide", "name": "족제비 가죽", "iconText": "가죽", "slot": "", "icon": "assets/items/icons/loot_weasel_hide.png", "stack": true, "sellPrice": 14 },
+    { "id": "loot_hwangmo", "name": "황모", "iconText": "황모", "slot": "", "icon": "assets/items/icons/loot_hwangmo.png", "stack": true, "sellPrice": 40 },
+    { "id": "loot_ratking_coins", "name": "쥐왕의 엽전 꿰미", "iconText": "꿰미", "slot": "", "icon": "assets/items/icons/loot_ratking_coins.png", "stack": true, "sellPrice": 100, "anyShop": true },
+    { "id": "item_return_charm", "name": "귀환 부적", "iconText": "부적", "slot": "", "icon": "assets/items/icons/item_return_charm.png", "stack": true, "use": { "returnTo": { "map": "village", "x": 440, "y": 738, "facing": "down" } } },
     { "id": "food_riceball", "name": "주먹밥", "iconText": "밥", "slot": "", "icon": "assets/items/icons/food_riceball.png", "stack": true, "use": { "heal": 3 } },
     { "id": "med_tangyak", "name": "탕약", "iconText": "약", "slot": "", "icon": "assets/items/icons/med_tangyak.png", "stack": true, "use": { "healFull": true } }
   ],

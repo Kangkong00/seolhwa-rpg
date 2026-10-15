@@ -2,14 +2,16 @@
 // 가게는 자기가 사 주는 물건만 삼. 파는 값은 data/items.json sellPrice.
 import { addItem, removeItem, countItem } from './equipment.js';
 
-export function shopBuysItem(shop, id) {
-  return !!shop && Array.isArray(shop.buys) && shop.buys.includes(id);
+// 가게가 사 주는 물건인지(def.anyShop이면 어느 가게든 사 줌 — 쥐왕의 엽전 꿰미)
+export function shopBuysItem(shop, id, def = null) {
+  if (!shop || !Array.isArray(shop.buys)) return false;
+  return shop.buys.includes(id) || !!(def && def.anyShop && shop.sells !== undefined && shop.buys.length > 0);
 }
 
 // 가게에 팔기. 반환: { ok, coins, reason }
 export function sellToShop(inv, itemDefs, shop, id, n) {
   const def = itemDefs[id];
-  if (!def || !shopBuysItem(shop, id)) return { ok: false, reason: '이 가게에서는 사지 않습니다' };
+  if (!def || !shopBuysItem(shop, id, def)) return { ok: false, reason: '이 가게에서는 사지 않습니다' };
   n = Math.floor(n);
   if (n <= 0 || countItem(inv, id) < n) return { ok: false, reason: '가진 것이 모자랍니다' };
   removeItem(inv, id, n);

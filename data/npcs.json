@@ -1,40 +1,48 @@
 {
-  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, outfit=그림이 나오기 전 임시로 쓰는 옷 서 있기 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(푼), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
+  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, image=정면 서 있기 그림(빈 문자열이면 그림 없이 이름표만 — 성황당처럼 사람이 아닌 곳), imageCanvas=그림 규격(400×800, 발 y=780) — 5명 같은 배율로 refHeight(가장 큰 사람 740px)를 displayHeight(70)로 줄여 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(푼), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
   "tapRadius": 22,
+  "imageCanvas": { "width": 400, "height": 800, "footY": 780, "refHeight": 740, "displayHeight": 70 },
   "npcs": [
     {
-      "id": "gungwan", "name": "늙은 군관", "map": "village", "x": 640, "y": 412, "facing": "down", "outfit": "outfit3_dopo",
+      "id": "gungwan", "name": "늙은 군관", "map": "village", "x": 640, "y": 412, "facing": "down", "image": "assets/npcs/gungwan/front.png",
       "menu": ["learn", "talk"],
       "greeting": "젊은이, 칼 쥐는 법은 아는가?",
       "lines": ["군에서 물러난 지 오래지만, 몸이 기억하는 무예는 아직 남아 있지.", "무예는 공짜로 가르치지 않네. 엽전과, 몸으로 구해 온 것을 가져오게.", "몸이 먼저 붙어야 무예도 붙는 법이야. 들쥐라도 잡아 보게."]
     },
     {
-      "id": "jumo", "name": "주모", "map": "village", "x": 880, "y": 408, "facing": "down", "outfit": "outfit3_dopo",
+      "id": "jumo", "name": "주모", "map": "village", "x": 880, "y": 408, "facing": "down", "image": "assets/npcs/jumo/front.png",
       "menu": ["buy", "sell", "talk"],
       "greeting": "어서 와요. 배고프면 주먹밥이라도 하나 들고 가요.",
       "shop": { "buys": ["loot_rat_meat", "loot_rice"], "sells": [{ "id": "food_riceball", "price": 5 }] },
       "lines": ["쥐고기도 푹 고면 먹을 만해요. 가져오면 사 줄게요.", "곳간 쌀을 쥐들이 다 물어 갔다지 뭐예요."]
     },
     {
-      "id": "yakbang", "name": "약방 영감", "map": "village", "x": 1180, "y": 242, "facing": "down", "outfit": "outfit3_dopo",
+      "id": "yakbang", "name": "약방 영감", "map": "village", "x": 1180, "y": 242, "facing": "down", "image": "assets/npcs/yakbang/front.png",
       "menu": ["buy", "sell", "talk"],
       "greeting": "어디 다친 데는 없고?",
       "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth"], "sells": [{ "id": "med_tangyak", "price": 20 }] },
       "lines": ["쥐수염이며 쥐 앞니며, 약재로 쓰는 데가 다 있지.", "탕약 한 사발이면 웬만한 상처는 금세 아물어."]
     },
     {
-      "id": "gatbachi", "name": "갖바치", "map": "village", "x": 1250, "y": 395, "facing": "down", "outfit": "outfit3_dopo",
+      "id": "gatbachi", "name": "갖바치", "map": "village", "x": 1250, "y": 395, "facing": "down", "image": "assets/npcs/gatbachi/front.png",
       "menu": ["sell", "talk"],
       "greeting": "가죽 있으면 가져와. 값은 쳐 줄 테니.",
       "shop": { "buys": ["loot_rat_hide"], "sells": [] },
       "lines": ["쥐가죽은 작아도 쓸 데가 많아. 짚신 코에 덧대기도 하고.", "짚신이야 곧 짜 둘 거야. 조금만 기다려."]
     },
     {
-      "id": "chief", "name": "촌장", "map": "village", "x": 735, "y": 228, "facing": "down", "outfit": "outfit3_dopo",
+      "id": "chief", "name": "촌장", "map": "village", "x": 735, "y": 228, "facing": "down", "image": "assets/npcs/chief/front.png",
       "menu": ["talk"],
       "greeting": "허허, 처음 보는 얼굴이로군.",
       "quest": "chief_rats",
       "lines": ["이 마을도 예전 같지 않네.", "우물가 늙은 군관은 보기보다 대단한 사람이야."]
+    },
+    {
+      "id": "shrine", "name": "성황당", "map": "village", "x": 440, "y": 726, "facing": "down", "image": "", "tapHeight": 44,
+      "menu": ["buy", "talk"],
+      "greeting": "서낭나무에 오색 천이 바람에 나부낀다. 부적이 몇 장 걸려 있다.",
+      "shop": { "buys": [], "sells": [{ "id": "item_return_charm", "price": 10 }] },
+      "lines": ["귀환 부적을 쓰면 어디서든 이 서낭나무 앞으로 돌아온다고 한다.", "돌무더기에 돌 하나를 얹고 무사히 돌아오기를 빌었다."]
     }
   ]
 }
