@@ -42,6 +42,13 @@ export class PlayerView {
     this.glowState = null;
   }
 
+  // 칼에 금빛이 번짐(힘껏 베기 모으기): 칼 그림을 색칠해 더하기로 겹침
+  setWeaponGlow(color, alpha, ms) {
+    if (!this.weaponGlow) this.weaponGlow = this.scene.add.image(0, 0, '__DEFAULT').setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this.weaponGlow.setTint(Phaser.Display.Color.HexStringToColor(color).color).setTintMode(Phaser.TintModes.FILL);
+    this.weaponGlowState = { alpha, ms, t: 0 };
+  }
+
   setGlow(color, alpha, ms) {
     this.glow.setTint(Phaser.Display.Color.HexStringToColor(color).color).setTintMode(Phaser.TintModes.FILL);
     this.glowState = { alpha, ms, t: 0 };
@@ -199,6 +206,26 @@ export class PlayerView {
         .setScale(s, s * g.length)
         .setDepth(y + (g.behind ? -0.02 : 0.01));
       this.lastWeapon = g;
+      if (this.weaponGlowState) {
+        const ws = this.weaponGlowState;
+        ws.t += deltaMs;
+        if (ws.t >= ws.ms) {
+          this.weaponGlowState = null;
+          this.weaponGlow.setVisible(false);
+        } else {
+          const k = ws.t / ws.ms;
+          const ws2 = this.weaponSprite;
+          if (this.weaponGlow.texture.key !== ws2.texture.key) this.weaponGlow.setTexture(ws2.texture.key);
+          this.weaponGlow
+            .setVisible(true)
+            .setOrigin(ws2.originX, ws2.originY)
+            .setPosition(ws2.x, ws2.y)
+            .setRotation(ws2.rotation)
+            .setScale(ws2.scaleX, ws2.scaleY)
+            .setAlpha(ws.alpha * Math.min(1, k * 3) * (1 - k * 0.6))
+            .setDepth(ws2.depth + 0.001);
+        }
+      }
       // 손 덮개: 맨 위 (다리 반전 걷기 프레임도 반전하지 않은 덮개 그대로)
       const handKey = set.hand && set.hand[frameName];
       if (handKey) {

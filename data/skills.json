@@ -1,23 +1,26 @@
 {
-  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림, icon=그림을 못 받으면 대신 쓰는 한자, key=PC 단축키. 효과 값은 kind별. 모두 임시값",
+  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림, icon=그림을 못 받으면 대신 쓰는 한자, key=PC 단축키. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. 모두 임시값",
   "skills": [
     {
       "id": "power_slash", "image": "assets/items/icons/skill_power_slash.png", "name": "힘껏 베기", "icon": "斬", "key": "1", "kind": "powerSlash",
       "desc": "앞으로 한 번 크게 벰. 데미지 2배, 밀어내기 2배",
       "requires": { "level": 2 }, "cost": { "coins": 30, "items": { "loot_rat_meat": 5 } }, "cooldownMs": 6000,
-      "damageMul": 2, "knockbackMul": 2, "hitStopMul": 2.5, "trailWidthMul": 1.7, "shakeMul": 2
+      "damageMul": 2, "knockbackMul": 2, "hitStopMul": 2.5, "trailWidthMul": 1.7, "shakeMul": 2,
+      "chargeMs": 250, "chargeColor": "#ffd75e", "trailColor": "#ffd75e", "waveRadius": 60, "waveMs": 250, "waveColor": "#ffd75e"
     },
     {
       "id": "breath", "image": "assets/items/icons/skill_breath.png", "name": "숨 고르기", "icon": "息", "key": "2", "kind": "heal",
       "desc": "제자리에서 숨을 골라 최대 체력의 30%를 되찾음",
       "requires": { "level": 3 }, "cost": { "coins": 60, "items": { "loot_rice": 5 } }, "cooldownMs": 30000,
-      "healRatio": 0.3, "glowColor": "#bfe8ff", "glowMs": 900
+      "healRatio": 0.3, "glowColor": "#bfe8ff", "glowMs": 900,
+      "rings": 2, "ringGapMs": 150, "ringFrom": 20, "ringTo": 70, "ringMs": 600, "ringColor": "#7fd0ff", "particleCount": 10, "particleMs": 1200, "particleColor": "#bfe8ff"
     },
     {
       "id": "whirl", "image": "assets/items/icons/skill_whirl.png", "name": "휘돌려 베기", "icon": "旋", "key": "3", "kind": "spin",
-      "desc": "몸 둘레를 한 바퀴 베어 주변 몬스터를 모두 때림",
-      "requires": { "level": 5 }, "cost": { "coins": 150, "items": { "loot_rat_hide": 5, "loot_rat_tooth": 2 } }, "cooldownMs": 10000,
-      "radius": 42, "spinMs": 480, "hitAt": 0.5, "damageMul": 1, "knockbackPx": 12, "trailColor": "", "trailWidth": 7
+      "desc": "2초 동안 몸을 계속 돌리며 0.4초마다 주변 몬스터를 모두 벰. 도는 동안 천천히 움직일 수 있음",
+      "requires": { "level": 5 }, "cost": { "coins": 150, "items": { "loot_rat_hide": 5, "loot_rat_tooth": 2 } }, "cooldownMs": 12000,
+      "radius": 48, "spinMs": 2000, "turnMs": 400, "tickMs": 400, "damageMul": 0.7, "moveMul": 0.6, "knockbackPx": 6,
+      "ringColor": "#ffffff", "ringAlpha": 0.55, "dustEveryMs": 110, "dustColor": "#c8b48c"
     }
   ]
 }
