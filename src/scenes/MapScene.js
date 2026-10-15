@@ -6,12 +6,15 @@ import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer, aimAssist } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
-import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem } from '../core/equipment.js';
+import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem, countItem, removeItem } from '../core/equipment.js';
 import { createProgress, addExp, expToNext, maxHpFor, damageBonus } from '../core/progress.js';
+import { totalStats, damageTaken, levelOk } from '../core/stats.js';
 import { rollDrops, GroundDrops } from '../core/loot.js';
 import { Cooldowns } from '../core/skills.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
+import { ItemInfo } from '../ui/itemInfo.js';
+import { openItemInfo, tipText } from './itemInfoView.js';
 import { StatusPanel } from '../ui/statusPanel.js';
 import { SkillButtons } from '../ui/skillButtons.js';
 import { NpcPanel } from '../ui/npcPanel.js';
@@ -21,7 +24,7 @@ import { NpcMenu } from './npcMenu.js';
 import { DropView, makeDropTexture } from './dropView.js';
 import { PickupFeed } from './pickupFeed.js';
 import { josa } from '../ui/josa.js';
-import { floatText, breathFx, SpinTrail } from './progressFx.js';
+import { crescentWave, breathRings, WindRing } from './skillFx.js';
 import { levelUpFx } from './levelUpFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
@@ -35,6 +38,28 @@ import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
+
+// 그림을 색으로 물들임(곱하기 — 회색이면 색이 빠지고 어두워짐), 투명한 곳은 그대로
+function tintImage(img, color) {
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  // 먼저 흑백으로
+  const d = ctx.getImageData(0, 0, c.width, c.height);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const g = d.data[i] * 0.3 + d.data[i + 1] * 0.59 + d.data[i + 2] * 0.11;
+    d.data[i] = d.data[i + 1] = d.data[i + 2] = Math.min(255, g * 1.25);
+  }
+  ctx.putImageData(d, 0, 0);
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(img, 0, 0);
+  return c;
+}
 
 export class MapScene extends Phaser.Scene {
   constructor() {
@@ -94,6 +119,7 @@ export class MapScene extends Phaser.Scene {
     this.assistSlide = null; // 맞히기 도움으로 다가가는 중 { dir, left, speed }
     this.hpFill = null; // 레벨업 체력바 차오름
     this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
+    this.recall = null; // 귀환 부적 쓰는 중 { left }
     this.dead = false;
     // 레벨·경험치, 배운 무예, 의뢰: 저장된 것(맵을 옮겨도 이어짐)
     const eco = this.d.economy;
@@ -124,6 +150,7 @@ export class MapScene extends Phaser.Scene {
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     // 장비·가방: 저장된 것, 없으면 data/items.json의 start (맵을 옮겨도 이어짐)
     this.itemDefs = Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
+    this.weaponDefs = Object.fromEntries(this.d.weapons.weapons.map((w) => [w.id, w]));
     if (!this.d.equip) this.d.equip = createEquipment(this.itemDefs, this.d.items.start, save && save.equipment);
     this.equip = this.d.equip;
 
@@ -141,6 +168,7 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.hud) {
       this.d.hud = new Hud({
         onBag: () => this.d.scene.setBagOpen(!this.d.equipPanel.open),
+        onRecall: () => this.d.scene.startRecall(),
         onSound: () => {
           this.d.sfx.setMuted(!this.d.sfx.muted);
           this.d.hud.setSoundOn(!this.d.sfx.muted);
@@ -160,7 +188,9 @@ export class MapScene extends Phaser.Scene {
         onEquip: (i) => this.d.scene.equipItem(i),
         onUnequip: (slot) => this.d.scene.unequipSlot(slot),
         onClose: () => this.d.scene.setBagOpen(false),
+        decorate: (el, def) => this.d.itemInfo.hover(el, () => tipText(this.d.scene, def)),
       });
+      this.d.itemInfo = new ItemInfo(document.getElementById('item-info'), document.getElementById('item-tip'));
       this.d.status = new StatusPanel(document.getElementById('status'));
       this.d.toast = new Toast(document.getElementById('toast'), this.d.economy.textFx.toastHoldMs);
       this.d.npcPanel = new NpcPanel(document.getElementById('npc-panel'));
@@ -177,6 +207,8 @@ export class MapScene extends Phaser.Scene {
     this.editor = this.d.editor;
     this.attackButton = this.d.attackButton;
     this.equipPanel = this.d.equipPanel;
+    this.itemInfo = this.d.itemInfo;
+    this.itemInfo.hide();
     this.statusPanel = this.d.status;
     this.toast = this.d.toast;
     this.npcPanel = this.d.npcPanel;
@@ -279,6 +311,7 @@ export class MapScene extends Phaser.Scene {
 
   // ---------- 장비창·가방 ----------
   setBagOpen(on) {
+    if (!on) this.itemInfo.hide();
     if (on && this.gridOn) this.setGridMode(false);
     if (on && this.npcPanel.open) this.setNpcOpen(false);
     this.equipPanel.setVisible(on);
@@ -289,7 +322,9 @@ export class MapScene extends Phaser.Scene {
   }
 
   renderBag(message = '') {
-    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins));
+    const st = this.stats();
+    const totals = `공격력 ${st.attack}${st.fistOnly ? '(이 옷은 아직 주먹)' : ''} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}`;
+    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals);
   }
 
   // 조이스틱·공격·무예 버튼 보이기(창이 열려 있으면 숨김)
@@ -299,31 +334,38 @@ export class MapScene extends Phaser.Scene {
     this.skillButtons.setVisible(v);
   }
 
+  // 가방 물건을 누르면 정보창(끼기·쓰기는 정보창 단추로)
   equipItem(bagIndex) {
+    const e = this.equip.bag[bagIndex];
+    if (e) openItemInfo(this, e.id, { type: 'bag', index: bagIndex });
+  }
+
+  // 정보창 '끼기': 레벨이 모자라면 끼지 않음
+  equipFromBagIndex(bagIndex) {
     if (this.swing || this.spin) return; // 휘두르는 중에는 바꾸지 않음
     const e = this.equip.bag[bagIndex];
     const def = e && this.itemDefs[e.id];
     if (!def) return;
-    if (def.use) return this.eatItem(bagIndex, def);
-    if (!def.slot) {
-      this.renderBag(`${def.name}: 가게에 팔거나 무예 재료로 씁니다 (×${e.n})`);
+    if (!levelOk(def, this.progress.level)) {
+      this.renderBag(`${def.name}: 레벨 ${def.level}부터 낄 수 있습니다`);
       return;
     }
-    const slot = equipFromBag(this.equip, this.itemDefs, bagIndex);
+    const slot = equipFromBag(this.equip, this.itemDefs, bagIndex, this.progress.level);
     if (slot) this.afterEquipChange(slot);
   }
 
-  // 먹을 것(주먹밥·탕약): 체력 회복 / 귀환 부적: 마을 성황당 앞으로
+  // 정보창 '쓰기'
+  useBagItem(bagIndex) {
+    const e = this.equip.bag[bagIndex];
+    const def = e && this.itemDefs[e.id];
+    if (def && def.use) this.eatItem(bagIndex, def);
+  }
+
+  // 먹을 것(주먹밥·탕약): 체력 회복 / 귀환 부적: 1초 동안 빛난 뒤 마을 성황당 앞으로(startRecall)
   eatItem(bagIndex, def) {
     if (def.use.returnTo) {
-      if (this.transitioning || this.dead) return;
-      useFromBag(this.equip, this.itemDefs, bagIndex);
       this.setBagOpen(false);
-      this.sfx.play('learn');
-      this.toast.show(`${josa(def.name, '을', '를')} 썼습니다`);
-      this.save();
-      const r = def.use.returnTo;
-      this.travel(r.map, { x: r.x, y: r.y, facing: r.facing || 'down' });
+      this.startRecall();
       return;
     }
     if (this.player.hp >= this.player.maxHp) {
@@ -343,8 +385,7 @@ export class MapScene extends Phaser.Scene {
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     const got = this.player.hp - before;
-    const tf = this.d.economy.textFx;
-    if (got > 0) floatText(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, `+${got}`, { color: '#9dff9d', stroke: '#123512', holdMs: tf.pickupHoldMs, fadeMs: tf.pickupFadeMs }, this.d.getPixelRatio());
+    if (got > 0) showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, got, this.cfg.hitFx, this.d.getPixelRatio(), 'heal');
     this.refreshStatus();
   }
 
@@ -418,11 +459,18 @@ export class MapScene extends Phaser.Scene {
   }
 
   setNpcOpen(on) {
+    if (!on) this.itemInfo.hide();
     this.npcPanel.setVisible(on);
     this.setControlsVisible(!on && !this.gridOn);
   }
 
+  // 장비 칸을 누르면 정보창(벗기는 정보창 단추로)
   unequipSlot(slot) {
+    const id = this.equip.equipped[slot];
+    if (id) openItemInfo(this, id, { type: 'slot', slot });
+  }
+
+  takeOff(slot) {
     if (this.swing || this.spin) return;
     const id = this.equip.equipped[slot];
     if (id && !canUnequip(slot)) {
@@ -435,7 +483,8 @@ export class MapScene extends Phaser.Scene {
   afterEquipChange(slot) {
     this.renderBag();
     if (slot === 'weapon') this.setWeapon(this.equip.equipped.weapon);
-    else if (slot === 'outfit' || slot === 'head') this.refreshLook();
+    // 옷을 바꾸면 무기를 쓸 수 있는지가 바뀌므로 다 만든 뒤 합계를 다시 그림
+    else if (slot === 'outfit' || slot === 'head') this.refreshLook().then(() => this.equipPanel.open && this.renderBag());
     // 토시·신발은 화면에 안 보임(능력치만, 아직 0)
     this.save();
   }
@@ -447,7 +496,7 @@ export class MapScene extends Phaser.Scene {
       x: Math.round(this.pos.x),
       y: Math.round(this.pos.y),
       facing: this.facing,
-      equipment: { equipped: { ...this.equip.equipped }, bag: this.equip.bag.map((e) => ({ ...e })), coins: this.equip.coins },
+      equipment: { equipped: { ...this.equip.equipped }, bag: this.equip.bag.map((e) => ({ ...e })), coins: this.equip.coins, grants: [...(this.equip.grants || [])] },
       progress: { ...this.progress },
       skills: [...this.learned],
       quests: { ...this.quests },
@@ -491,8 +540,9 @@ export class MapScene extends Phaser.Scene {
       const key = `weapon:${def.id}`;
       const scale = this.textureScale();
       if (!this.textures.exists(key)) {
-        const img = await loadImage(def.image);
+        let img = await loadImage(def.image);
         if (!img || !this.sys.isActive()) return;
+        if (def.tint) img = tintImage(img, def.tint); // 새 무기 그림이 오기 전: 목검 그림을 회색으로 물들여 임시로
         if (!this.textures.exists(key)) {
           this.textures.addCanvas(key, downscale(img, scale, this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight)));
         }
@@ -528,6 +578,7 @@ export class MapScene extends Phaser.Scene {
     const w = this.weaponDef;
     this.sfx.play('swing');
     this.swing = { weapon: w, t: 0, hitDone: false, trail: null, mods };
+    if (mods && mods.chargeMs) this.playerView.setWeaponGlow(mods.chargeColor, 0.9, mods.chargeMs + 260);
     this.attackCooldown = w.cooldownMs;
     const res = moveStep(this.map.grid, this.pos, this.facing, w.stepPx, this.cfg.player.footBox, 0);
     this.pos.x = res.x;
@@ -535,19 +586,20 @@ export class MapScene extends Phaser.Scene {
   }
 
   // 몸 전체 움직임(640 기준): 직전 preMs 동안 뒤로 backPx → 진행 stepFrom~stepTo 동안 앞으로 step → 끝나면 제자리
-  swingLean(t, w) {
+  // pre: 휘두르기 직전 뒤로 빼는 시간(힘껏 베기는 모으기 시간만큼 김)
+  swingLean(t, w, pre) {
     const sw = this.d.weapons.swing;
     const L = sw.lean;
     if (!L) return 0;
     const side = this.facing === 'left' || this.facing === 'right';
     const step = side ? L.stepSide : L.stepFrontBack;
     const smooth = (v) => v * v * (3 - 2 * v);
-    if (t < L.preMs) return -L.backPx * smooth(t / L.preMs);
-    const p = (t - L.preMs) / w.swingMs;
+    if (t < pre) return -L.backPx * smooth(t / pre);
+    const p = (t - pre) / w.swingMs;
     if (p < L.stepFrom) return -L.backPx * (1 - smooth(p / L.stepFrom));
     if (p < L.stepTo) return step * smooth((p - L.stepFrom) / (L.stepTo - L.stepFrom));
     if (p <= 1) return step;
-    return step * (1 - smooth(Math.min(1, (t - L.preMs - w.swingMs) / sw.recoverMs)));
+    return step * (1 - smooth(Math.min(1, (t - pre - w.swingMs) / sw.recoverMs)));
   }
 
   // 휘두르는 중 한 프레임. 직전 lean.preMs 동안은 몸만 뒤로 빼고(칼은 치켜든 채),
@@ -558,20 +610,22 @@ export class MapScene extends Phaser.Scene {
     const s = this.swing;
     const w = s.weapon;
     const sw = this.d.weapons.swing;
-    const pre = (sw.lean && sw.lean.preMs) || 0;
+    // 힘껏 베기는 모으기(chargeMs) 동안 더 오래 뒤로 빼고 칼에 금빛이 번짐
+    const pre = ((sw.lean && sw.lean.preMs) || 0) + ((s.mods && s.mods.chargeMs) || 0);
     s.t += dt;
     if (s.t >= pre + w.swingMs + sw.recoverMs) {
       if (s.trail) s.trail.fadeOut();
       this.swing = null;
       return null;
     }
-    const lean = this.swingLean(s.t, w);
+    const lean = this.swingLean(s.t, w, pre);
     if (s.t < pre) return { theta: sw.thetaFrom, lean };
     const theta = swingTheta(sw, (s.t - pre) / w.swingMs);
     // 칼이 앞을 지나는 순간(hitTheta) 맞힘 판정
     if (!s.hitDone && theta >= sw.hitTheta) {
       s.hitDone = true;
       this.strikeHit(w, s.mods);
+      if (s.mods && s.mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, s.mods);
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
     if (!s.trail) s.trail = this.makeTrail(w, s.mods);
@@ -593,7 +647,7 @@ export class MapScene extends Phaser.Scene {
       shape,
       cfg: tr,
       k: w.tipFromGrip / tr.refTip,
-      color: w.trailColor,
+      color: (mods && mods.trailColor) || w.trailColor,
       toMap: (px, py) => pv.posePoint(px, py, x, y, facing === 'right'),
       res: this.pixelScale(),
       // 칼(몸 앞 +0.01)·손 덮개(+0.02) 아래, 몸 위. 뒷면은 몸 뒤
@@ -611,7 +665,7 @@ export class MapScene extends Phaser.Scene {
     if (!target) return;
     const result = hitMonster(target, this.facing, (w.damage + this.levelDamage()) * (m.damageMul || 1), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
     const def = this.monsterDefs[target.type];
-    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
     const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
     inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, d[0], d[1]);
     this.hitStopMs = sfx.hitStopMs * (m.hitStopMul || 1);
@@ -654,8 +708,9 @@ export class MapScene extends Phaser.Scene {
     const result = hitMonster(target, this.facing, (a.damage + this.levelDamage()) * (m.damageMul || 1), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
     const def = this.monsterDefs[target.type];
     this.sfx.play('punchHit');
-    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
     if (mods) {
+      if (mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, mods);
       this.hitStopMs = this.cfg.swingFx.hitStopMs * (m.hitStopMul || 1);
       this.cameras.main.shake(this.cfg.swingFx.shakeMs, this.cfg.swingFx.shakeIntensity * (m.shakeMul || 1));
     }
@@ -687,6 +742,16 @@ export class MapScene extends Phaser.Scene {
     }
     if (w) this.startSwing(mods);
     else this.punch(mods);
+  }
+
+  // 낀 장비 전체 능력치 { attack, defense, speedMul, fistOnly }
+  // 옷 2~6은 아직 무기 자세 그림이 없어 무기를 들어도 주먹으로 치므로, 그때 공격력은 맨손 기준
+  stats() {
+    const eq = this.equip.equipped;
+    const usable = this.canSwing || !eq.weapon ? eq : { ...eq, weapon: '' };
+    const st = totalStats(usable, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels);
+    st.fistOnly = !!eq.weapon && !this.canSwing;
+    return st;
   }
 
   // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
@@ -830,7 +895,8 @@ export class MapScene extends Phaser.Scene {
         this.toast.show('체력이 가득합니다');
         return;
       }
-      breathFx(this, this.pos.x, this.pos.y, this.cfg.player.height, sk.glowColor, sk.glowMs);
+      breathRings(this, () => this.pos, sk);
+      this.playerView.setGlow(sk.glowColor, 0.5, sk.glowMs);
       this.healPlayer(Math.max(1, Math.ceil(this.player.maxHp * sk.healRatio)));
       this.sfx.play('heal');
     } else if (sk.kind === 'spin') {
@@ -843,18 +909,17 @@ export class MapScene extends Phaser.Scene {
   }
 
   // 휘돌려 베기: 아래 → 왼쪽 → 위 → 오른쪽으로 몸을 돌리며 원형 궤적, 중간에 둘레 몬스터를 모두 때림
+  // 휘돌려 베기(지속형): spinMs 동안 계속 돌며(한 바퀴 turnMs) tickMs마다 둘레 몬스터를 모두 벰. 도는 동안 천천히 움직일 수 있음
   startSpin(sk) {
     const order = ['down', 'left', 'up', 'right'];
-    const w = this.canSwing ? this.weaponDef : null;
-    const color = sk.trailColor || (w && w.trailColor) || '#f3ead6';
     this.sfx.play('swing');
     this.spin = {
       sk,
       t: 0,
-      hitDone: false,
+      nextTick: sk.tickMs,
       startFacing: this.facing,
       order: [...order.slice(order.indexOf(this.facing)), ...order.slice(0, order.indexOf(this.facing))],
-      trail: new SpinTrail(this, this.pos.x, this.pos.y - this.cfg.player.height * 0.3, sk.radius, color, sk.trailWidth),
+      ring: new WindRing(this, sk),
     };
     this.attackCooldown = Math.max(this.attackCooldown, sk.spinMs);
   }
@@ -863,15 +928,15 @@ export class MapScene extends Phaser.Scene {
     const s = this.spin;
     const sk = s.sk;
     s.t += dt;
-    const p = Math.min(1, s.t / sk.spinMs);
-    this.facing = s.order[Math.min(3, Math.floor(p * 4))];
-    s.trail.draw(p);
-    if (!s.hitDone && p >= sk.hitAt) {
-      s.hitDone = true;
+    this.facing = s.order[Math.floor(s.t / (sk.turnMs / 4)) % 4];
+    s.ring.update(this.pos, s.t, dt);
+    while (s.t >= s.nextTick && s.nextTick <= sk.spinMs) {
+      s.nextTick += sk.tickMs;
+      this.sfx.play('swing');
       this.spinHit(sk);
     }
-    if (p >= 1) {
-      s.trail.fadeOut();
+    if (s.t >= sk.spinMs) {
+      s.ring.fadeOut();
       this.facing = s.startFacing;
       this.spin = null;
       return null;
@@ -892,13 +957,14 @@ export class MapScene extends Phaser.Scene {
       const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
       const result = hitMonster(target, dir, base * (sk.damageMul || 1), sk.knockbackPx, (w ? w.stunMs : this.cfg.attack.stunMs));
       const def = this.monsterDefs[target.type];
-      showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio());
+      showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), 'skill');
       const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
       inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, v[0], v[1]);
       this.afterHit(target, result);
     }
     if (hits.length) {
-      this.hitStopMs = sfx.hitStopMs;
+      // 여러 번 때리므로 멈춤은 짧게
+      this.hitStopMs = sfx.hitStopMs * 0.5;
       this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity);
       this.sfx.play(w ? 'woodHit' : 'punchHit');
     }
@@ -915,11 +981,13 @@ export class MapScene extends Phaser.Scene {
   onBitten(bite) {
     if (this.dead || this.transitioning) return;
     this.sfx.play('playerHurt');
+    this.cancelRecall('맞아서 귀환이 끊겼습니다');
     const ph = this.cfg.playerHit;
-    const result = hitPlayer(this.player, bite.damage);
+    // 방어력만큼 덜 아픔(최소 1)
+    const result = hitPlayer(this.player, damageTaken(bite.damage, this.stats().defense));
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     this.playerView.flash(ph.flashColor, ph.flashMs);
-    showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, { ...this.cfg.hitFx, damageColor: '#ffb0a0' }, this.d.getPixelRatio());
+    showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, this.cfg.hitFx, this.d.getPixelRatio(), 'player');
     this.knock = { dir: bite.dir, left: bite.knockbackPx ?? ph.knockbackPx }; // 쥐왕 돌진은 더 많이 밀려남
     if (result.killed) this.die();
   }
@@ -948,6 +1016,55 @@ export class MapScene extends Phaser.Scene {
 
   portalAt(x, y) {
     return this.map.portals.find((p) => this.portalOpen(p) && x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) || null;
+  }
+
+  // ---------- 귀환(부적) ----------
+  recallDef() {
+    return this.itemDefs[this.cfg.recall.item];
+  }
+
+  recallUsable() {
+    const def = this.recallDef();
+    return !!def && this.d.mapId !== def.use.returnTo.map;
+  }
+
+  // 귀환 시작: channelMs 동안 몸이 푸르게 빛난 뒤 이동. 그 사이 맞으면 취소(부적은 그대로)
+  startRecall() {
+    const def = this.recallDef();
+    if (!def || this.recall || this.transitioning || this.dead) return;
+    if (!this.recallUsable()) {
+      this.toast.show('마을에서는 쓸 수 없습니다');
+      return;
+    }
+    if (countItem(this.equip, def.id) <= 0) {
+      this.toast.show('귀환 부적은 성황당(마을 왼쪽 아래 서낭나무)이나 약방에서 살 수 있습니다', 2500);
+      return;
+    }
+    const rc = this.cfg.recall;
+    this.recall = { left: rc.channelMs };
+    this.playerView.setGlow(rc.glowColor, rc.glowAlpha, rc.channelMs + 200);
+    this.sfx.play('heal');
+  }
+
+  cancelRecall(reason) {
+    if (!this.recall) return;
+    this.recall = null;
+    this.playerView.glowState = null;
+    this.playerView.glow.setVisible(false);
+    if (reason) this.toast.show(reason);
+  }
+
+  updateRecall(dt) {
+    if (!this.recall) return;
+    this.recall.left -= dt;
+    if (this.recall.left > 0) return;
+    this.recall = null;
+    const def = this.recallDef();
+    if (!removeItem(this.equip, def.id, 1)) return;
+    this.toast.show(`${josa(def.name, '을', '를')} 썼습니다`);
+    this.save();
+    const r = def.use.returnTo;
+    this.travel(r.map, { x: r.x, y: r.y, facing: r.facing || 'down' });
   }
 
   // 다른 맵(또는 같은 맵의 다른 자리)으로: 어두워졌다가 도착 자리에서 밝아짐
@@ -1081,8 +1198,8 @@ export class MapScene extends Phaser.Scene {
     const swingPose = this.swing ? this.updateSwing(dt) : spinPose;
     const punching = this.punchMs > 0 || !!swingPose;
 
-    // 주먹 지르는 동안은 걷지 않음
-    const v = this.transitioning || punching ? { x: 0, y: 0 } : this.d.input.getVector();
+    // 주먹 지르는 동안은 걷지 않음(휘돌려 베기는 도는 동안 천천히 걸을 수 있음)
+    const v = this.transitioning || (punching && !this.spin) ? { x: 0, y: 0 } : this.d.input.getVector();
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 
     this.moving = false;
@@ -1105,13 +1222,16 @@ export class MapScene extends Phaser.Scene {
       if (s.left <= 0.01) this.assistSlide = null;
     }
     if (this.dir && !this.dead) {
-      this.facing = this.dir;
-      const res = moveStep(this.map.grid, this.pos, this.dir, (p.speed * dt) / 1000, p.footBox, p.cornerSlide);
+      if (!this.spin) this.facing = this.dir;
+      // 걸음 = 기본 속도 × 장비 걸음 배율(짚신) × 휘돌려 베기 중이면 moveMul
+      const speed = p.speed * this.stats().speedMul * (this.spin ? this.spin.sk.moveMul : 1);
+      const res = moveStep(this.map.grid, this.pos, this.dir, (speed * dt) / 1000, p.footBox, p.cornerSlide);
       this.pos.x = res.x;
       this.pos.y = res.y;
       this.moving = res.moved;
     }
     this.checkPortal();
+    this.updateRecall(dt);
     this.updateDrops(dt);
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
@@ -1135,7 +1255,8 @@ export class MapScene extends Phaser.Scene {
       if (this.hpFill.t >= this.hpFill.ms || this.player.hp < this.hpFill.from) this.hpFill = null;
       this.playerView.setHp(this.shownHp() / this.player.maxHp);
     }
-    // 왼쪽 위 표시·무예 버튼(바뀐 것만 다시 그림)
+    // 왼쪽 위 표시·무예 버튼·귀환 단추(바뀐 것만 다시 그림)
+    this.hud.setRecall(countItem(this.equip, this.cfg.recall.item), this.recallUsable(), !!this.recall);
     this.refreshStatus();
     this.refreshSkills();
 

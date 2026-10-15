@@ -11,6 +11,7 @@ export function itemIcon(def) {
   if (!def || !def.icon) return text();
   const img = document.createElement('img');
   img.src = def.icon;
+  if (def.iconFilter) img.style.filter = def.iconFilter; // 그림이 오기 전 임시로 물들임(새 무기)
   img.alt = '';
   img.draggable = false;
   img.addEventListener('error', () => img.replaceWith(text()), { once: true });

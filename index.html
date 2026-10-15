@@ -26,6 +26,7 @@
   <!-- 오른쪽 위 버튼: 소리, 가방(장비창), 격자 (src/ui/hud.js) -->
   <div id="hud">
     <button id="btn-sound" type="button" aria-label="소리">소리 켬</button>
+    <button id="btn-recall" type="button" aria-label="귀환"><img src="assets/items/icons/item_return_charm.png" alt="" draggable="false"><span>귀환</span></button>
     <button id="btn-bag" type="button">가방</button>
     <button id="btn-grid" type="button">격자</button>
   </div>
@@ -55,6 +56,10 @@
     <div class="lb-hp"></div>
   </div>
 
+  <!-- 아이템 정보창(가방·장비·가게에서 아이콘을 누르면) + PC 마우스 올리면 작은 창 (src/ui/itemInfo.js) -->
+  <div id="item-info" hidden><div class="ii-box"></div></div>
+  <div id="item-tip" hidden></div>
+
   <!-- 잠깐 뜨는 알림 (src/ui/toast.js) -->
   <div id="toast"></div>
 
@@ -74,6 +79,7 @@
       <div class="equip-title">장비</div>
       <button class="equip-close" type="button">닫기</button>
     </div>
+    <div class="equip-totals"></div>
     <div class="equip-slots"></div>
     <div class="equip-title">가방</div>
     <div class="equip-bag"></div>

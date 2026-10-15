@@ -6,6 +6,7 @@ import { questStage, acceptQuest, turnInQuest } from '../core/quests.js';
 import { countItem } from '../core/equipment.js';
 import { itemIcon, charIcon } from '../ui/itemIcon.js';
 import { josa } from '../ui/josa.js';
+import { openItemInfo } from './itemInfoView.js';
 
 const MENU_LABEL = { buy: '사기', sell: '팔기', learn: '무예 배우기', talk: '대화' };
 
@@ -68,7 +69,7 @@ export class NpcMenu {
           sub: this.useText(def),
           right: this.coins(g.price),
           disabled: !can,
-          onClick: () => this.buyCount(g, def),
+          onClick: () => openItemInfo(this.s, g.id, { type: 'buy', onBuy: () => this.buyCount(g, def) }),
         };
       }),
       empty: '지금은 파는 물건이 없습니다',
@@ -126,7 +127,7 @@ export class NpcMenu {
           icon: itemIcon(def),
           label: `${def.name} ×${n}`,
           sub: `하나에 ${this.coins(def.sellPrice || 0)}`,
-          onClick: () => this.sellCount(id, def, n),
+          onClick: () => openItemInfo(this.s, id, { type: 'sell', onSell: () => this.sellCount(id, def, n) }),
         };
       }),
       empty: '이 가게가 사 줄 물건이 가방에 없습니다',

@@ -111,6 +111,32 @@ html, body {
   opacity: 0.6;
 }
 
+/* 귀환 단추: 부적 아이콘 + 남은 개수. 마을이거나 부적이 없으면 흐리게 */
+#btn-recall {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding-left: 6px;
+}
+
+#btn-recall img {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+#btn-recall span {
+  pointer-events: none;
+}
+
+#btn-recall.dim {
+  opacity: 0.45;
+}
+
+#btn-recall.casting {
+  background: rgba(60, 120, 170, 0.8);
+}
+
 #hud button.on {
   background: rgba(150, 40, 30, 0.75);
 }
@@ -799,3 +825,142 @@ html, body {
   100% { opacity: 1; background-position: 0% 0; }
 }
 
+
+/* ---------- 아이템 정보창 (src/ui/itemInfo.js) ---------- */
+#item-info {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+#item-info[hidden] {
+  display: none;
+}
+
+.ii-box {
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  color: #f3ead6;
+  background: rgba(28, 22, 15, 0.97);
+  border: 1px solid rgba(243, 234, 214, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ii-top {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.ii-top img,
+.ii-top .icon-text {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  font-size: 30px;
+}
+
+.ii-name {
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.ii-kind {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.ii-stats {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ii-stats .up {
+  color: #7dff7a;
+}
+
+.ii-stats .down {
+  color: #ff6a5a;
+}
+
+.ii-warn {
+  color: #ff6a5a;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.ii-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.85;
+  margin: 4px 0;
+}
+
+.ii-price {
+  font-size: 12px;
+  color: #ffd98a;
+  margin: 2px 0 6px;
+}
+
+.ii-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ii-actions button {
+  font: inherit;
+  font-size: 14px;
+  color: #f3ead6;
+  background: rgba(70, 48, 30, 0.8);
+  border: 1px solid rgba(243, 234, 214, 0.45);
+  border-radius: 8px;
+  min-height: 40px;
+  min-width: 70px;
+  padding: 4px 12px;
+}
+
+.ii-actions button.primary {
+  background: rgba(150, 90, 30, 0.9);
+}
+
+.ii-actions button:disabled {
+  opacity: 0.4;
+}
+
+#item-tip {
+  position: fixed;
+  z-index: 36;
+  pointer-events: none;
+  max-width: 220px;
+  padding: 5px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #f3ead6;
+  background: rgba(20, 16, 10, 0.92);
+  border: 1px solid rgba(243, 234, 214, 0.35);
+  border-radius: 6px;
+}
+
+#item-tip[hidden] {
+  display: none;
+}
+
+.equip-totals {
+  font-size: 12px;
+  color: #ffe9b0;
+  margin: -2px 0 6px;
+}

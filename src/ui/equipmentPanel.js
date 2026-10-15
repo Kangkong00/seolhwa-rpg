@@ -5,7 +5,10 @@ import { itemIcon } from './itemIcon.js';
 
 export class EquipmentPanel {
   // slots: [{ id, name }], itemDefs: { id: def }, onEquip(bagIndex), onUnequip(slot), canUnequip(slot)
-  constructor({ slots, itemDefs, onEquip, onUnequip, canUnequip, onClose }) {
+  // decorate(el, def): 칸마다 덧붙일 것(PC 마우스 올리면 작은 창)
+  constructor({ slots, itemDefs, onEquip, onUnequip, canUnequip, onClose, decorate = () => {} }) {
+    this.decorate = decorate;
+    this.totals = document.querySelector('#equip-panel .equip-totals');
     this.slots = slots;
     this.itemDefs = itemDefs;
     this.canUnequip = canUnequip;
@@ -40,8 +43,10 @@ export class EquipmentPanel {
     b.type = 'button';
     b.className = 'equip-cell';
     for (const [k, v] of Object.entries(attrs)) b.dataset[k] = v;
-    if (def) b.appendChild(itemIcon(def));
-    else b.classList.add('empty');
+    if (def) {
+      b.appendChild(itemIcon(def));
+      this.decorate(b, def);
+    } else b.classList.add('empty');
     const t = document.createElement('span');
     t.textContent = label;
     b.appendChild(t);
@@ -55,7 +60,8 @@ export class EquipmentPanel {
   }
 
   // state: { equipped, bag: [{ id, n }], coins }, coinsText: 엽전 표시
-  render(state, message = '', coinsText = '') {
+  render(state, message = '', coinsText = '', totalsText = '') {
+    this.totals.textContent = totalsText;
     this.bagTitle.textContent = coinsText ? `가방 · ${coinsText}` : '가방';
     this.slotRow.replaceChildren(
       ...this.slots.map((s) => {
@@ -74,6 +80,6 @@ export class EquipmentPanel {
     } else {
       this.bagGrid.replaceChildren(...state.bag.map((e, i) => this.cell(this.itemDefs[e.id], this.itemDefs[e.id].name, { index: String(i) }, e.n)));
     }
-    this.info.textContent = message || '가방 물건을 누르면 끼거나 먹고, 장비 칸을 누르면 벗습니다';
+    this.info.textContent = message || '물건을 누르면 정보창(끼기·벗기·쓰기)이 열립니다';
   }
 }
