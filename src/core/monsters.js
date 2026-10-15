@@ -2,6 +2,8 @@
 // 평소: 쉬기 ↔ 4방향으로 조금 걷기 (먼저 덤비지 않음).
 // 맞으면 반격: 주인공을 쫓아와(구역 밖도 가능) 가까우면 일정 간격으로 묾.
 // 주인공이 멀어지거나(giveUpDistance) 한동안(giveUpMs) 서로 안 때리면 포기하고 구역으로 돌아감.
+// 돌진(def.charge, 곳간 쥐왕): 반격 중 everyMs마다 windupMs 동안 웅크려 예고한 뒤 주인공 쪽으로 distance만큼 빠르게 돌진,
+// 돌진 중 닿으면 damage + 밀려남(knockbackPx).
 import { moveStep, isStandable } from './movement.js';
 
 const DIR_NAMES = ['up', 'down', 'left', 'right'];
@@ -24,8 +26,10 @@ function inZone(zone, x, y) {
   return x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h;
 }
 
+// 잠긴 출구(unlockOnKill — 쥐왕의 방 '마을로')는 우두머리 바로 앞에 있으므로 따지지 않음
 function nearPortal(portals, minDist, x, y) {
   return portals.some((p) => {
+    if (p.unlockOnKill) return false;
     const cx = Math.max(p.x, Math.min(x, p.x + p.w));
     const cy = Math.max(p.y, Math.min(y, p.y + p.h));
     return Math.hypot(x - cx, y - cy) < minDist;
@@ -70,6 +74,13 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     biteCooldown: 0,
     biteMs: 0, // 무는 동작 남은 시간 (그림: 튀어나갔다 돌아옴)
     bitePending: false,
+    // 돌진(def.charge가 있는 몬스터만): chargeState = null | 'windup' | 'dash'
+    chargeTimer: def.charge ? def.charge.everyMs : 0,
+    chargeState: null,
+    chargeMs: 0,
+    chargeLeft: 0,
+    chargeVec: null,
+    chargeHit: false,
   };
 }
 
@@ -102,6 +113,52 @@ function stepToward(m, def, map, tx, ty, dist) {
   return false;
 }
 
+// 돌진 한 프레임. 반환: 닿았으면 { type: 'bite', damage, dir, knockbackPx }
+function updateCharge(m, def, map, dtMs, target) {
+  const c = def.charge;
+  if (m.chargeState === 'windup') {
+    m.chargeMs -= dtMs;
+    if (m.chargeMs <= 0) {
+      // 예고가 끝난 순간 주인공 쪽으로 방향을 정해 돌진
+      const dx = target.x - m.x;
+      const dy = target.y - m.y;
+      const d = Math.hypot(dx, dy) || 1;
+      m.chargeVec = { x: dx / d, y: dy / d };
+      m.chargeState = 'dash';
+      m.chargeLeft = c.distance;
+      m.chargeHit = false;
+    }
+    return null;
+  }
+  // dash: 가로·세로를 나눠 벽을 피해 움직임
+  const step = Math.min(m.chargeLeft, (c.speed * dtMs) / 1000);
+  let moved = false;
+  const sx = m.chargeVec.x * step;
+  const sy = m.chargeVec.y * step;
+  if (Math.abs(sx) > 0.01) {
+    const r = moveStep(map.grid, m, sx < 0 ? 'left' : 'right', Math.abs(sx), def.footBox, 0);
+    if (r.moved) { m.x = r.x; m.y = r.y; moved = true; }
+  }
+  if (Math.abs(sy) > 0.01) {
+    const r = moveStep(map.grid, m, sy < 0 ? 'up' : 'down', Math.abs(sy), def.footBox, 0);
+    if (r.moved) { m.x = r.x; m.y = r.y; moved = true; }
+  }
+  m.moving = moved;
+  m.facing = Math.abs(m.chargeVec.x) > Math.abs(m.chargeVec.y) ? (m.chargeVec.x < 0 ? 'left' : 'right') : m.chargeVec.y < 0 ? 'up' : 'down';
+  m.chargeLeft -= step;
+  let ev = null;
+  if (!m.chargeHit && Math.hypot(target.x - m.x, target.y - m.y) <= c.hitRadius) {
+    m.chargeHit = true;
+    m.calmMs = 0;
+    ev = { type: 'bite', damage: c.damage, dir: m.facing, knockbackPx: c.knockbackPx };
+  }
+  if (!moved || m.chargeLeft <= 0) {
+    m.chargeState = null;
+    m.chargeTimer = c.everyMs;
+  }
+  return ev;
+}
+
 // 반격 중 한 프레임. 반환: 이번 프레임에 문 경우 { type: 'bite', damage } 아니면 null
 function updateAggro(m, def, map, dtMs, target) {
   const dist = Math.hypot(target.x - m.x, target.y - m.y);
@@ -110,9 +167,21 @@ function updateAggro(m, def, map, dtMs, target) {
     m.aggro = false;
     m.state = 'rest';
     m.timer = 300;
+    m.chargeState = null;
     return null;
   }
   m.biteCooldown = Math.max(0, m.biteCooldown - dtMs);
+  // 돌진: 무는 중이 아닐 때 everyMs마다, 주인공이 range 안이면 웅크려 예고 → 돌진
+  if (def.charge) {
+    if (m.chargeState) return updateCharge(m, def, map, dtMs, target);
+    m.chargeTimer -= dtMs;
+    if (m.chargeTimer <= 0 && m.biteMs <= 0 && dist <= def.charge.range) {
+      m.chargeState = 'windup';
+      m.chargeMs = def.charge.windupMs;
+      m.facing = towardPoint(m, target.x, target.y);
+      return null;
+    }
+  }
 
   // 무는 중: 동작 절반에서 실제로 닿는지 판정
   if (m.biteMs > 0) {
@@ -164,6 +233,7 @@ export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
     m.stunMs -= dtMs;
     m.biteMs = 0;
     m.bitePending = false;
+    if (m.chargeState === 'windup') m.chargeState = null;
     return null;
   }
   if (m.aggro && target) return updateAggro(m, def, map, dtMs, target);

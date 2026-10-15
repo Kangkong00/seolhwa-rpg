@@ -39,6 +39,10 @@ export class MonsterView {
     this.sprite = scene.add.image(0, 0, textures.keys.front);
     this.sprite.setOrigin(0.5, canvasSpec.footY / canvasSpec.height);
     this.sprite.setScale(def.height / canvasSpec.standHeight / textures.scale);
+    this.baseScale = this.sprite.scaleX;
+    // 물들임(굴 들쥐: 들쥐 그림을 어둡게)
+    this.tint = def.tint ? Phaser.Display.Color.HexStringToColor(def.tint).color : null;
+    this.clearFlash();
     this.shadow = createMonsterShadow(scene, shadowCfg, def.height);
     this.hpBarCfg = hpBarCfg;
     this.hpBar = new HpBar(scene, hpBarCfg, hpBarCfg.monsterColor);
@@ -71,6 +75,18 @@ export class MonsterView {
       oy += this.push.dy * e;
       if (k >= 1) this.push = null;
     }
+    // 돌진 예고(쥐왕): 웅크림 — 납작해지고 옆으로 퍼지며 부르르 떪. 돌진 중엔 걷기 그림
+    let sx = 1;
+    let sy = 1;
+    if (m.chargeState === 'windup') {
+      const k = 1 - Math.max(0, m.chargeMs) / this.def.charge.windupMs;
+      sy = 1 - 0.18 * k;
+      sx = 1 + 0.1 * k;
+      ox += Math.sin(m.chargeMs / 18) * 1.2 * k;
+    } else if (m.chargeState === 'dash') {
+      step = true;
+    }
+    if (!this.dead) this.sprite.setScale(this.baseScale * sx, this.baseScale * sy);
     const key = this.textures.keys[step ? `${base}_step` : base];
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
     this.sprite.setFlipX(m.facing === 'right');
@@ -86,11 +102,17 @@ export class MonsterView {
     this.push = { dx, dy, ms, t: 0 };
   }
 
+  // 번쩍 끝: 원래 색(물들임이 있으면 그 색)으로
+  clearFlash() {
+    this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+    if (this.tint !== null) this.sprite.setTint(this.tint);
+  }
+
   // 맞았을 때: 하얗게 번쩍
   flash(ms) {
     this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     this.sprite.scene.time.delayedCall(ms, () => {
-      if (this.sprite.active) this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+      if (this.sprite.active) this.clearFlash();
     });
   }
 

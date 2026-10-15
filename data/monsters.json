@@ -1,5 +1,5 @@
 {
-  "_설명": "몬스터 그림 규격·표시 크기·돌아다니기 값·체력. hp=체력(주먹 데미지는 data/game.json attack.damage). 반격(맞은 뒤에만): chaseSpeed=쫓는 속도, biteRange=무는 거리, biteMs=무는 동작 시간, biteCooldownMs=무는 간격, biteDamage=무는 데미지, lungePx=물 때 튀어나가는 거리, giveUpDistance=이만큼 멀어지면 포기, giveUpMs=서로 안 때린 채 이 시간이 지나면 포기. sounds=맞음·쓰러짐 소리 이름(data/sounds.json). height=1376 좌표 기준 표시 키(정면 서 있기). speed=초당 이동 픽셀, restMs=[최소,최대] 쉬는 시간, walkDistance=[최소,최대] 한 번에 걷는 거리(픽셀), walkFrameMs=걷기 그림 바꾸는 간격, footBox=벽 충돌에 쓰는 발밑 상자. 움직임 값은 모두 임시값. exp=쓰러뜨리면 받는 경험치, drops=전리품(item=아이템 id, chance=확률 0~1, count=개수), coins=엽전(chance=확률, min~max푼). 경험치·드랍은 docs/spec/economy.md 1차 시험안(모두 임시값).",
+  "_설명": "몬스터 그림 규격·표시 크기·돌아다니기 값·체력. hp=체력(주먹 데미지는 data/game.json attack.damage). 반격(맞은 뒤에만): chaseSpeed=쫓는 속도, biteRange=무는 거리, biteMs=무는 동작 시간, biteCooldownMs=무는 간격, biteDamage=무는 데미지, lungePx=물 때 튀어나가는 거리, giveUpDistance=이만큼 멀어지면 포기, giveUpMs=서로 안 때린 채 이 시간이 지나면 포기. sounds=맞음·쓰러짐 소리 이름(data/sounds.json). height=1376 좌표 기준 표시 키(정면 서 있기). speed=초당 이동 픽셀, restMs=[최소,최대] 쉬는 시간, walkDistance=[최소,최대] 한 번에 걷는 거리(픽셀), walkFrameMs=걷기 그림 바꾸는 간격, footBox=벽 충돌에 쓰는 발밑 상자. 움직임 값은 모두 임시값. exp=쓰러뜨리면 받는 경험치, drops=전리품(item=아이템 id, chance=확률 0~1, count=개수), coins=엽전(chance=확률, min~max푼). 경험치·드랍은 docs/spec/economy.md 1차 시험안(모두 임시값). 새 몬스터(굴 들쥐·곳간 쥐왕·족제비) 수치는 docs/spec/beginner_area.md '몬스터 수치'(임시값). tint=그림을 물들이는 색(굴 들쥐는 들쥐 그림을 어둡게). charge=돌진(쥐왕): everyMs마다 range 안이면 windupMs 동안 웅크려 예고한 뒤 speed로 distance만큼 돌진, 닿으면(hitRadius) damage + knockbackPx 밀려남.",
   "canvas": { "width": 640, "height": 400, "footY": 380, "standHeight": 240 },
   "monsters": [
     {
@@ -33,6 +33,52 @@
         { "item": "loot_rat_tooth", "chance": 0.3, "count": 1 }
       ],
       "coins": { "chance": 1, "min": 5, "max": 10 }
+    },
+    {
+      "id": "rat_deep", "name": "굴 들쥐", "folder": "assets/monsters/rat", "tint": "#8a7a70", "height": 30,
+      "speed": 45, "restMs": [800, 2600], "walkDistance": [16, 64], "walkFrameMs": 120, "footBox": { "w": 12, "h": 5 },
+      "hp": 6,
+      "chaseSpeed": 65, "biteRange": 20, "biteMs": 240, "biteCooldownMs": 1200, "biteDamage": 2, "lungePx": 8,
+      "giveUpDistance": 200, "giveUpMs": 8000,
+      "sounds": { "hit": "ratHit", "die": "ratDie" },
+      "exp": 8,
+      "drops": [
+        { "item": "loot_rat_meat", "chance": 0.7, "count": 1 },
+        { "item": "loot_rat_hide", "chance": 0.25, "count": 1 },
+        { "item": "loot_rat_whisker", "chance": 0.08, "count": 1 }
+      ],
+      "coins": { "chance": 0.8, "min": 2, "max": 5 }
+    },
+    {
+      "id": "rat_king", "name": "곳간 쥐왕", "folder": "assets/monsters/rat_king", "height": 50, "boss": true,
+      "speed": 30, "restMs": [1500, 3500], "walkDistance": [8, 24], "walkFrameMs": 150, "footBox": { "w": 22, "h": 7 },
+      "hp": 60,
+      "chaseSpeed": 55, "biteRange": 28, "biteMs": 300, "biteCooldownMs": 1400, "biteDamage": 3, "lungePx": 10,
+      "giveUpDistance": 260, "giveUpMs": 10000,
+      "charge": { "everyMs": 4000, "range": 160, "windupMs": 600, "distance": 60, "speed": 320, "hitRadius": 22, "damage": 3, "knockbackPx": 16 },
+      "sounds": { "hit": "ratHit", "die": "ratDie" },
+      "exp": 150,
+      "drops": [
+        { "item": "loot_rat_tooth", "chance": 1, "count": 3 },
+        { "item": "loot_ratking_coins", "chance": 0.3, "count": 1 }
+      ],
+      "coins": { "chance": 1, "min": 50, "max": 80 }
+    },
+    {
+      "id": "weasel", "name": "족제비", "folder": "assets/monsters/weasel", "height": 34,
+      "_빠름": "들쥐의 1.5배 속도, 쫓는 속도 1.4배(docs/spec/beginner_area.md)",
+      "speed": 68, "restMs": [700, 2200], "walkDistance": [20, 80], "walkFrameMs": 100, "footBox": { "w": 14, "h": 5 },
+      "hp": 14,
+      "chaseSpeed": 91, "biteRange": 22, "biteMs": 220, "biteCooldownMs": 1100, "biteDamage": 3, "lungePx": 9,
+      "giveUpDistance": 220, "giveUpMs": 8000,
+      "sounds": { "hit": "ratHit", "die": "ratDie" },
+      "exp": 22,
+      "drops": [
+        { "item": "loot_weasel_meat", "chance": 0.6, "count": 1 },
+        { "item": "loot_weasel_hide", "chance": 0.25, "count": 1 },
+        { "item": "loot_hwangmo", "chance": 0.06, "count": 1 }
+      ],
+      "coins": { "chance": 0.8, "min": 6, "max": 12 }
     }
   ]
 }

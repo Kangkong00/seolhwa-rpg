@@ -28,7 +28,7 @@
     "borderColor": "#fff3d6",
     "edgePx": 1,
     "edgeColor": "#3a2a1a",
-    "rareItems": ["loot_rat_whisker", "loot_rat_tooth"],
+    "rareItems": ["loot_rat_whisker", "loot_rat_tooth", "loot_hwangmo", "loot_ratking_coins"],
     "rareColor": "#ffcf40",
     "sparkleMs": 1400,
     "bobPx": 2,
