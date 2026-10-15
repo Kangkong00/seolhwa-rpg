@@ -72,6 +72,19 @@
 - 레벨이 모자라면 정보창에 "레벨 9부터" 빨강, 끼기 단추 흐리게.
 - 그림이 오기 전에는 목검 그림을 회색으로 물들여 시험해도 됨.
 
+### 7-1. 그림 준비됨 (2026-10-16, 기획 대화) — Claude Code가 할 일
+
+**무기 그림** `assets/weapons/iron_rusty.png`·`iron_hwando.png`·`steel_hwando.png` (원본 `assets/source/v3/weapons_iron_sheet.jpg`, 도구 `tools/art/v3_iron.py`)
+- 규격은 목검과 같음: 240×960, 쥐는 점 (120,800), 칼끝 위. 칼끝 y = 800 − tipFromGrip(340·320·300, 1px 안으로 맞음) → `data/weapons.json`의 `tipFromGrip` 460·480·500 그대로.
+- 할 일: 세 무기의 `image`를 새 그림으로 바꾸고 `tint`·`_tint`를 지움. `data/items.json`의 `iconFilter`도 지우고 `icon`을 `assets/items/icons/<id>.png`로(아이콘 3개 준비됨, 256×256, 목검처럼 45도). 궤적 색(`trailColor`)은 위 표 그대로.
+- 시안: `docs/iron_weapons_mock.png`(홑옷 들고 서 있기 3방향·치켜들기·내려치기, 박달 목검과 비교), `docs/iron_weapons_row.png`(같은 축척, 빨간 선 = 쥐는 점).
+
+**대장장이 그림** `assets/npcs/blacksmith/front.png` (원본 `assets/source/v3/npc_blacksmith.jpg`, 도구 `tools/art/v3_blacksmith.py`)
+- 규격은 다른 마을 사람과 같음: 400×800, 발 y=780, 같은 배율(키 732px = 갖바치와 같음) → `data/npcs.json` `imageCanvas` 그대로.
+- 할 일: `data/npcs.json`에 대장장이 추가 — `id` `blacksmith`, 이름 "대장장이", `village` **(500, 404)**, `facing` down(대장간 모루 바로 앞 흙길, 갈 수 있는 칸, 시안 `docs/npc_blacksmith_place.png`), `menu` buy·talk(전리품은 사 주지 않음 — 임시), `shop.sells` = 새 무기 3종(값은 `data/items.json` `shopPrice`, 재료가 필요한 값 "2냥 + 쥐가죽 5"는 무예 배우기와 같은 방식으로 재료를 함께 받음). 레벨이 모자라면 가게 목록에서도 빨강 "레벨 N부터"(사기는 막지 않음 — 미리 사 둘 수 있게, 임시). 발밑 그림자 필수.
+- 인사·대화(임시): 인사 "쇠는 거짓말을 안 하지. 쓸 만한 칼이 필요한가?" / "목검으로 버틸 만큼 버텼으면, 이제 쇠를 쥘 때야." / "쥐가죽은 손잡이 감는 데 그만이지. 모아 오면 환도를 쳐 주겠네."
+- **그림 주의(확인 필요)**: Flow 48이 갖바치와 얼굴·머리띠·앞치마가 거의 같게 나옴(망치만 다름). 그림 파일 이름·규격은 그대로 두고 나중에 바꿀 수 있으므로 코드는 지금대로 붙이면 됨.
+
 ## 반영됨 (2026-10-15, Claude Code)
 
 1. **무예 연출**(`src/scenes/skillFx.js`, 값은 `data/skills.json`):

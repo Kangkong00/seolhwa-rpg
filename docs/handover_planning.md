@@ -61,11 +61,13 @@
 12. (10-16) 47·48 그림 받음 → 원본만 저장(`assets/source/v3/weapons_iron_sheet.jpg`, `npc_blacksmith.jpg`), **가공은 아직**. 검토: 쇠칼 3종 모두 곧은~아주 살짝 휜 날, 작고 둥근 코등이, 칼끝 위로 섬 → 합격으로 봄(2·3번 환도가 일본 칼처럼 보이는지 게임 화면에서 한 번 더 확인 필요). 대장장이 정면 전신, 그림 오른쪽에 치우쳐 있음(오리기에는 문제 없음) → 합격.
     - Claude Code도 자기 인수인계서 `docs/handover_code.md`가 있음(10-15 작성). 새 Claude Code 대화는 그것부터.
 
+13. (10-16) 47 쇠칼 3종 가공 완료(`tools/art/v3_iron.py`, 칼끝 = 800 − 460/480/500, 시안 `docs/iron_weapons_mock.png`·`iron_weapons_row.png`), 아이콘 3개(`icons.py`에 id 추가). 48 대장장이 가공 완료(`tools/art/v3_blacksmith.py`, 같은 배율 → 키 732 = 갖바치와 같음), 자리 = 대장간 모루 앞 (500,404)(시안 `docs/npc_blacksmith_place.png`). Claude Code 전달 = `feedback_1015.md` "7-1". **문제**: 대장장이가 갖바치와 거의 똑같이 생김(`docs/npc_blacksmith_lineup.png`) → 강콩 판단 대기.
+
 ## 7. 새 기획 대화에서 바로 할 일 (우선순위)
 
-1. **47 쇠칼 3종 가공**: `tools/art/v3_weapons.py`의 목검 부분과 같은 방식 — 시트를 밝기·위치로 3자루로 자르고(왼쪽부터 `iron_rusty`·`iron_hwando`·`steel_hwando`), 240×960·쥐는 점 (120,800)·칼끝 위로. 칼끝 거리(tipFromGrip)는 `feedback_1015.md` 7번 표(460/480/500)에 맞춰 칼끝 y = 800 − tip 이 되게 옮김. 쥐는 점 = 손잡이 가운데(코등이와 손잡이 끝의 중간). → `assets/weapons/<id>.png`. 아이콘은 `icons.py`에 세 id 추가(45도 눕힘, 목검과 같음). 시안(홑옷 hold·swing에 붙여 보기)으로 확인.
-2. **48 대장장이 가공**: `tools/art/v3_npcs.py` 방식, 캔버스 400×800·발 780·**다른 마을 사람과 같은 배율**(시트 해상도가 같으므로 같은 배율 s=740/촌장 키 → 갖바치와 비슷한 키가 되는지 확인) → `assets/npcs/blacksmith/front.png`.
-3. Claude Code 전달: 무기 그림 교체(회색 임시 → 새 그림, 궤적 색은 표대로) + 대장장이 NPC(대장간 앞, 자리 확인 필요, 새 무기 3종 판매) → `feedback_1015.md` 7번에 "그림 준비됨" 적고 CLAUDE.md 지금 단계 갱신.
+1. (완료 10-16) 47 쇠칼 3종 가공 + 아이콘.
+2. (완료 10-16) 48 대장장이 가공. 단, 갖바치와 닮은 문제 → 강콩 판단(그대로 / 대장장이 다시 뽑기 / 갖바치 다시 뽑기).
+3. (완료 10-16) Claude Code 전달 내용 `feedback_1015.md` "7-1", CLAUDE.md 지금 단계 갱신 → 강콩이 Claude Code에 넘김.
 4. 강콩 아이폰 확인 받을 것: 10-15 피드백 반영판(무예 연출·데미지 숫자·귀환 단추·정보창·걸음), 새 굴 3곳 격자(어긋난 칸은 게임 격자 편집), 족제비굴 입구 자리.
 5. 열린 질문(강콩 답 기다림): 쥐왕이 새 무기 하나를 보상으로 떨어뜨릴지.
 
