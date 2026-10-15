@@ -1,6 +1,7 @@
 // 사람(NPC) 창의 내용: 처음 인사 → 사기 · 팔기 · 무예 배우기 · 대화(의뢰).
 // 규칙은 src/core(shop·skills·quests), 그리기는 src/ui/npcPanel.js. scene은 MapScene.
-import { buyFromShop, sellToShop, shopBuysItem } from '../core/shop.js';
+import { buyFromShop, sellToShop, shopBuysItem, goodsPrice, maxAffordable } from '../core/shop.js';
+import { levelOk } from '../core/stats.js';
 import { canLearn, learnSkill } from '../core/skills.js';
 import { questStage, acceptQuest, turnInQuest } from '../core/quests.js';
 import { countItem } from '../core/equipment.js';
@@ -62,14 +63,17 @@ export class NpcMenu {
       text: message || `가진 엽전: ${this.coins(equip.coins)}`,
       list: goods.map((g) => {
         const def = itemDefs[g.id];
-        const can = equip.coins >= g.price;
+        const price = goodsPrice(g, def);
+        // 레벨이 모자라도 사기는 막지 않음(미리 사 둘 수 있게, 임시) — 빨강으로 알림만
+        const lvWarn = def.level && !levelOk(def, this.s.progress.level) ? `레벨 ${def.level}부터` : '';
         return {
           icon: itemIcon(def),
           label: def.name,
-          sub: this.useText(def),
-          right: this.coins(g.price),
-          disabled: !can,
-          onClick: () => openItemInfo(this.s, g.id, { type: 'buy', onBuy: () => this.buyCount(g, def) }),
+          sub: lvWarn || this.useText(def),
+          subWarn: !!lvWarn,
+          right: this.priceText(price),
+          disabled: maxAffordable(equip, price) < 1,
+          onClick: () => openItemInfo(this.s, g.id, { type: 'buy', price: this.priceText(price), onBuy: () => this.buyCount(g, def) }),
         };
       }),
       empty: '지금은 파는 물건이 없습니다',
@@ -85,22 +89,44 @@ export class NpcMenu {
     return '';
   }
 
+  // 값 글자: "2냥 + 쥐가죽 5"
+  priceText(price) {
+    const parts = [];
+    if (price.coins || !Object.keys(price.items).length) parts.push(this.coins(price.coins));
+    for (const [id, n] of Object.entries(price.items)) parts.push(`${this.s.itemDefs[id] ? this.s.itemDefs[id].name : id} ${n}`);
+    return parts.join(' + ');
+  }
+
+  // 재료 값이 있으면 가진 재료도 함께 보여 줌
+  haveText(price) {
+    const parts = [`가진 엽전 ${this.coins(this.s.equip.coins)}`];
+    for (const id of Object.keys(price.items)) parts.push(`${this.s.itemDefs[id] ? this.s.itemDefs[id].name : id} ${countItem(this.s.equip, id)}`);
+    return parts.join(', ');
+  }
+
+  priceTimes(price, n) {
+    const items = {};
+    for (const [id, k] of Object.entries(price.items)) items[id] = k * n;
+    return { coins: price.coins * n, items };
+  }
+
   buyCount(g, def) {
-    const max = Math.min(99, Math.floor(this.s.equip.coins / g.price));
-    if (max < 1) return this.buy('엽전이 모자랍니다');
+    const price = goodsPrice(g, def);
+    const max = maxAffordable(this.s.equip, price);
+    if (max < 1) return this.buy(Object.keys(price.items).length ? `모자랍니다 (${this.haveText(price)})` : '엽전이 모자랍니다');
     this.panel.render({
       title: `${this.npc.name} · 사기`,
-      text: `${def.name} 몇 개 살까요? (하나에 ${this.coins(g.price)}, 가진 엽전 ${this.coins(this.s.equip.coins)})`,
+      text: `${def.name} 몇 개 살까요? (하나에 ${this.priceText(price)}, ${this.haveText(price)})`,
       count: {
         max,
         value: 1,
-        label: (n) => `${n}개 사기 · ${this.coins(g.price * n)}`,
+        label: (n) => `${n}개 사기 · ${this.priceText(this.priceTimes(price, n))}`,
         onConfirm: (n) => {
           const r = buyFromShop(this.s.equip, this.s.itemDefs, this.npc.shop, g.id, n);
           if (r.ok) {
             this.s.sfx.play('coin');
             this.changed();
-            this.buy(`${def.name} ${n}개를 샀습니다 (−${this.coins(r.cost)})`);
+            this.buy(`${def.name} ${n}개를 샀습니다 (−${this.priceText({ coins: r.cost, items: r.items })})`);
           } else {
             this.buy(r.reason);
           }

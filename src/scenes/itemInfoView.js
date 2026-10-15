@@ -1,6 +1,7 @@
 // 아이템 정보창의 내용(docs/spec/feedback_1015.md 5·6). 그리기는 src/ui/itemInfo.js.
 // 능력치는 지금 낀 것과 비교해 ▲(초록)/▼(빨강). 전리품 설명은 가게(buys)·무예 재료(cost)·의뢰(need)에서 자동으로 만듦.
 import { weaponAttack, swingSpeedLabel, levelOk } from '../core/stats.js';
+import { josa } from '../ui/josa.js';
 
 const SLOT_KIND = { weapon: '무기', outfit: '옷', head: '머리', arms: '팔', feet: '발' };
 
@@ -60,6 +61,8 @@ export function itemDesc(s, def) {
     }
     const skills = s.skills.filter((sk) => sk.cost && sk.cost.items && sk.cost.items[def.id]).map((sk) => sk.name);
     if (skills.length) lines.push(`무예(${skills.join('·')})를 배울 때 쓴다.`);
+    const goods = Object.values(s.itemDefs).filter((g) => g.shopPrice && g.shopPrice.items && g.shopPrice.items[def.id]).map((g) => g.name);
+    if (goods.length) lines.push(`${josa(goods.join('·'), '을', '를')} 살 때 쓴다.`);
     const quests = Object.values(s.questDefs).filter((q) => q.need && q.need[def.id] && s.quests[q.id] !== 'done');
     if (quests.length) lines.push(`의뢰 「${quests[0].name}」에 쓴다.`);
   }
@@ -78,7 +81,7 @@ export function tipText(s, def) {
   return [def.name, kindLabel(def), st, warn].filter(Boolean).join(' · ');
 }
 
-// context: { type: 'bag', index } | { type: 'slot', slot } | { type: 'buy', onBuy } | { type: 'sell', onSell }
+// context: { type: 'bag', index } | { type: 'slot', slot } | { type: 'buy', onBuy, price(글자) } | { type: 'sell', onSell }
 export function openItemInfo(s, id, context) {
   const def = s.itemDefs[id];
   if (!def) return;
@@ -100,7 +103,7 @@ export function openItemInfo(s, id, context) {
     stats: itemStats(s, def),
     warn,
     desc: itemDesc(s, def),
-    price: def.sellPrice ? `파는 값 ${s.coinsText(def.sellPrice)}` : '',
+    price: context.type === 'buy' && context.price ? `값 ${context.price}` : def.sellPrice ? `파는 값 ${s.coinsText(def.sellPrice)}` : '',
     actions,
   });
 }

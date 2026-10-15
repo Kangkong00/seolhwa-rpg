@@ -542,7 +542,7 @@ export class MapScene extends Phaser.Scene {
       if (!this.textures.exists(key)) {
         let img = await loadImage(def.image);
         if (!img || !this.sys.isActive()) return;
-        if (def.tint) img = tintImage(img, def.tint); // 새 무기 그림이 오기 전: 목검 그림을 회색으로 물들여 임시로
+        if (def.tint) img = tintImage(img, def.tint); // 그림이 없는 무기를 임시로 물들여 쓸 때(data/weapons.json tint)
         if (!this.textures.exists(key)) {
           this.textures.addCanvas(key, downscale(img, scale, this.outlineFor(scale, this.cfg.player.height, this.d.outfits.canvas.standHeight)));
         }

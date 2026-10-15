@@ -1,5 +1,5 @@
 {
-  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, image=정면 서 있기 그림(빈 문자열이면 그림 없이 이름표만 — 성황당처럼 사람이 아닌 곳), imageCanvas=그림 규격(400×800, 발 y=780) — 5명 같은 배율로 refHeight(가장 큰 사람 740px)를 displayHeight(70)로 줄여 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(푼), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
+  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, image=정면 서 있기 그림(빈 문자열이면 그림 없이 이름표만 — 성황당처럼 사람이 아닌 곳), imageCanvas=그림 규격(400×800, 발 y=780) — 5명 같은 배율로 refHeight(가장 큰 사람 740px)를 displayHeight(70)로 줄여 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(price=푼, 없으면 data/items.json shopPrice — 엽전+재료), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
   "tapRadius": 22,
   "imageCanvas": { "width": 400, "height": 800, "footY": 780, "refHeight": 740, "displayHeight": 70 },
   "npcs": [
@@ -29,6 +29,13 @@
       "greeting": "가죽 있으면 가져와. 값은 쳐 줄 테니.",
       "shop": { "buys": ["loot_rat_hide"], "sells": [] },
       "lines": ["쥐가죽은 작아도 쓸 데가 많아. 짚신 코에 덧대기도 하고.", "짚신이야 곧 짜 둘 거야. 조금만 기다려."]
+    },
+    {
+      "id": "blacksmith", "name": "대장장이", "map": "village", "x": 500, "y": 404, "facing": "down", "image": "assets/npcs/blacksmith/front.png",
+      "menu": ["buy", "talk"],
+      "greeting": "쇠는 거짓말을 안 하지. 쓸 만한 칼이 필요한가?",
+      "shop": { "buys": [], "sells": [{ "id": "iron_rusty" }, { "id": "iron_hwando" }, { "id": "steel_hwando" }] },
+      "lines": ["목검으로 버틸 만큼 버텼으면, 이제 쇠를 쥘 때야.", "쥐가죽은 손잡이 감는 데 그만이지. 모아 오면 환도를 쳐 주겠네."]
     },
     {
       "id": "chief", "name": "촌장", "map": "village", "x": 735, "y": 228, "facing": "down", "image": "assets/npcs/chief/front.png",

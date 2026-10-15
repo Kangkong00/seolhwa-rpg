@@ -1,6 +1,6 @@
 // 사람(NPC) 창을 그리는 일만 함(무엇을 보여 줄지는 src/scenes/npcMenu.js).
 // view: { title, text, actions: [{ label, onClick, disabled, primary }],
-//         list: [{ icon(DOM), label, sub, right, onClick, disabled }], empty,
+//         list: [{ icon(DOM), label, sub, subWarn(빨강), right, onClick, disabled }], empty,
 //         count: { max, value, label(n), confirm, onConfirm(n) }, onClose }
 export class NpcPanel {
   constructor(el) {
@@ -64,7 +64,7 @@ export class NpcPanel {
         main.appendChild(l);
         if (r.sub) {
           const s = document.createElement('span');
-          s.className = 'row-sub';
+          s.className = r.subWarn ? 'row-sub row-warn' : 'row-sub';
           s.textContent = r.sub;
           main.appendChild(s);
         }
