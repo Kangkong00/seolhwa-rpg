@@ -60,6 +60,7 @@ docs/          문서 사본
 | [docs/spec/feedback_1015.md](docs/spec/feedback_1015.md) | 2026-10-15 강콩 피드백: 무예 연출(휘돌려 베기 지속형), 데미지 숫자, 걸음 125, 귀환 단추, 아이템 정보창, 능력치(공격력·방어력·걸음) 임시값, 새 무기 3종 |
 | [docs/spec/beginner_area.md](docs/spec/beginner_area.md) | 초보 구간 구성: 들쥐굴 1~3층·족제비굴, 레벨 표(15까지), 새 몬스터(굴 들쥐·곳간 쥐왕·족제비) 수치, 새 전리품·귀환 부적, 마을 사람 그림 |
 | [docs/spec/test_boost.md](docs/spec/test_boost.md) | **시험 배율(2026-10-16)**: 진행 검증용 경험치 ×3·엽전 ×2·전리품 확률 ×1.5 (`data/game.json` `testBoost`, 표는 그대로, 밸런스 조정 때 끔) |
+| [docs/spec/admin_mode.md](docs/spec/admin_mode.md) | **관리자 모드(2026-10-16 초안)**: 레벨 글자 5번 누르기(PC F2)로 여는 시험 창 — 레벨·엽전·물건 주기·맵 이동·안 죽기·한 방·시험 배율 |
 | [docs/spec/combat.md](docs/spec/combat.md) | 때리기(맞히기·히트), 싸움 규칙(맞으면 반격·포기), 주인공 체력·체력바 |
 | [docs/spec/monsters.md](docs/spec/monsters.md) | 몬스터 그림 규격, 들쥐·큰 들쥐 크기, 돌아다니기, 몬스터 구역(`spawnZones`) |
 | [docs/spec/maps.md](docs/spec/maps.md) | 마을·들쥐굴 그림, 격자·지붕 가림(`occluders`), 맵 이동(`portals`)·던전 입구 표시, 닭장 마당 길 |
@@ -105,7 +106,8 @@ docs/          문서 사본
 - [x] 2026-10-15 피드백(`docs/spec/feedback_1015.md` 1~6): 무예 연출, 데미지 숫자, 걸음 속도, 귀환 단추, 아이템 정보창, 능력치 — 반영됨(`feedback_1015.md` "반영됨"), 강콩 아이폰 확인 필요
 - [x] 새 무기 3종·대장장이(`feedback_1015.md` 7·7-1): 그림 교체(쇠칼 3종·아이콘), 대장장이(마을 500,404, 엽전 + 재료로 사기) — 2026-10-16 반영, 강콩 아이폰 확인 필요(환도가 일본 칼처럼 보이는지)
 - [ ] 시험 배율(`docs/spec/test_boost.md`): `data/game.json` `testBoost`(경험치 ×3·엽전 ×2·전리품 확률 ×1.5), 규칙 쪽에서 곱함, 화면에 "시험 ×3" 표시 — 2026-10-16 강콩
-- [ ] 옷 2~6 무기 자세 그림: 미룸(나중에 옷마다 3장, 들고 걷기는 합성)
+- [ ] 관리자 모드(`docs/spec/admin_mode.md`) — 2026-10-16 강콩: 적용 안 됨 → 규격이 처음부터 없었음, 초안 작성(강콩 확인 후 반영)
+- [ ] 옷 2~6 무기 자세 그림: **2026-10-16 강콩: 모두 만들기로**. Flow 49~68(옷마다 4장, `docs/prompts_2026-10-16_outfit_weapon.md`) 생성 대기 → 기획 쪽 가공 후 전달
 
 ## 작업 규칙
 
