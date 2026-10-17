@@ -76,6 +76,41 @@
       "raise": { "front": { "grip": [151, 172] }, "side": { "grip": [214, 147] }, "back": { "grip": [482, 173] } },
       "swing": { "front": { "grip": [182, 216] }, "side": { "grip": [131, 232] }, "back": { "grip": [462, 212] } },
       "strike": { "front": { "grip": [335, 468] }, "side": { "grip": [227, 459] }, "back": { "grip": [386, 375] } }
+    },
+    "outfit2_mumyeong": {
+      "hold": { "front": { "grip": [191, 405], "theta": 15, "lat": -0.12 }, "side": { "grip": [207, 407], "theta": 20, "lat": 0 }, "back": { "grip": [456, 393], "theta": 10, "lat": -0.12 } },
+      "hold_step": { "front": { "grip": [191, 405], "theta": 15, "lat": -0.12 }, "side": { "grip": [207, 407], "theta": 20, "lat": 0 }, "back": { "grip": [456, 393], "theta": 10, "lat": -0.12 } },
+      "raise": { "front": { "grip": [136, 164] }, "side": { "grip": [214, 139] }, "back": { "grip": [488, 149] } },
+      "swing": { "front": { "grip": [178, 195] }, "side": { "grip": [125, 211] }, "back": { "grip": [450, 206] } },
+      "strike": { "front": { "grip": [348, 447] }, "side": { "grip": [204, 444] }, "back": { "grip": [386, 375] } }
+    },
+    "outfit3_dopo": {
+      "hold": { "front": { "grip": [190, 405], "theta": 15, "lat": -0.12 }, "side": { "grip": [197, 415], "theta": 20, "lat": 0 }, "back": { "grip": [451, 396], "theta": 10, "lat": -0.12 } },
+      "hold_step": { "front": { "grip": [190, 405], "theta": 15, "lat": -0.12 }, "side": { "grip": [197, 415], "theta": 20, "lat": 0 }, "back": { "grip": [451, 396], "theta": 10, "lat": -0.12 } },
+      "raise": { "front": { "grip": [136, 152] }, "side": { "grip": [213, 138] }, "back": { "grip": [488, 149] } },
+      "swing": { "front": { "grip": [196, 195] }, "side": { "grip": [82, 210] }, "back": { "grip": [445, 206] } },
+      "strike": { "front": { "grip": [331, 485] }, "side": { "grip": [207, 471] }, "back": { "grip": [386, 375] } }
+    },
+    "outfit4_cheollik": {
+      "hold": { "front": { "grip": [188, 402], "theta": 15, "lat": -0.12 }, "side": { "grip": [198, 396], "theta": 20, "lat": 0 }, "back": { "grip": [446, 388], "theta": 10, "lat": -0.12 } },
+      "hold_step": { "front": { "grip": [188, 402], "theta": 15, "lat": -0.12 }, "side": { "grip": [198, 396], "theta": 20, "lat": 0 }, "back": { "grip": [446, 388], "theta": 10, "lat": -0.12 } },
+      "raise": { "front": { "grip": [136, 174] }, "side": { "grip": [224, 149] }, "back": { "grip": [492, 159] } },
+      "swing": { "front": { "grip": [186, 208] }, "side": { "grip": [122, 209] }, "back": { "grip": [445, 210] } },
+      "strike": { "front": { "grip": [341, 505] }, "side": { "grip": [153, 462] }, "back": { "grip": [386, 375] } }
+    },
+    "outfit5_dujeonggap": {
+      "hold": { "front": { "grip": [178, 401], "theta": 15, "lat": -0.12 }, "side": { "grip": [216, 396], "theta": 20, "lat": 0 }, "back": { "grip": [467, 379], "theta": 10, "lat": -0.12 } },
+      "hold_step": { "front": { "grip": [178, 401], "theta": 15, "lat": -0.12 }, "side": { "grip": [216, 396], "theta": 20, "lat": 0 }, "back": { "grip": [467, 379], "theta": 10, "lat": -0.12 } },
+      "raise": { "front": { "grip": [143, 171] }, "side": { "grip": [231, 156] }, "back": { "grip": [475, 162] } },
+      "swing": { "front": { "grip": [184, 248] }, "side": { "grip": [113, 214] }, "back": { "grip": [453, 207] } },
+      "strike": { "front": { "grip": [347, 484] }, "side": { "grip": [175, 485] }, "back": { "grip": [386, 375] } }
+    },
+    "outfit6_sinseon": {
+      "hold": { "front": { "grip": [191, 400], "theta": 15, "lat": -0.12 }, "side": { "grip": [228, 409], "theta": 20, "lat": 0 }, "back": { "grip": [456, 395], "theta": 10, "lat": -0.12 } },
+      "hold_step": { "front": { "grip": [191, 400], "theta": 15, "lat": -0.12 }, "side": { "grip": [228, 409], "theta": 20, "lat": 0 }, "back": { "grip": [456, 395], "theta": 10, "lat": -0.12 } },
+      "raise": { "front": { "grip": [181, 198] }, "side": { "grip": [216, 166] }, "back": { "grip": [455, 176] } },
+      "swing": { "front": { "grip": [191, 152] }, "side": { "grip": [114, 223] }, "back": { "grip": [464, 203] } },
+      "strike": { "front": { "grip": [305, 502] }, "side": { "grip": [144, 472] }, "back": { "grip": [386, 375] } }
     }
   }
 }

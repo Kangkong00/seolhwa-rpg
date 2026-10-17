@@ -323,7 +323,7 @@ export class MapScene extends Phaser.Scene {
 
   renderBag(message = '') {
     const st = this.stats();
-    const totals = `공격력 ${st.attack}${st.fistOnly ? '(이 옷은 아직 주먹)' : ''} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}`;
+    const totals = `공격력 ${st.attack} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}`;
     this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals);
   }
 
@@ -744,14 +744,9 @@ export class MapScene extends Phaser.Scene {
     else this.punch(mods);
   }
 
-  // 낀 장비 전체 능력치 { attack, defense, speedMul, fistOnly }
-  // 옷 2~6은 아직 무기 자세 그림이 없어 무기를 들어도 주먹으로 치므로, 그때 공격력은 맨손 기준
+  // 낀 장비 전체 능력치 { attack, defense, speedMul } — 옷 6종 모두 무기 자세가 있어 무기 공격력 그대로(2026-10-18)
   stats() {
-    const eq = this.equip.equipped;
-    const usable = this.canSwing || !eq.weapon ? eq : { ...eq, weapon: '' };
-    const st = totalStats(usable, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels);
-    st.fistOnly = !!eq.weapon && !this.canSwing;
-    return st;
+    return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels);
   }
 
   // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
