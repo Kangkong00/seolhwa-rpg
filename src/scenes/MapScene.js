@@ -9,7 +9,7 @@ import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImag
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem, countItem, removeItem } from '../core/equipment.js';
 import { createProgress, addExp, expToNext, maxHpFor, damageBonus } from '../core/progress.js';
 import { totalStats, damageTaken, levelOk } from '../core/stats.js';
-import { rollDrops, GroundDrops } from '../core/loot.js';
+import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns } from '../core/skills.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
@@ -404,6 +404,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   refreshStatus() {
+    this.statusPanel.setBoost(this.cfg.testBoost);
     this.statusPanel.set({
       level: this.progress.level,
       hp: this.shownHp(),
@@ -767,8 +768,8 @@ export class MapScene extends Phaser.Scene {
         this.toast.show(`${label.endsWith('로') ? label : josa(label, '으로', '로')} 가는 길이 열렸습니다`, 3000);
       }
     });
-    if (def.exp) this.gainExp(def.exp);
-    const entries = rollDrops(def);
+    const { exp, entries } = killRewards(def, this.cfg.testBoost);
+    if (exp) this.gainExp(exp);
     for (const d of this.ground.spawn(target.x, target.y, entries, this.map.grid)) {
       const key = `drop:${d.coins ? 'coins' : d.item}`;
       this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio(), this.cfg.shadow, key, this.dropTexRes()));

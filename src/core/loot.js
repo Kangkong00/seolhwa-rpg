@@ -15,6 +15,26 @@ export function rollDrops(def, rand = Math.random) {
   return out;
 }
 
+// 시험 배율(docs/spec/test_boost.md, data/game.json testBoost). 꺼져 있으면 그대로.
+// 경험치·엽전은 곱한 뒤 반올림(최소 1), 확률은 min(1, 확률 × dropChance)
+export function boostAmount(v, boost, key) {
+  if (!boost || !boost.enabled || !v) return v;
+  return Math.max(1, Math.round(v * (boost[key] || 1)));
+}
+
+export function boostChance(chance, boost) {
+  if (!boost || !boost.enabled) return chance;
+  return Math.min(1, chance * (boost.dropChance || 1));
+}
+
+// 몬스터를 쓰러뜨렸을 때 받는 것을 정하는 한 곳(쥐왕 포함). 반환: { exp, entries: rollDrops 꼴 }
+// 전리품 확률만 dropChance를 곱하고, 엽전은 나올 확률은 그대로·금액에 coins를 곱함
+export function killRewards(def, boost, rand = Math.random) {
+  const drops = (def.drops || []).map((d) => ({ ...d, chance: boostChance(d.chance, boost) }));
+  const entries = rollDrops({ ...def, drops }, rand).map((e) => (e.coins ? { coins: boostAmount(e.coins, boost, 'coins') } : e));
+  return { exp: boostAmount(def.exp || 0, boost, 'exp'), entries };
+}
+
 // 바닥에 떨어진 물건들. cfg = data/economy.json groundDrops
 export class GroundDrops {
   constructor(cfg) {

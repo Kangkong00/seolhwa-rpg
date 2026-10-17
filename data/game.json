@@ -127,5 +127,12 @@
   },
   "mapFadeMs": 250,
   "_mapFadeMs": "맵 이동할 때 어두워졌다(밝아졌다) 하는 시간",
-  "autoSaveMs": 3000
+  "autoSaveMs": 3000,
+  "testBoost": {
+    "_설명": "시험 배율(docs/spec/test_boost.md). 진행 검증용 — 밸런스 조정 때 끔. exp=얻는 경험치, coins=떨어지는 엽전, dropChance=전리품이 떨어질 확률(곱한 뒤 최대 1), 개수는 그대로. 쥐왕·의뢰 보상도 같은 배율(경험치·엽전만)",
+    "enabled": true,
+    "exp": 3,
+    "coins": 2,
+    "dropChance": 1.5
+  }
 }

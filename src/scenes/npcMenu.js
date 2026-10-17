@@ -266,11 +266,12 @@ export class NpcMenu {
         label: q.turnIn,
         primary: true,
         onClick: () => {
-          const r = turnInQuest(q, quests, equip, itemDefs);
+          const r = turnInQuest(q, quests, equip, itemDefs, this.s.cfg.testBoost);
           if (!r) return this.questTalk(q);
           this.s.sfx.play('learn');
+          if (r.exp) this.s.gainExp(r.exp);
           this.changed();
-          const got = [r.coins ? this.coins(r.coins) : '', ...Object.entries(r.items || {}).map(([id, n]) => `${itemDefs[id].name} ${n}개`)].filter(Boolean).join(', ');
+          const got = [r.coins ? this.coins(r.coins) : '', r.exp ? `경험치 ${r.exp}` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${itemDefs[id].name} ${n}개`)].filter(Boolean).join(', ');
           this.s.toast.show(`의뢰 「${q.name}」 마침 · ${got}`);
           this.questTalk(q, q.done);
         },
