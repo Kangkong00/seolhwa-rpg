@@ -27,6 +27,13 @@ export function learnSkill(skill, progress, inv, learned, itemDefs) {
   return { ok: true, reasons: [] };
 }
 
+// 값을 받지 않고 배운 목록에 넣음(보상·시험용). 반환: 새로 배웠는지
+export function grantSkill(skill, learned) {
+  if (learned.includes(skill.id)) return false;
+  learned.push(skill.id);
+  return true;
+}
+
 // 기다리는 시간: { 무예 id: 남은 ms }
 export class Cooldowns {
   constructor() {

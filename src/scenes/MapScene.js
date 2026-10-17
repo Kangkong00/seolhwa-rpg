@@ -7,7 +7,7 @@ import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer, aimAssist } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem, countItem, removeItem } from '../core/equipment.js';
-import { createProgress, addExp, expToNext, maxHpFor, damageBonus } from '../core/progress.js';
+import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } from '../core/progress.js';
 import { totalStats, damageTaken, levelOk } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns } from '../core/skills.js';
@@ -36,6 +36,7 @@ import { showDamage } from './damageText.js';
 import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
+import { AdminPanel } from '../ui/adminPanel.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -140,6 +141,8 @@ export class MapScene extends Phaser.Scene {
     this.player.maxHp = maxHp;
     this.player.hp = Math.min(this.player.hp, maxHp);
     this.attackCooldown = 0; // 다음 공격까지 남은 시간
+    // 관리자 '안 죽기'·'한 방'(저장하지 않음 — 다시 열면 꺼짐, docs/spec/admin_mode.md)
+    if (!this.d.admin) this.d.admin = { noDie: false, oneHit: false };
     // 이동 지점 위에서 시작하면 한 번 밖으로 나가야 다시 작동 (도착하자마자 되돌아가지 않게)
     this.portalArmed = !this.portalAt(this.pos.x, this.pos.y);
 
@@ -174,7 +177,18 @@ export class MapScene extends Phaser.Scene {
           this.d.hud.setSoundOn(!this.d.sfx.muted);
         },
         onGrid: () => this.d.scene.setGridMode(!this.d.scene.gridOn),
+        onAdmin: () => this.d.adminPanel.toggle(),
+        adminEnabled: !!(this.cfg.admin && this.cfg.admin.enabled),
       });
+      this.d.adminPanel = new AdminPanel(document.getElementById('admin-panel'), () => this.d.scene);
+      // PC는 F2로 관리자 창
+      if (this.cfg.admin && this.cfg.admin.enabled) {
+        window.addEventListener('keydown', (e) => {
+          if (e.code !== 'F2') return;
+          e.preventDefault();
+          this.d.adminPanel.toggle();
+        });
+      }
       this.d.editor = new EditorPanel({
         onExport: () => this.d.scene.exportGrid(),
         onReset: () => this.d.scene.resetGrid(),
@@ -214,6 +228,8 @@ export class MapScene extends Phaser.Scene {
     this.npcPanel = this.d.npcPanel;
     this.skillButtons = this.d.skillButtons;
     this.npcMenu = new NpcMenu(this);
+    this.adminPanel = this.d.adminPanel;
+    this.hud.setAdminWarn(this.d.admin.noDie || this.d.admin.oneHit);
     if (this.npcPanel.open) this.setNpcOpen(false); // 맵을 옮기면 창은 닫음
     // 효과음 (Phaser 장면에 이미 'sound'가 있어 sfx 이름으로 둠)
     this.sfx = this.d.sfx;
@@ -491,7 +507,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   save() {
-    if (!this.pos) return;
+    if (!this.pos || this.d.noSave) return; // 저장을 지우고 새로 시작하는 중이면 다시 쓰지 않음
     writeSave({
       map: this.d.mapId,
       x: Math.round(this.pos.x),
@@ -664,7 +680,7 @@ export class MapScene extends Phaser.Scene {
     const m = mods || {};
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, w.reach, w.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, (w.damage + this.levelDamage()) * (m.damageMul || 1), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
+    const result = hitMonster(target, this.facing, this.adminDamage(target, (w.damage + this.levelDamage()) * (m.damageMul || 1)), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
     const def = this.monsterDefs[target.type];
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
     const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
@@ -706,7 +722,7 @@ export class MapScene extends Phaser.Scene {
 
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, a.reach, a.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, (a.damage + this.levelDamage()) * (m.damageMul || 1), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
+    const result = hitMonster(target, this.facing, this.adminDamage(target, (a.damage + this.levelDamage()) * (m.damageMul || 1)), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
     const def = this.monsterDefs[target.type];
     this.sfx.play('punchHit');
     showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
@@ -951,7 +967,7 @@ export class MapScene extends Phaser.Scene {
       const dx = target.x - this.pos.x;
       const dy = target.y - this.pos.y;
       const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
-      const result = hitMonster(target, dir, base * (sk.damageMul || 1), sk.knockbackPx, (w ? w.stunMs : this.cfg.attack.stunMs));
+      const result = hitMonster(target, dir, this.adminDamage(target, base * (sk.damageMul || 1)), sk.knockbackPx, (w ? w.stunMs : this.cfg.attack.stunMs));
       const def = this.monsterDefs[target.type];
       showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), 'skill');
       const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
@@ -981,6 +997,11 @@ export class MapScene extends Phaser.Scene {
     const ph = this.cfg.playerHit;
     // 방어력만큼 덜 아픔(최소 1)
     const result = hitPlayer(this.player, damageTaken(bite.damage, this.stats().defense));
+    // 관리자 '안 죽기': 체력이 1 아래로 내려가지 않음
+    if (this.d.admin.noDie && this.player.hp < 1) {
+      this.player.hp = 1;
+      result.killed = false;
+    }
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     this.playerView.flash(ph.flashColor, ph.flashMs);
     showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, this.cfg.hitFx, this.d.getPixelRatio(), 'player');
@@ -1105,6 +1126,44 @@ export class MapScene extends Phaser.Scene {
         cam.fadeIn(this.cfg.mapFadeMs);
       }
     });
+  }
+
+  // ---------- 관리자 모드에서 부르는 것(docs/spec/admin_mode.md, 창은 src/ui/adminPanel.js) ----------
+  // 한 방: 맞힌 몬스터의 남은 체력만큼
+  adminDamage(target, damage) {
+    return this.d.admin.oneHit ? Math.max(damage, target.hp) : damage;
+  }
+
+  // 레벨을 바로 정함: 최대 체력·데미지 보너스가 바로 바뀌고 체력 가득, 레벨업 연출 없음
+  setLevelNow(level) {
+    setLevel(this.progress, level, this.d.economy.levels);
+    this.player.maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, this.d.economy.levels);
+    this.player.hp = this.player.maxHp;
+    this.hpFill = null;
+    this.playerView.setHp(1);
+    this.refreshStatus();
+    if (this.equipPanel.open) this.renderBag();
+    this.save();
+  }
+
+  // 지금 맵 몬스터를 모두 지우고 처음처럼 다시 생기게
+  respawnMonsters() {
+    const { removed, born } = this.spawner.reset();
+    for (const m of removed) {
+      const v = this.monsterViews.get(m.id);
+      if (v) v.destroy();
+      this.monsterViews.delete(m.id);
+    }
+    for (const m of born) this.addMonsterView(m);
+    return born.length;
+  }
+
+  // 그 몬스터 구역을 바로 채움(쥐왕). 반환: 새로 생긴 수, 이 맵에 그 구역이 없으면 -1
+  spawnNow(type) {
+    if (!this.map.spawnZones.some((z) => z.monster === type)) return -1;
+    const born = this.spawner.fill(type);
+    for (const m of born) this.addMonsterView(m);
+    return born.length;
   }
 
   // ---------- 격자 편집 ----------

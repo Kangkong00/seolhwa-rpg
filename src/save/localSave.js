@@ -45,3 +45,8 @@ export function writeGridEdit(mapId, rows) {
 export function clearGridEdit(mapId) {
   return write(GRID_KEY_PREFIX + mapId, null);
 }
+
+// 저장 지우기(새로 시작)
+export function clearSave() {
+  return write(SAVE_KEY, null);
+}

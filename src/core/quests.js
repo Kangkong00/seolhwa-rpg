@@ -27,3 +27,8 @@ export function turnInQuest(q, qs, inv, itemDefs, boost = null) {
   qs[q.id] = 'done';
   return r;
 }
+
+// 모든 의뢰를 처음(아직 안 맡음)으로
+export function resetQuests(qs) {
+  for (const id of Object.keys(qs)) delete qs[id];
+}

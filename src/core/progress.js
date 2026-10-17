@@ -13,6 +13,18 @@ export function expToNext(p, cfg) {
   return Number.isFinite(need) ? need : null;
 }
 
+// 최고 레벨(레벨 표 길이 + 1)
+export function maxLevel(cfg) {
+  return cfg.expToNext.length + 1;
+}
+
+// 레벨을 바로 정함(1 ~ 최고 레벨, 경험치는 0부터). 반환: 정해진 레벨
+export function setLevel(p, level, cfg) {
+  p.level = Math.max(1, Math.min(maxLevel(cfg), Math.floor(level)));
+  p.exp = 0;
+  return p.level;
+}
+
 export function maxHpFor(level, baseHp, cfg) {
   return baseHp + (level - 1) * cfg.hpPerLevel;
 }

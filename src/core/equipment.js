@@ -48,6 +48,12 @@ export function addItem(state, itemDefs, id, n = 1) {
   for (let i = 0; i < n; i++) state.bag.push({ id, n: 1 });
 }
 
+// 엽전 더하기(빼기는 음수, 0 아래로는 안 내려감)
+export function addCoins(state, n) {
+  state.coins = Math.max(0, state.coins + Math.floor(n));
+  return state.coins;
+}
+
 export function countItem(state, id) {
   return state.bag.reduce((s, e) => s + (e.id === id ? e.n : 0), 0);
 }

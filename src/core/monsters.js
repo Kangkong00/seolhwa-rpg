@@ -309,6 +309,28 @@ export class MonsterSpawner {
     this.monsters = this.monsters.filter((x) => x !== m);
   }
 
+  // 구역마다 모자란 만큼 바로 채움(type을 주면 그 몬스터 구역만). 반환: 새로 생긴 몬스터
+  fill(type = null) {
+    const born = [];
+    this.map.spawnZones.forEach((zone, i) => {
+      if (type && zone.monster !== type) return;
+      let alive = this.monsters.filter((m) => m.zoneIndex === i).length;
+      for (; alive < zone.count; alive++) {
+        const m = this.spawn(i);
+        if (m) born.push(m);
+      }
+      this.timers[i] = 0;
+    });
+    return born;
+  }
+
+  // 모두 지우고 처음처럼 다시 채움. 반환: { removed, born }
+  reset() {
+    const removed = this.monsters;
+    this.monsters = [];
+    return { removed, born: this.fill() };
+  }
+
   // target: 주인공 { x, y, alive }
   // 반환: { born: 새로 생긴 몬스터, bites: [{ monster, damage, dir }] }
   update(dtMs, target) {

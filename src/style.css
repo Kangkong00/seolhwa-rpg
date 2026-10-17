@@ -976,3 +976,179 @@ html, body {
   color: #ffe9b0;
   margin: -2px 0 6px;
 }
+
+/* 관리자 단추·창 (src/ui/adminPanel.js, docs/spec/admin_mode.md) */
+#hud button#btn-admin.warn {
+  color: #ff6b5b;
+  border-color: rgba(255, 107, 91, 0.7);
+}
+
+#admin-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+#admin-panel[hidden] {
+  display: none;
+}
+
+.ad-box {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 16px));
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+  padding: 8px 10px 10px;
+  color: #f3ead6;
+  background: rgba(28, 22, 15, 0.94);
+  border: 1px solid rgba(243, 234, 214, 0.3);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.ad-box button {
+  font: inherit;
+  color: #f3ead6;
+  background: rgba(60, 48, 32, 0.9);
+  border: 1px solid rgba(243, 234, 214, 0.3);
+  border-radius: 7px;
+  padding: 5px 10px;
+  min-height: 32px;
+  min-width: 40px;
+}
+
+.ad-box button:disabled {
+  opacity: 0.4;
+}
+
+.ad-box button.on {
+  background: rgba(150, 110, 40, 0.9);
+  border-color: #ffd98a;
+}
+
+.ad-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ad-title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.ad-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.ad-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  min-height: 0;
+}
+
+.ad-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(243, 234, 214, 0.08);
+}
+
+.ad-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ad-value {
+  min-width: 44px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.ad-group {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ad-help {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.ad-msg {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #ffd98a;
+}
+
+.ad-box button.ad-wide {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.ad-box button.ad-danger {
+  color: #ff8a7a;
+}
+
+.ad-box button.ad-danger.on {
+  background: rgba(140, 40, 30, 0.9);
+  border-color: #ff8a7a;
+  color: #fff;
+}
+
+.ad-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 4px;
+}
+
+.ad-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ad-box button.ad-give {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ad-give img,
+.ad-give .icon-text {
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+}
+
+.ad-item-name {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.ad-box button.ad-wear {
+  min-height: 24px;
+  padding: 2px 4px;
+  font-size: 11px;
+}
+

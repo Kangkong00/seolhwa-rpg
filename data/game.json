@@ -134,5 +134,19 @@
     "exp": 3,
     "coins": 2,
     "dropChance": 1.5
+  },
+  "admin": {
+    "_설명": "관리자 모드(docs/spec/admin_mode.md). enabled=false면 위쪽 관리자 단추가 사라짐. PC는 F2. maps=맵 탭 목록(누르면 그 맵 spawn으로), boss·bossMap=쥐왕 바로 생기게(지금 맵에 쥐왕 구역이 없으면 bossMap으로 이동), longPressMs=물건을 길게 누르면 10개",
+    "enabled": true,
+    "maps": [
+      { "id": "village", "name": "마을" },
+      { "id": "dungeon_rat_1", "name": "들쥐굴 1층" },
+      { "id": "dungeon_rat_2", "name": "들쥐굴 2층" },
+      { "id": "dungeon_rat_3", "name": "들쥐굴 3층(쥐왕)" },
+      { "id": "dungeon_weasel_1", "name": "족제비굴" }
+    ],
+    "boss": "rat_king",
+    "bossMap": "dungeon_rat_3",
+    "longPressMs": 450
   }
 }
