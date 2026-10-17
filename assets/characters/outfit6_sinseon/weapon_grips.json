@@ -1,0 +1,62 @@
+{
+"front_hold": [
+191,
+400
+],
+"side_hold": [
+228,
+409
+],
+"back_hold": [
+456,
+395
+],
+"front_raise": [
+181,
+198
+],
+"side_raise": [
+216,
+166
+],
+"back_raise": [
+455,
+176
+],
+"front_swing": [
+191,
+152
+],
+"side_swing": [
+114,
+223
+],
+"back_swing": [
+464,
+203
+],
+"front_strike": [
+305,
+502
+],
+"side_strike": [
+144,
+472
+],
+"back_strike": [
+386,
+375
+],
+"front_hold_step": [
+191,
+400
+],
+"side_hold_step": [
+228,
+409
+],
+"back_hold_step": [
+456,
+395
+]
+}

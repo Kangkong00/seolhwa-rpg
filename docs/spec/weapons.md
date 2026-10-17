@@ -53,3 +53,25 @@
 - **몸 전체 움직임**: 휘두르기 직전 `preMs` 60ms 동안 바라보는 반대쪽으로 `backPx` 6 뺌(칼은 치켜든 채) → 진행 30~80% 동안 바라보는 쪽으로 내딛기(640 기준 옆면 10, 정면·뒷면 6) → 끝나면(`recoverMs`) 제자리. 몸·무기·손 덮개·그림자를 함께 옮기는 화면상 움직임(실제 위치는 그대로). 값은 `swing.lean`. 맞힘 판정·궤적·소리 타이밍은 칼이 돌기 시작한 뒤 기준(직전 60ms만큼 늦게 맞음).
 - **외곽선**: 캐릭터·몬스터·무기(손 덮개 포함) 테두리에 진한 갈색 `#46301e` 외곽선, 게임 화면 기준 0.75px(처음 1px → 2026-10-11 강콩: 아주 조금만 얇게, 반영됨. 소수도 됨. 마을 그림 선 굵기와 맞춤, 시안 `docs/outline_compare.png`). 그림을 불러올 때 한 번만 만들어 둠(게임 중 성능 영향 없음). 굵기·색·진하기는 `data/game.json` `outline`(`widthPx` 0이면 끔).
 - 휘두르는 중에 공격 버튼을 누르면 버리지 않고 끝난 뒤 나감.
+
+## 옷 2~6 무기 자세 (2026-10-18, 기획 쪽 그림 준비됨 → Claude Code가 할 일)
+
+강콩 결정(10-16): 옷 5벌 모두 무기 자세를 만듦. Flow 49~68(`docs/prompts_2026-10-16_outfit_weapon.md`) 20장 합격, 원본 `assets/source/v3/outfitN_<id>_{hold,raise,swing,strike}.webp`, 도구 `tools/art/v3_outfit_weapons.py`·`v3_outfit_hood.py`(+`_fix`)·`v3_outfit_mock.py`.
+
+**그림 (옷마다 `assets/characters/<옷>/`, 홑옷과 같은 규격 640×720·발 700·몸통 가운데 320)**
+- `{front,side,back}_{hold,hold_step,raise,swing,strike}.png` + 같은 이름 `_hand.png`(손 덮개).
+- 들고 걷기 `hold_step`은 Flow 없이 합성: 들고 서 있기 윗몸 + 기존 걷기 다리, 경계 = 그 옷의 `legSplitY`(옷 아랫단 바로 아래). 윗몸이 같아 쥐는 점·손 덮개는 hold와 같음.
+- 뒷면 내려치기(`back_strike`)는 치는 주먹이 몸 앞이라 안 보임 → 쥐는 점은 홑옷 값 (386,375), 손 덮개는 빈 그림(칼이 몸 뒤에 그려지므로 문제 없음).
+
+**할 일**
+1. `data/weapons.json` `attach`에 옷 5벌 추가: 쥐는 점은 `assets/characters/<옷>/weapon_grips.json`(키 `front_hold` 등 → `attach.<옷>.<자세>.<방향>.grip`). `hold`·`hold_step`의 `theta`·`lat`는 홑옷 값 그대로(정면 15/−0.12, 옆면 20/0, 뒷면 10/−0.12).
+2. `data/outfits.json` 옷 5벌에 `holdLegSplitY` = 그 옷의 `legSplitY`(596·601·633·593·599) — 합성 경계와 같아 다리 반전이 이음새 없이 맞음.
+3. 머리 장비 위치: `assets/equipment/head/head_anchor.json`에 새 자세 75개(옷 5 × 자세 5 × 방향 3) 추가됨, 상투 지우개 `hood_mumyeong/topknot/<옷>/<자세>.png`도 추가됨 → 코드 변경 없이 읽히는지만 확인.
+4. "이 옷은 아직 주먹" 처리(정보창 문구·맨손 공격력 기준)를 지움 — 이제 모든 옷이 무기를 듦.
+5. 반영하면 이 절 아래에 "반영됨".
+
+**그림 메모**
+- 신선복 휘두르기 중간 정면은 Flow가 좌우를 바꿔 그려 정면만 좌우 반전함(노리개가 반대쪽으로 감 — 62px에서는 거의 안 보임). 주먹도 홑옷보다 조금 높음(쥐는 점은 실제 주먹에 맞춤).
+- 신선복은 크림색 비단이 피부색과 비슷해 쥐는 점 4곳을 눈으로 잼(`MANUAL`).
+- 무명옷·신선복 옆면 치켜들기는 치켜든 팔과 상투가 이어져 상투 지우개를 손봄(`v3_outfit_hood_fix.py`).
+- 시안: `docs/outfit_weapons_mock.png`(옷 6종 × 들고 서 있기 3방향·치켜들기·휘두르기·내려치기, 두건 + 박달 목검), `docs/outfit_weapons_swing.gif`(휘두르기 3방향).
