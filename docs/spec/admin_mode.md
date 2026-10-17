@@ -34,3 +34,15 @@
 
 - 탭 4개(나·물건·맵·설정)와 기능은 위 표대로 확정.
 - 여는 법은 위쪽 단추(숨기지 않음).
+
+## 반영됨 (2026-10-18, Claude Code)
+
+- **단추**: 위쪽 단추 줄 맨 오른쪽 `관리자`(`index.html` `#btn-admin`, `src/ui/hud.js`). 누르면 열고 닫음, 창 바깥(어두운 곳)을 눌러도 닫힘, PC는 F2. `data/game.json` `admin.enabled` false면 단추가 숨고 F2도 안 됨. 안 죽기·한 방이 켜져 있으면 글자 빨강. 창이 열려 있는 동안 조이스틱·공격 단추는 숨김(게임은 그대로 흐름).
+- **창**: `src/ui/adminPanel.js` 하나(화면 가운데, 탭 나·물건·맵·설정, 아래 한 줄 알림).
+  - 나: 레벨 − / +(1~15, `progress.setLevel` — 경험치 0부터, 최대 체력·데미지 보너스 바로, 체력 가득, 레벨업 연출 없음), 경험치 +100 / +1000(보통 경험치처럼 들어가므로 레벨이 오르면 레벨업 연출은 뜸), 엽전 +1냥 / +10냥(`equipment.addCoins`), 체력 가득, 안 죽기(체력이 1 아래로 안 내려감), 한 방(맞힌 몬스터의 남은 체력만큼), 무예 모두 배우기(`skills.grantSkill`, 값 없이).
+  - 물건: `data/items.json` 전체를 무기·옷·머리·팔·발·먹을거리·쓰는 것·전리품으로 묶어 아이콘 + 이름. 누르면 1개, 길게(0.45초, `admin.longPressMs`) 누르면 10개. 장비는 아래 `끼기`(가방에 하나 넣고 `equipFromBag`에 레벨 무한으로 → 레벨 제한 무시, 벗은 것은 가방으로).
+  - 맵: `admin.maps` 목록(마을·들쥐굴 1~3층·족제비굴)을 누르면 그 맵의 `spawn`으로 이동. 지금 맵 몬스터 모두 다시 생기게(`MonsterSpawner.reset`), 쥐왕 바로 생기게(`MonsterSpawner.fill('rat_king')` — 이미 있으면 알림, 이 맵에 쥐왕 자리가 없으면 `admin.bossMap` 들쥐굴 3층으로 이동, 들어가면 바로 있음).
+  - 설정: 시험 배율 켜기/끄기·경험치(1~10)·엽전(1~10)·전리품 확률(1~5, 0.5씩) — **이번 실행에만**(다시 열면 `data/game.json` 값), 의뢰 처음부터(`quests.resetQuests`), 격자 편집 열기, 저장 지우고 새로 시작(두 번 더 눌러야 지움 → 다시 불러옴. 격자 편집 내용은 그대로).
+- 규칙 쪽에 더한 보통 함수: `progress.maxLevel`·`setLevel`, `equipment.addCoins`, `skills.grantSkill`, `quests.resetQuests`, `MonsterSpawner.fill`·`reset`, `localSave.clearSave`. 관리자 전용 규칙은 없음.
+- 안 죽기·한 방은 `scene.d.admin`에만 둠(저장 안 됨 — 시험으로 확인).
+- 제가 정한 것(확인 필요): 시험 배율 조정은 저장하지 않음, 경험치 단추는 레벨업 연출이 뜸, 창이 열려도 게임은 멈추지 않음.
