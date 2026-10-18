@@ -136,6 +136,16 @@ const SYNTH = {
     noise(ctx, out, t + 0.03, 0.6, { type: 'lowpass', f0: 400 * p, f1: 120 * p, q: 0.8, peak: 0.7, attack: 0.02 });
     tone(ctx, out, t, 0.35, { type: 'sine', f0: 90 * p, f1: 50 * p, peak: 0.6, attack: 0.01 });
   },
+  // 물뱀 '쉭': 높은 잡음이 짧게 새는 소리
+  hiss(ctx, out, t, p) {
+    noise(ctx, out, t, 0.22, { type: 'highpass', f0: 4200 * p, q: 0.6, peak: 0.55, attack: 0.02 });
+    noise(ctx, out, t, 0.18, { type: 'bandpass', f0: 6500 * p, f1: 5000 * p, q: 2, peak: 0.3, attack: 0.02 });
+  },
+  // 꼬리 휘두르기 '휙': 낮게 훑는 바람(휘두르기보다 굵고 김)
+  whoosh(ctx, out, t, p) {
+    noise(ctx, out, t, 0.3, { type: 'bandpass', f0: 1800 * p, f1: 260 * p, q: 1.1, peak: 1, attack: 0.04 });
+    tone(ctx, out, t + 0.05, 0.2, { type: 'sine', f0: 140 * p, f1: 70 * p, peak: 0.35, attack: 0.02 });
+  },
   // 주인공 물림: 둔탁한 소리 + 짧은 잡음
   playerHurt(ctx, out, t, p) {
     tone(ctx, out, t, 0.12, { type: 'sine', f0: 170 * p, f1: 80 * p, peak: 0.9, attack: 0.003 });

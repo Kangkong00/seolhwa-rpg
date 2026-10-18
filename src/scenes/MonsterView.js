@@ -4,6 +4,7 @@ import { loadImage, downscale } from './characterFrames.js';
 import { createMonsterShadow } from './shadow.js';
 import { HpBar } from '../ui/hpBar.js';
 import { smokeBurst } from './impactFx.js';
+import { isEnraged } from '../core/monsters.js';
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
@@ -87,6 +88,39 @@ export class MonsterView {
     } else if (m.chargeState === 'dash') {
       step = true;
     }
+    // 웅크림(물뱀이 물기 전): 세로로 눌리고 가로로 조금 퍼짐
+    if (m.biteWindup > 0 && this.def.biteWindupMs) {
+      const k = 1 - m.biteWindup / this.def.biteWindupMs;
+      sy *= 1 - (1 - (this.def.crouchY || 0.85)) * Math.min(1, k * 2);
+      sx *= 1 + 0.05 * Math.min(1, k * 2);
+    }
+    // 꿈틀(뱀: 움직이는 그림이 없어 가로로 늘였다 줄임). 움직이거나 무는 동안
+    const wr = this.def.wriggle;
+    if (wr && (m.moving || m.biteMs > 0)) {
+      this.wriggleT = (this.wriggleT || 0) + dtMs;
+      const k = (Math.sin((this.wriggleT / wr.ms) * Math.PI * 2) + 1) / 2;
+      sx *= wr.sx[1] + (wr.sx[0] - wr.sx[1]) * k;
+    }
+    // 꼬리 휘두르기 예고(늙은 구렁이): 몸을 옆으로 비틂(좌우로 기울며 떪)
+    let angle = 0;
+    if (m.tailState === 'windup' && this.def.tail) {
+      const k = 1 - Math.max(0, m.tailMs) / this.def.tail.windupMs;
+      angle = Math.sin(k * Math.PI * 3) * 10 * k;
+      sx *= 1 - 0.08 * k;
+    }
+    if (!this.dead) this.sprite.setAngle(angle);
+    // 꼬리를 휘두른 순간: 반원 바람 + 소리
+    if (this.def.tail && m.tailCount !== (this.tailSeen ?? m.tailCount)) this.tailSweep(m);
+    this.tailSeen = m.tailCount;
+    // 성남(체력 50% 아래): 붉게 깜빡임
+    if (this.def.enrage && !this.dead && !this.flashing) {
+      const on = isEnraged(m, this.def) && Math.floor(this.sprite.scene.time.now / this.def.enrage.blinkMs) % 2 === 0;
+      if (on !== this.blinkOn) {
+        this.blinkOn = on;
+        if (on) this.sprite.setTint(Phaser.Display.Color.HexStringToColor(this.def.enrage.blinkColor).color).setTintMode(Phaser.TintModes.MULTIPLY);
+        else this.clearFlash();
+      }
+    }
     // 맞아서 찌그러짐(가로로 퍼지고 세로로 눌렸다 돌아옴)
     if (this.squashing) {
       const q = this.squashing;
@@ -120,10 +154,50 @@ export class MonsterView {
 
   // 맞았을 때: 하얗게 번쩍
   flash(ms) {
+    this.flashing = true;
+    this.blinkOn = false;
     this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     this.sprite.scene.time.delayedCall(ms, () => {
+      this.flashing = false;
       if (this.sprite.active) this.clearFlash();
     });
+  }
+
+  // 꼬리 휘두르기(늙은 구렁이): 바라보는 쪽 반원(반경 tail.radius)을 바람 호가 쓸고 지나감 + '휙'
+  tailSweep(m) {
+    const scene = this.sprite.scene;
+    const t = this.def.tail;
+    const base = { up: -Math.PI / 2, down: Math.PI / 2, left: Math.PI, right: 0 }[m.facing];
+    const g = scene.add.graphics().setDepth(m.y + 0.05).setBlendMode(Phaser.BlendModes.ADD);
+    const c = Phaser.Display.Color.HexStringToColor(t.color).color;
+    const o = { k: 0 };
+    const cx = m.x;
+    const cy = m.y - this.def.height * 0.3;
+    scene.tweens.add({
+      targets: o,
+      k: 1,
+      duration: 260,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        g.clear();
+        const end = base - Math.PI / 2 + Math.PI * o.k;
+        for (const [w, al, rr] of [[8, 0.35, t.radius], [3, 0.9, t.radius * 0.92]]) {
+          g.lineStyle(w * (1 - o.k * 0.5), c, al * (1 - o.k * 0.6));
+          g.beginPath();
+          for (let i = 0; i <= 16; i++) {
+            const a = base - Math.PI / 2 + (end - (base - Math.PI / 2)) * (i / 16);
+            const px = cx + Math.cos(a) * rr;
+            const py = cy + Math.sin(a) * rr * 0.55;
+            if (i === 0) g.moveTo(px, py);
+            else g.lineTo(px, py);
+          }
+          g.strokePath();
+        }
+      },
+      onComplete: () => scene.tweens.add({ targets: g, alpha: 0, duration: 150, onComplete: () => g.destroy() }),
+    });
+    const snd = this.def.sounds && this.def.sounds.tail;
+    if (snd && scene.sfx) scene.sfx.play(snd);
   }
 
   // 맞았을 때 몸이 살짝 찌그러졌다 돌아옴(ms 동안). 바로 한 번 그려 둠(맞는 순간 멈춤 동안에도 보이게)

@@ -81,6 +81,13 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     chargeLeft: 0,
     chargeVec: null,
     chargeHit: false,
+    // 웅크렸다 물기(물뱀, def.biteWindupMs): 무는 동작 전 웅크리는 남은 시간
+    biteWindup: 0,
+    // 꼬리 휘두르기(늙은 구렁이, def.tail): tailState = null | 'windup', tailCount = 휘두른 횟수(그림·소리용)
+    tailTimer: def.tail ? def.tail.everyMs : 0,
+    tailState: null,
+    tailMs: 0,
+    tailCount: 0,
   };
 }
 
@@ -159,6 +166,34 @@ function updateCharge(m, def, map, dtMs, target) {
   return ev;
 }
 
+// 성남(def.enrage): 체력이 below 아래면 공격 간격 intervalMul배(짧게)
+export function isEnraged(m, def) {
+  return !!(def.enrage && m.hp > 0 && m.hp < m.maxHp * def.enrage.below);
+}
+
+function attackInterval(m, def, ms) {
+  return isEnraged(m, def) ? ms * def.enrage.intervalMul : ms;
+}
+
+// 꼬리 휘두르기 한 프레임(늙은 구렁이): windupMs 예고(몸을 비틂) 뒤 바라보는 쪽 반원(반경 radius) 안이면 맞음.
+// 반환: 맞았으면 { type: 'bite', damage, dir, knockbackPx }
+function updateTail(m, def, dtMs, target) {
+  const t = def.tail;
+  m.tailMs -= dtMs;
+  if (m.tailMs > 0) return null;
+  m.tailState = null;
+  m.tailTimer = attackInterval(m, def, t.everyMs);
+  m.tailCount += 1;
+  const dx = target.x - m.x;
+  const dy = target.y - m.y;
+  const [fx, fy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[m.facing];
+  if (Math.hypot(dx, dy) > t.radius || dx * fx + dy * fy < -6) return null;
+  m.calmMs = 0;
+  // 밀려나는 쪽 = 구렁이에서 주인공 쪽
+  const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
+  return { type: 'bite', damage: t.damage, dir, knockbackPx: t.knockbackPx };
+}
+
 // 반격 중 한 프레임. 반환: 이번 프레임에 문 경우 { type: 'bite', damage } 아니면 null
 function updateAggro(m, def, map, dtMs, target) {
   const dist = Math.hypot(target.x - m.x, target.y - m.y);
@@ -168,6 +203,8 @@ function updateAggro(m, def, map, dtMs, target) {
     m.state = 'rest';
     m.timer = 300;
     m.chargeState = null;
+    m.tailState = null;
+    m.biteWindup = 0;
     return null;
   }
   m.biteCooldown = Math.max(0, m.biteCooldown - dtMs);
@@ -181,6 +218,28 @@ function updateAggro(m, def, map, dtMs, target) {
       m.facing = towardPoint(m, target.x, target.y);
       return null;
     }
+  }
+
+  // 꼬리 휘두르기: everyMs마다(성나면 짧게), 주인공이 반경 1.5배 안이면 예고 → 휘두름
+  if (def.tail) {
+    if (m.tailState) return updateTail(m, def, dtMs, target);
+    m.tailTimer -= dtMs;
+    if (m.tailTimer <= 0 && m.biteMs <= 0 && m.biteWindup <= 0 && dist <= def.tail.radius * 1.5) {
+      m.tailState = 'windup';
+      m.tailMs = def.tail.windupMs;
+      m.facing = towardPoint(m, target.x, target.y);
+      return null;
+    }
+  }
+
+  // 웅크리는 중(물뱀): 끝나면 앞으로 튀어 묾
+  if (m.biteWindup > 0) {
+    m.biteWindup -= dtMs;
+    if (m.biteWindup <= 0) {
+      m.biteMs = def.biteMs;
+      m.bitePending = true;
+    }
+    return null;
   }
 
   // 무는 중: 동작 절반에서 실제로 닿는지 판정
@@ -199,9 +258,13 @@ function updateAggro(m, def, map, dtMs, target) {
   if (dist <= def.biteRange) {
     m.facing = towardPoint(m, target.x, target.y);
     if (m.biteCooldown <= 0) {
-      m.biteMs = def.biteMs;
-      m.bitePending = true;
-      m.biteCooldown = def.biteCooldownMs;
+      m.biteCooldown = attackInterval(m, def, def.biteCooldownMs);
+      if (def.biteWindupMs) {
+        m.biteWindup = def.biteWindupMs;
+      } else {
+        m.biteMs = def.biteMs;
+        m.bitePending = true;
+      }
     }
     return null;
   }
@@ -233,7 +296,12 @@ export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
     m.stunMs -= dtMs;
     m.biteMs = 0;
     m.bitePending = false;
+    m.biteWindup = 0;
     if (m.chargeState === 'windup') m.chargeState = null;
+    if (m.tailState === 'windup') {
+      m.tailState = null;
+      m.tailTimer = attackInterval(m, def, def.tail.everyMs) * 0.5;
+    }
     return null;
   }
   if (m.aggro && target) return updateAggro(m, def, map, dtMs, target);
