@@ -61,6 +61,9 @@ docs/          문서 사본
 | [docs/spec/beginner_area.md](docs/spec/beginner_area.md) | 초보 구간 구성: 들쥐굴 1~3층·족제비굴, 레벨 표(15까지), 새 몬스터(굴 들쥐·곳간 쥐왕·족제비) 수치, 새 전리품·귀환 부적, 마을 사람 그림 |
 | [docs/spec/test_boost.md](docs/spec/test_boost.md) | **시험 배율(2026-10-16)**: 진행 검증용 경험치 ×3·엽전 ×2·전리품 확률 ×1.5 (`data/game.json` `testBoost`, 표는 그대로, 밸런스 조정 때 끔) |
 | [docs/spec/admin_mode.md](docs/spec/admin_mode.md) | **관리자 모드(2026-10-18 확정)**: 위쪽 `관리자` 단추(PC F2)로 여는 시험 창 — 레벨·엽전·물건 주기·맵 이동·안 죽기·한 방·시험 배율 |
+| [docs/spec/tiers.md](docs/spec/tiers.md) | **구간표(2026-10-18)**: 레벨 1~40, 사냥터 9곳(뱀굴~산군굴), 몬스터 수치, 구간별 장비(모자·토시·신발·팔찌·옷), 레벨 표 40까지, 뒷산 오솔길 |
+| [docs/spec/weapon_list.md](docs/spec/weapon_list.md) | **무기 목록 v2(2026-10-18)**: 20종(구간마다 2자루, 둘째는 우두머리 재료로 제작), 디자인·무기별 고유 연출(`fx`) |
+| [docs/spec/skills_impact.md](docs/spec/skills_impact.md) | **타격감·무예 확장(2026-10-18)**: 멈춤·흔들림 키움, 타격 섬광·베인 자국·회심·쓰러뜨림 연출, 무예 13개(새 10개)·무예 칸 4개·무예창, 직업 대비 `job` |
 | [docs/spec/combat.md](docs/spec/combat.md) | 때리기(맞히기·히트), 싸움 규칙(맞으면 반격·포기), 주인공 체력·체력바 |
 | [docs/spec/monsters.md](docs/spec/monsters.md) | 몬스터 그림 규격, 들쥐·큰 들쥐 크기, 돌아다니기, 몬스터 구역(`spawnZones`) |
 | [docs/spec/maps.md](docs/spec/maps.md) | 마을·들쥐굴 그림, 격자·지붕 가림(`occluders`), 맵 이동(`portals`)·던전 입구 표시, 닭장 마당 길 |
@@ -108,6 +111,9 @@ docs/          문서 사본
 - [x] 시험 배율(`docs/spec/test_boost.md`): `data/game.json` `testBoost`(경험치 ×3·엽전 ×2·전리품 확률 ×1.5), 규칙 쪽(`loot.killRewards`·의뢰 보상)에서 곱함, 화면에 "시험 ×3" — 2026-10-18 반영
 - [x] 관리자 모드(`docs/spec/admin_mode.md`): 위쪽 `관리자` 단추(PC F2), 탭 나·물건·맵·설정, `src/ui/adminPanel.js` — 2026-10-18 반영, 강콩 아이폰 확인 필요
 - [x] 옷 2~6 무기 자세(`docs/spec/weapons.md` "옷 2~6 무기 자세"): attach 쥐는 점·holdLegSplitY, "아직 주먹" 지움 — 2026-10-18 반영, 강콩 아이폰 확인 필요
+
+- [ ] 타격감 키우기 + 무예 10개 추가 + 무예 칸 4개·무예창 + 레벨 표 40·hpPerLevel 4 (`docs/spec/skills_impact.md`, `tiers.md` "레벨 표") — 2026-10-18 강콩, 그림 없이 바로 (무예 아이콘은 Flow 69~70이 오기 전엔 한자 `icon`)
+- [ ] 구간 3~9 사냥터·몬스터·무기·장비 (`tiers.md`·`weapon_list.md`) — Flow 69~94(`docs/prompts_2026-10-18_tiers.md`) 생성 대기 → 기획 쪽 가공 후 구간별로 전달
 
 ## 작업 규칙
 
