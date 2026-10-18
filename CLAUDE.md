@@ -112,7 +112,7 @@ docs/          문서 사본
 - [x] 관리자 모드(`docs/spec/admin_mode.md`): 위쪽 `관리자` 단추(PC F2), 탭 나·물건·맵·설정, `src/ui/adminPanel.js` — 2026-10-18 반영, 강콩 아이폰 확인 필요
 - [x] 옷 2~6 무기 자세(`docs/spec/weapons.md` "옷 2~6 무기 자세"): attach 쥐는 점·holdLegSplitY, "아직 주먹" 지움 — 2026-10-18 반영, 강콩 아이폰 확인 필요
 
-- [ ] 타격감 키우기 + 무예 10개 추가 + 무예 칸 4개·무예창 + 레벨 표 40·hpPerLevel 4 (`docs/spec/skills_impact.md`, `tiers.md` "레벨 표") — 2026-10-18 강콩, 그림 없이 바로 (무예 아이콘은 Flow 69~70이 오기 전엔 한자 `icon`)
+- [x] 타격감 키우기 + 무예 10개 추가 + 무예 칸 4개·무예창 + 레벨 표 40·hpPerLevel 4 (`docs/spec/skills_impact.md` "반영됨", `tiers.md` "레벨 표") — 2026-10-18 반영, 강콩 아이폰 확인 필요 (무예 아이콘은 Flow 69~70이 오기 전엔 한자 `icon`)
 - [ ] 구간 3~9 사냥터·몬스터·무기·장비 (`tiers.md`·`weapon_list.md`) — Flow 69~94(`docs/prompts_2026-10-18_tiers.md`) 생성 대기 → 기획 쪽 가공 후 구간별로 전달
 
 ## 작업 규칙

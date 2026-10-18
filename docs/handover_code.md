@@ -22,6 +22,8 @@
 - `src/core/` — **화면과 무관한 규칙**(나중에 서버로): `grid`·`movement`(격자·이동), `mapData`, `monsters`(돌아다니기·반격·쥐왕 돌진·생김), `combat`(맞히기·맞히기 도움 `aimAssist`), `progress`(경험치·레벨·최대 체력·레벨 데미지), `stats`(공격력·방어력·걸음·레벨 제한), `equipment`(장비·가방 겹침·엽전·한 번 주는 선물), `loot`(드랍·바닥 물건, 시험 배율 `killRewards`), `shop`, `skills`(배우기·재사용 시간), `quests`, `money`(푼·전·냥 표시).
 - `src/scenes/MapScene.js` — 한 장면이 모든 맵을 맡음(맵을 옮기면 `scene.restart`, 이어지는 상태는 `this.d`에). 큼(약 1300줄): 겉모습(옷+두건 합성·무기), 공격·무예·휘두르기, 쓰러뜨림·경험치·드랍, NPC·가게·정보창 연결, 귀환, 맵 이동(`travel`, 잠긴 출구 `unlockOnKill`), 저장, 매 프레임 `update`.
 - 그리기: `PlayerView`(몸·무기·손 덮개·빛남), `characterFrames`(그림 불러와 줄이기·외곽선·다리 반전·두건 합성), `weaponPose`(3D 칼 방향), `weaponFx`(궤적·먹 튐), `MonsterView`(물들임·돌진 예고·밀려나 보이기), `NpcView`, `dropView`(바닥 전리품), `mapObjects`(앞뒤 가림 조각·가려짐 윤곽 — 지금 꺼 둠), `levelUpFx`, `skillFx`(무예 연출), `progressFx`(빛 고리·빛기둥·반짝이 그림), `damageText`, `pickupFeed`, `portalFx`, `npcMenu`(사람 창 내용), `itemInfoView`(정보창 내용).
+- 타격·무예(10-18): 모든 맞힘은 `MapScene.impactHit`(회심·섬광·베인 자국·쓰러뜨림), 무예 동작은 `src/scenes/skillKinds.js`(kind별, 오래 걸리는 것은 `scene.setAct`), 연출 그림은 `skillFx.js`·`impactFx.js`, 무예 칸·무예창은 `src/ui/skillButtons.js`·`skillPanel.js`.
+- 시험 함정: 느리게 돌려 찍으려면 `s.sys.sceneUpdate`를 감싸야 함(`s.update`를 바꾸면 안 먹음) + `s.tweens.timeScale`·`s.time.timeScale`.
 - `src/ui/adminPanel.js` — 관리자 창(나·물건·맵·설정, `docs/spec/admin_mode.md`). 안 죽기·한 방은 `this.d.admin`(저장 안 함), 저장 지우기 중엔 `this.d.noSave`.
 - `src/ui/` — DOM 화면: 조이스틱(왼쪽에 선 NPC를 누르면 `tapHandler`), 공격·무예 단추, `hud`(소리·귀환·가방·격자), 장비창·가방, 사람 창, 정보창, 왼쪽 위 상태, 알림, `josa`(조사 고르기).
 - `src/save/localSave.js` — 자동 저장(localStorage `seolhwa-rpg:save:v1`). 저장 내용: 맵·위치·장비/가방/엽전/선물·레벨·배운 무예·의뢰. 체력·재사용 시간은 저장 안 함.
