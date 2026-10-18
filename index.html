@@ -23,10 +23,11 @@
     <div id="joystick-base"><div id="joystick-knob"></div></div>
   </div>
 
-  <!-- 오른쪽 위 버튼: 소리, 귀환, 가방(장비창), 격자, 관리자 (src/ui/hud.js) -->
+  <!-- 오른쪽 위 버튼: 소리, 귀환, 무예(무예창), 가방(장비창), 격자, 관리자 (src/ui/hud.js) -->
   <div id="hud">
     <button id="btn-sound" type="button" aria-label="소리">소리 켬</button>
     <button id="btn-recall" type="button" aria-label="귀환"><img src="assets/items/icons/item_return_charm.png" alt="" draggable="false"><span>귀환</span></button>
+    <button id="btn-skills" type="button">무예</button>
     <button id="btn-bag" type="button">가방</button>
     <button id="btn-grid" type="button">격자</button>
     <button id="btn-admin" type="button" hidden>관리자</button>
@@ -43,7 +44,7 @@
 
   <!-- 오른쪽 아래 공격 버튼 (src/ui/attackButton.js, PC는 스페이스) -->
   <button id="btn-attack" type="button" aria-label="공격">공격</button>
-  <!-- 공격 버튼 둘레 무예 버튼 3개 (src/ui/skillButtons.js, PC는 1·2·3) -->
+  <!-- 공격 버튼 둘레 무예 칸 4개 (src/ui/skillButtons.js, PC는 1·2·3·4) -->
   <div id="skill-buttons"></div>
 
   <!-- 사람(NPC) 창: 사기·팔기·무예 배우기·대화 (src/ui/npcPanel.js) -->
@@ -61,6 +62,9 @@
   <!-- 아이템 정보창(가방·장비·가게에서 아이콘을 누르면) + PC 마우스 올리면 작은 창 (src/ui/itemInfo.js) -->
   <div id="item-info" hidden><div class="ii-box"></div></div>
   <div id="item-tip" hidden></div>
+
+  <!-- 무예창: 무예 칸 4개에 넣고 빼기 (src/ui/skillPanel.js, docs/spec/skills_impact.md 2) -->
+  <div id="skill-panel" hidden></div>
 
   <!-- 관리자 창: 나·물건·맵·설정 (src/ui/adminPanel.js, docs/spec/admin_mode.md) -->
   <div id="admin-panel" hidden></div>

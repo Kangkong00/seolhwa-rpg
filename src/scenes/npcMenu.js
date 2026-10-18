@@ -214,9 +214,10 @@ export class NpcMenu {
             const r = learnSkill(sk, progress, equip, learned, itemDefs);
             if (!r.ok) return this.learn(r.reasons.join(', '));
             this.s.sfx.play('learn');
+            this.s.autoSlotSkill(sk.id); // 빈 무예 칸이 있으면 바로 넣음
             this.changed();
             this.s.refreshSkills();
-            this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 무예 단추로 쓰게.`);
+            this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 무예 칸으로 쓰게(칸은 위쪽 '무예'에서 고름).`);
           },
         };
       }),

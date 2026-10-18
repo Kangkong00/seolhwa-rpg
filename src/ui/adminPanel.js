@@ -69,6 +69,7 @@ export class AdminPanel {
     if (s.gridOn) s.setGridMode(false);
     if (s.equipPanel.open) s.setBagOpen(false);
     if (s.npcPanel.open) s.setNpcOpen(false);
+    if (s.d.skillPanel && s.d.skillPanel.open) s.d.skillPanel.close();
     s.itemInfo.hide();
     this.open = true;
     this.confirmClear = 0;
@@ -187,7 +188,7 @@ export class AdminPanel {
     const left = s.skills.filter((sk) => !s.learned.includes(sk.id)).length;
     const learnAll = this.btn(left ? `모두 배우기 (${left})` : '모두 배움', () => {
       let n = 0;
-      for (const sk of s.skills) if (grantSkill(sk, s.learned)) n++;
+      for (const sk of s.skills) if (grantSkill(sk, s.learned)) { n++; s.autoSlotSkill(sk.id); }
       s.refreshSkills();
       s.save();
       this.note(`무예 ${n}개를 배웠습니다`);

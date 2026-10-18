@@ -521,19 +521,44 @@ html, body {
   user-select: none;
 }
 
+/* 무예 칸 4개: 공격 버튼(가운데 오른쪽 아래) 둘레 반지름 108 호 위에 180°·150°·120°·90° */
 .skill-btn:nth-child(1) {
-  right: calc(env(safe-area-inset-right) + 122px);
+  right: calc(env(safe-area-inset-right) + 152px);
   bottom: calc(env(safe-area-inset-bottom) + 44px);
 }
 
 .skill-btn:nth-child(2) {
-  right: calc(env(safe-area-inset-right) + 99px);
-  bottom: calc(env(safe-area-inset-bottom) + 99px);
+  right: calc(env(safe-area-inset-right) + 137px);
+  bottom: calc(env(safe-area-inset-bottom) + 98px);
 }
 
 .skill-btn:nth-child(3) {
+  right: calc(env(safe-area-inset-right) + 98px);
+  bottom: calc(env(safe-area-inset-bottom) + 137px);
+}
+
+.skill-btn:nth-child(4) {
   right: calc(env(safe-area-inset-right) + 44px);
-  bottom: calc(env(safe-area-inset-bottom) + 122px);
+  bottom: calc(env(safe-area-inset-bottom) + 152px);
+}
+
+.skill-btn.empty {
+  opacity: 0.45;
+  font-size: 20px;
+  border-style: dashed;
+}
+
+.skill-btn .skill-num {
+  position: absolute;
+  right: 7px;
+  bottom: 3px;
+  font-size: 9px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.skill-btn .skill-face {
+  pointer-events: none;
 }
 
 .skill-btn.locked {
@@ -983,7 +1008,8 @@ html, body {
   border-color: rgba(255, 107, 91, 0.7);
 }
 
-#admin-panel {
+#admin-panel,
+#skill-panel {
   position: fixed;
   inset: 0;
   z-index: 34;
@@ -993,7 +1019,8 @@ html, body {
   background: rgba(0, 0, 0, 0.35);
 }
 
-#admin-panel[hidden] {
+#admin-panel[hidden],
+#skill-panel[hidden] {
   display: none;
 }
 
@@ -1152,3 +1179,56 @@ html, body {
   font-size: 11px;
 }
 
+/* 무예창 (src/ui/skillPanel.js) */
+.sk-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.ad-box button.sk-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+}
+
+.ad-box button.sk-slot.target {
+  border-color: #ffd98a;
+  box-shadow: 0 0 0 1px #ffd98a inset;
+}
+
+.sk-slot img,
+.sk-slot .icon-text,
+.sk-row img,
+.sk-row .icon-text {
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+}
+
+.sk-num {
+  position: absolute;
+  left: 5px;
+  top: 3px;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.sk-slot-name {
+  font-size: 11px;
+}
+
+.npc-row.sk-row.picked {
+  border-color: #ffd98a;
+  background: rgba(150, 110, 40, 0.5);
+}
+
+
+.ad-box button.sk-row {
+  width: 100%;
+  margin-bottom: 4px;
+}
