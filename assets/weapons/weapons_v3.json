@@ -22,5 +22,13 @@
 "steel_hwando": {
 "tipFromGrip": 500,
 "note": "Flow 47 쇠칼 시트, 칼끝 = 800 − tipFromGrip (tools/art/v3_iron.py)"
+},
+"bronze_ring": {
+"tipFromGrip": 510,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"serpent_scale": {
+"tipFromGrip": 520,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
 }
 }

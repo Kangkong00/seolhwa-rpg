@@ -71,6 +71,7 @@
 2-2. (10-16) 강콩: 옷 2~6 무기 자세 모두 만들기 → Flow 49~68 프롬프트(`docs/prompts_2026-10-16_outfit_weapon.md`, 참조 `옷무기자세_참조그림.zip` 9장) 전달, 생성 대기. 관리자 모드가 안 된다는 지적 → 규격이 어디에도 없었음, 초안 `docs/spec/admin_mode.md`(강콩 확인 대기). 시험 배율도 아직 코드 반영 전.
 2-3. (10-18) 관리자 모드 확정(위쪽 단추, 숨기지 않음, 탭 4개). Flow 49~68 20장 받음 → 합격·가공 완료(`tools/art/v3_outfit_weapons.py`·`v3_outfit_hood.py`·`v3_outfit_mock.py`), 들고 걷기는 legSplitY에서 합성, 두건 위치 75개 추가. Claude Code 전달 = `docs/spec/weapons.md` 맨 아래.
 2-4. (10-18) 강콩: 장비·사냥터를 함께 늘리고, 무기는 더 멋있게, 타격감·무예는 더 화려·다양하게(직업도 나중에). → 구간표 1~40·사냥터 9곳(`docs/spec/tiers.md`), 무기 v2 20종(`weapon_list.md`, 옛 22종 기각), 타격감·무예 13개(`skills_impact.md`), Flow 69~94(`docs/prompts_2026-10-18_tiers.md`, 참조 `구간확장_참조그림.zip` 8장). Claude Code는 그림 없이 되는 타격감·무예·레벨 표부터. **Claude Code 전달은 항상 한 블록으로**(강콩 10-18).
+2-5. (10-18) Flow 1차 69~80 합격(74·70은 다시 뽑아 합격) → 구간 3 묶음 가공 완료: 아이콘 37(`tools/art/v3_tier3_icons.py`), 맵 2·뱀 2·패랭이 아이콘(`v3_tier3_art.py`), 격자 초안(`grid_draft_tier3.py`), 무기(`v3_weapon_sheet.py`), 챙 있는 모자(`hat_cut.py`·`hat_mock.py`). 모자는 한 장으로 옷 6벌 공용(강콩 걱정 해소). Claude Code 전달 = `docs/spec/tier3_snake.md`. 다음 Flow: 81·82(뱀 움직이기), 83~94.
 3. (완료 10-16) Claude Code 전달 내용 `feedback_1015.md` "7-1", CLAUDE.md 지금 단계 갱신 → 강콩이 Claude Code에 넘김.
 4. 강콩 아이폰 확인 받을 것: 10-15 피드백 반영판(무예 연출·데미지 숫자·귀환 단추·정보창·걸음), 새 굴 3곳 격자(어긋난 칸은 게임 격자 편집), 족제비굴 입구 자리.
 5. 열린 질문(강콩 답 기다림): 쥐왕이 새 무기 하나를 보상으로 떨어뜨릴지.
