@@ -1,4 +1,4 @@
-// 최소 장비창·가방 (docs/spec/equipment.md). 장비 칸 5개 + 가방 칸 목록.
+// 최소 장비창·가방 (docs/spec/equipment.md). 장비 칸 6개(팔찌 칸은 레벨 25부터 — 그 전엔 자물쇠) + 가방 칸 목록.
 // 가방 아이템을 누르면 낌(먹을 것은 먹음), 장비 칸을 누르면 벗음(옷은 벗을 수 없음). 규칙은 src/core/equipment.js.
 // 겹치는 물건은 ×개수, 위쪽에 가진 엽전.
 import { itemIcon } from './itemIcon.js';
@@ -60,12 +60,20 @@ export class EquipmentPanel {
   }
 
   // state: { equipped, bag: [{ id, n }], coins }, coinsText: 엽전 표시
-  render(state, message = '', coinsText = '', totalsText = '') {
+  render(state, message = '', coinsText = '', totalsText = '', level = Infinity) {
     this.totals.textContent = totalsText;
     this.bagTitle.textContent = coinsText ? `가방 · ${coinsText}` : '가방';
     this.slotRow.replaceChildren(
       ...this.slots.map((s) => {
         const def = this.itemDefs[state.equipped[s.id]];
+        // 아직 열리지 않은 칸(팔찌 칸: 레벨 25부터): 자물쇠 + "레벨 N부터"
+        if (!def && s.level && level < s.level) {
+          const b = this.cell(null, `레벨 ${s.level}부터`, { slot: s.id });
+          b.classList.add('slot-locked');
+          b.prepend(Object.assign(document.createElement('span'), { className: 'lock', textContent: '🔒' }));
+          b.title = `${s.name}: 레벨 ${s.level}부터`;
+          return b;
+        }
         const b = this.cell(def, def ? def.name : s.name, { slot: s.id });
         b.title = def ? `${s.name}: ${def.name}` : `${s.name}: 비어 있음`;
         if (def && !this.canUnequip(s.id)) b.classList.add('locked');

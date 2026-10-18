@@ -1232,3 +1232,14 @@ html, body {
   width: 100%;
   margin-bottom: 4px;
 }
+
+/* 열리지 않은 장비 칸(팔찌: 레벨 25부터) */
+.equip-cell.slot-locked {
+  opacity: 0.55;
+}
+
+.equip-cell.slot-locked .lock {
+  font-size: 18px;
+  line-height: 1;
+}
+

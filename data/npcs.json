@@ -1,5 +1,5 @@
 {
-  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, image=정면 서 있기 그림(빈 문자열이면 그림 없이 이름표만 — 성황당처럼 사람이 아닌 곳), imageCanvas=그림 규격(400×800, 발 y=780) — 5명 같은 배율로 refHeight(가장 큰 사람 740px)를 displayHeight(70)로 줄여 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(price=푼, 없으면 data/items.json shopPrice — 엽전+재료), quest=대화로 주는 의뢰(data/quests.json), lines=대화. 자리·값 모두 임시",
+  "_설명": "마을 사람(NPC). map·x·y=서 있는 자리(발, 1376 좌표), facing=바라보는 쪽, image=정면 서 있기 그림(빈 문자열이면 그림 없이 이름표만 — 성황당처럼 사람이 아닌 곳), imageCanvas=그림 규격(400×800, 발 y=780) — 5명 같은 배율로 refHeight(가장 큰 사람 740px)를 displayHeight(70)로 줄여 그림, menu=누르면 뜨는 창의 단추(buy 사기, sell 팔기, learn 무예 배우기, talk 대화), shop.buys=사 주는 물건(값은 data/items.json sellPrice), shop.sells=파는 물건과 값(price=푼, 없으면 data/items.json shopPrice — 엽전+재료), quest=대화로 주는 의뢰(data/quests.json), lines=대화. minLevel=이 레벨부터 보임(방물장수 25), wander=가로길을 오감(x0~x1, speed 초당 픽셀, 끝에서 pauseMs 쉼, 이름표만인 곳). 가게 목록의 레벨 모자란 물건은 빨강 「레벨 N부터」(사기는 됨, 끼기는 막음). 자리·값 모두 임시",
   "tapRadius": 22,
   "imageCanvas": { "width": 400, "height": 800, "footY": 780, "refHeight": 740, "displayHeight": 70 },
   "npcs": [
@@ -20,21 +20,21 @@
       "id": "yakbang", "name": "약방 영감", "map": "village", "x": 1180, "y": 242, "facing": "down", "image": "assets/npcs/yakbang/front.png",
       "menu": ["buy", "sell", "talk"],
       "greeting": "어디 다친 데는 없고?",
-      "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth"], "sells": [{ "id": "med_tangyak", "price": 20 }, { "id": "item_return_charm", "price": 10 }] },
+      "shop": { "buys": ["loot_rat_whisker", "loot_rat_tooth", "loot_snake_skin", "loot_snake_fang"], "sells": [{ "id": "med_tangyak", "price": 20 }, { "id": "item_return_charm", "price": 10 }] },
       "lines": ["쥐수염이며 쥐 앞니며, 약재로 쓰는 데가 다 있지.", "탕약 한 사발이면 웬만한 상처는 금세 아물어."]
     },
     {
       "id": "gatbachi", "name": "갖바치", "map": "village", "x": 1250, "y": 395, "facing": "down", "image": "assets/npcs/gatbachi/front.png",
-      "menu": ["sell", "talk"],
+      "menu": ["buy", "sell", "talk"],
       "greeting": "가죽 있으면 가져와. 값은 쳐 줄 테니.",
-      "shop": { "buys": ["loot_rat_hide"], "sells": [] },
-      "lines": ["쥐가죽은 작아도 쓸 데가 많아. 짚신 코에 덧대기도 하고.", "짚신이야 곧 짜 둘 거야. 조금만 기다려."]
+      "shop": { "buys": ["loot_rat_hide"], "sells": [{ "id": "shoes_mituri" }, { "id": "shoes_leather" }, { "id": "shoes_mokhwa" }, { "id": "shoes_silk" }, { "id": "shoes_taesa" }, { "id": "shoes_unhye" }] },
+      "lines": ["쥐가죽은 작아도 쓸 데가 많아. 짚신 코에 덧대기도 하고.", "미투리부터 운혜까지, 발에 맞는 신은 다 있지."]
     },
     {
       "id": "blacksmith", "name": "대장장이", "map": "village", "x": 500, "y": 404, "facing": "down", "image": "assets/npcs/blacksmith/front.png",
-      "menu": ["buy", "talk"],
+      "menu": ["buy", "sell", "talk"],
       "greeting": "쇠는 거짓말을 안 하지. 쓸 만한 칼이 필요한가?",
-      "shop": { "buys": [], "sells": [{ "id": "iron_rusty" }, { "id": "iron_hwando" }, { "id": "steel_hwando" }] },
+      "shop": { "buys": ["loot_serpent_scale", "loot_dogking_fang", "loot_raccoon_tail", "loot_foxfire_bead", "loot_boar_tusk", "loot_bear_claw", "loot_tiger_fang", "loot_tiger_hide"], "sells": [{ "id": "iron_rusty" }, { "id": "iron_hwando" }, { "id": "steel_hwando" }, { "id": "bronze_ring" }, { "id": "serpent_scale" }] },
       "lines": ["목검으로 버틸 만큼 버텼으면, 이제 쇠를 쥘 때야.", "쥐가죽은 손잡이 감는 데 그만이지. 모아 오면 환도를 쳐 주겠네."]
     },
     {
@@ -50,6 +50,9 @@
       "greeting": "서낭나무에 오색 천이 바람에 나부낀다. 부적이 몇 장 걸려 있다.",
       "shop": { "buys": [], "sells": [{ "id": "item_return_charm", "price": 10 }] },
       "lines": ["귀환 부적을 쓰면 어디서든 이 서낭나무 앞으로 돌아온다고 한다.", "돌무더기에 돌 하나를 얹고 무사히 돌아오기를 빌었다."]
-    }
+    },
+    {"id": "hatshop", "name": "갓방", "map": "village", "x": 958, "y": 414, "facing": "down", "image": "", "tapHeight": 44, "menu": ["buy", "talk"], "greeting": "갓방 안에 패랭이와 갓이 가지런히 걸려 있다.", "shop": {"buys": [], "sells": [{"id": "hat_paraengi"}]}, "lines": ["패랭이 한 닢이면 뙤약볕도 견딜 만하다고 한다.", "앞으로 전립이며 흑립도 들여놓는다는 말이 붙어 있다."]},
+    {"id": "clothshop", "name": "포목점", "map": "village", "x": 150, "y": 400, "facing": "down", "image": "", "tapHeight": 44, "menu": ["buy", "talk"], "greeting": "빨랫줄에 물들인 천이 바람에 나부낀다. 토시와 옷감이 쌓여 있다.", "shop": {"buys": [], "sells": [{"id": "toshi_leather"}, {"id": "toshi_ironring"}, {"id": "toshi_deer"}, {"id": "toshi_silk"}, {"id": "toshi_scale"}, {"id": "toshi_dragon"}, {"id": "outfit2_mumyeong"}, {"id": "outfit3_dopo"}, {"id": "outfit4_cheollik"}, {"id": "outfit5_dujeonggap"}, {"id": "outfit6_sinseon"}]}, "lines": ["무명옷부터 신선복까지, 몸에 맞는 옷을 고를 수 있다.", "토시 한 짝이 팔뚝 상처를 많이 줄여 준다고 한다."]},
+    {"id": "peddler", "name": "방물장수", "map": "village", "x": 300, "y": 432, "facing": "down", "image": "", "tapHeight": 44, "minLevel": 25, "wander": {"x0": 260, "x1": 1120, "speed": 18, "pauseMs": [1500, 3500]}, "menu": ["buy", "talk"], "greeting": "방물 보따리를 진 장수가 웃으며 팔찌를 꺼내 보인다.", "shop": {"buys": [], "sells": [{"id": "bracelet_bead"}, {"id": "bracelet_jade"}, {"id": "bracelet_silver"}, {"id": "bracelet_gold"}, {"id": "bracelet_chilbo"}]}, "lines": ["팔찌 하나에 기운이 달라진다니까요.", "장터를 한 바퀴 돌고 나면 또 새 물건이 들어와요."]}
   ]
 }

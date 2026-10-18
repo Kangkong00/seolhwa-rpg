@@ -16,16 +16,24 @@ export function swingSpeedLabel(w) {
   return '보통';
 }
 
-// 낀 장비 전체 능력치
+// 낀 장비 전체 능력치. 팔찌(docs/spec/tier3_snake.md 4): maxHp 최대 체력 +, healMul 회복 배율 +, critChance 회심 확률 +,
+// attack 공격력 +, cooldownCut 무예 기다리는 시간 −(최대 0.5)
 export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, levelsCfg) {
-  let defense = 0;
-  let speed = 0;
+  const sum = { defense: 0, speed: 0, maxHp: 0, healMul: 0, critChance: 0, attack: 0, cooldownCut: 0 };
   for (const id of Object.values(equipped)) {
     const s = (id && itemDefs[id] && itemDefs[id].stats) || {};
-    defense += s.defense || 0;
-    speed += s.speed || 0;
+    for (const k of Object.keys(sum)) sum[k] += s[k] || 0;
   }
-  return { attack: weaponAttack(equipped.weapon, weaponDefs, baseDamage, level, levelsCfg), defense, speedMul: 1 + speed };
+  return {
+    attack: weaponAttack(equipped.weapon, weaponDefs, baseDamage, level, levelsCfg) + sum.attack,
+    attackBonus: sum.attack,
+    defense: sum.defense,
+    speedMul: 1 + sum.speed,
+    maxHp: sum.maxHp,
+    healMul: 1 + sum.healMul,
+    critChance: sum.critChance,
+    cooldownMul: 1 - Math.min(0.5, sum.cooldownCut),
+  };
 }
 
 // 맞았을 때 받는 데미지: 데미지 − 방어력(최소 1)

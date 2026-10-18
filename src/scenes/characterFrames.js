@@ -42,14 +42,14 @@ const BODY_FILES = FILES.filter((f) => !f.endsWith('_hand'));
 const headCache = new Map();
 
 // 머리 장비 그림(front·side·back)과 이 옷의 상투 지우개(몸 그림이 있는 것만)
-// headDef: { id, head: 폴더 }. 반환: { hood: {front, side, back}, erasers: { 그림이름: img } }
+// headDef: { id, head: 폴더, topknot: 상투 지우개 폴더(없으면 head — 패랭이는 두건 것을 그대로 씀) }. 반환: { hood: {front, side, back}, erasers: { 그림이름: img } }
 export function loadHeadImages(headDef, outfit, bodyImages) {
   const key = `${headDef.id}|${outfit.id}`;
   if (!headCache.has(key)) {
     const names = BODY_FILES.filter((f) => bodyImages[f]);
     const p = Promise.all([
       Promise.all(['front', 'side', 'back'].map((d) => loadImage(`${headDef.head}/${d}.png`))),
-      Promise.all(names.map((f) => loadImage(`${headDef.head}/topknot/${outfit.id}/${f}.png`))),
+      Promise.all(names.map((f) => loadImage(`${headDef.topknot || headDef.head}/topknot/${outfit.id}/${f}.png`))),
     ]).then(([hoods, erasers]) => {
       const out = { hood: { front: hoods[0], side: hoods[1], back: hoods[2] }, erasers: {} };
       names.forEach((f, i) => { out.erasers[f] = erasers[i]; });

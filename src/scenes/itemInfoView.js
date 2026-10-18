@@ -3,7 +3,7 @@
 import { weaponAttack, swingSpeedLabel, levelOk } from '../core/stats.js';
 import { josa } from '../ui/josa.js';
 
-const SLOT_KIND = { weapon: '무기', outfit: '옷', head: '머리', arms: '팔', feet: '발' };
+const SLOT_KIND = { weapon: '무기', outfit: '옷', head: '머리', arms: '팔', feet: '발', wrist: '팔찌' };
 
 export function kindLabel(def) {
   if (def.slot) return SLOT_KIND[def.slot] || '장비';
@@ -35,6 +35,14 @@ export function itemStats(s, def) {
     const pct = (x) => `+${Math.round(x * 100)}%`;
     if (eq.feet === def.id) out.push({ text: `걸음 ${pct(v)}` });
     else cmpLine('걸음', v, cur, (x) => (x >= 0 ? pct(x) : `${Math.round(x * 100)}%`));
+  } else if (def.slot === 'wrist') {
+    // 팔찌: 능력치 이름대로 한 줄씩
+    const st = def.stats || {};
+    if (st.maxHp) out.push({ text: `최대 체력 +${st.maxHp}` });
+    if (st.healMul) out.push({ text: `회복 +${Math.round(st.healMul * 100)}%` });
+    if (st.critChance) out.push({ text: `회심 +${Math.round(st.critChance * 100)}%` });
+    if (st.attack) out.push({ text: `공격력 +${st.attack}` });
+    if (st.cooldownCut) out.push({ text: `무예 기다림 −${Math.round(st.cooldownCut * 100)}%` });
   } else if (def.slot) {
     const v = (def.stats && def.stats.defense) || 0;
     const curDef = eq[def.slot] && s.itemDefs[eq[def.slot]];

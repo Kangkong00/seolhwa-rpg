@@ -1,9 +1,9 @@
 // 장비 칸·가방·엽전 규칙(화면과 무관).
-// 상태: { equipped: { weapon, outfit, head, arms, feet }, bag: [{ id, n }, ...], coins }
+// 상태: { equipped: { weapon, outfit, head, arms, feet, wrist }, bag: [{ id, n }, ...], coins }
 // 빈 칸은 빈 문자열. 옷은 벗을 수 없음(늘 하나는 입고 있음).
 // 겹치는 물건(def.stack)은 가방 한 칸에 n개, 장비는 한 칸에 하나(n = 1).
 
-export const SLOTS = ['weapon', 'outfit', 'head', 'arms', 'feet'];
+export const SLOTS = ['weapon', 'outfit', 'head', 'arms', 'feet', 'wrist'];
 const CANNOT_REMOVE = new Set(['outfit']);
 
 // 저장된 상태가 있으면 그것을(모르는 아이템은 빼고), 없으면 시작 상태를 복사

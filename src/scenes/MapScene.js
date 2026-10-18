@@ -34,7 +34,7 @@ import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
 import { PortalFx } from './portalFx.js';
 import { showDamage } from './damageText.js';
-import { hitStar, slashMark } from './impactFx.js';
+import { hitStar, slashMark, poisonPuff } from './impactFx.js';
 import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
@@ -142,8 +142,9 @@ export class MapScene extends Phaser.Scene {
     this.skills = this.d.skills.skills;
     this.questDefs = Object.fromEntries(this.d.questsData.quests.map((q) => [q.id, q]));
     // 주인공 체력: 맵을 옮겨도 이어짐. 처음이거나 쓰러졌다 다시 시작하면 가득. 최대 체력은 레벨에 따라
-    const maxHp = maxHpFor(this.progress.level, cfg.player.maxHp, eco.levels);
-    if (!this.d.player || this.d.player.hp <= 0) this.d.player = { hp: maxHp, maxHp };
+    const maxHp = this.maxHpNow();
+    const freshHp = !this.d.player || this.d.player.hp <= 0;
+    if (freshHp) this.d.player = { hp: maxHp, maxHp };
     this.player = this.d.player;
     this.player.maxHp = maxHp;
     this.player.hp = Math.min(this.player.hp, maxHp);
@@ -163,6 +164,9 @@ export class MapScene extends Phaser.Scene {
     this.weaponDefs = Object.fromEntries(this.d.weapons.weapons.map((w) => [w.id, w]));
     if (!this.d.equip) this.d.equip = createEquipment(this.itemDefs, this.d.items.start, save && save.equipment);
     this.equip = this.d.equip;
+    // 팔찌(최대 체력 +)까지 넣은 최대 체력(처음 불러올 때는 장비가 여기서 생기므로 다시 맞춤)
+    this.player.maxHp = this.maxHpNow();
+    this.player.hp = freshHp ? this.player.maxHp : Math.min(this.player.hp, this.player.maxHp);
 
     // 카메라 (1.0배 고정)
     const cam = this.cameras.main;
@@ -353,7 +357,7 @@ export class MapScene extends Phaser.Scene {
   renderBag(message = '') {
     const st = this.stats();
     const totals = `공격력 ${st.attack} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}`;
-    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals);
+    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals, this.progress.level);
   }
 
   // 조이스틱·공격·무예 버튼 보이기(창이 열려 있으면 숨김)
@@ -410,6 +414,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   healPlayer(amount) {
+    amount = Math.round(amount * this.stats().healMul); // 옥 팔찌: 회복 +
     const before = this.player.hp;
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
@@ -511,6 +516,10 @@ export class MapScene extends Phaser.Scene {
   }
 
   afterEquipChange(slot) {
+    // 팔찌로 최대 체력이 바뀔 수 있음
+    this.player.maxHp = this.maxHpNow();
+    this.player.hp = Math.min(this.player.hp, this.player.maxHp);
+    this.playerView.setHp(this.player.hp / this.player.maxHp);
     this.renderBag();
     if (slot === 'weapon') this.setWeapon(this.equip.equipped.weapon);
     // 옷을 바꾸면 무기를 쓸 수 있는지가 바뀌므로 다 만든 뒤 합계를 다시 그림
@@ -721,7 +730,8 @@ export class MapScene extends Phaser.Scene {
     const im = this.cfg.impact;
     const sfx = this.cfg.swingFx;
     const fx = this.cfg.hitFx;
-    const roll = rollCrit(damage, im.crit, Math.random, !!o.forceCrit);
+    const critCfg = { ...im.crit, chance: im.crit.chance + this.stats().critChance }; // 은 팔찌: 회심 +
+    const roll = rollCrit(damage, critCfg, Math.random, !!o.forceCrit);
     const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), o.knockbackPx ?? this.cfg.attack.knockbackPx, o.stunMs ?? this.cfg.attack.stunMs);
     const def = this.monsterDefs[target.type];
     const pr = this.d.getPixelRatio();
@@ -739,6 +749,8 @@ export class MapScene extends Phaser.Scene {
     inkSplash(this, hx, hy, sfx.splashColor || '#1b1712', tierK === 1 ? sfx : { ...sfx, splashSize: sfx.splashSize * tierK }, v[0], v[1]);
     const view = this.monsterViews.get(target.id);
     if (view && !result.killed) view.squash(im.squashMs, im.squashX, im.squashY);
+    // 무기 고유 타격 연출(weapon_list.md: 구렁이 비늘검 독안개)
+    if (w && w.fx && w.fx.hitFx === 'poison') poisonPuff(this, hx, hy, w.trailColor);
     if (roll.crit) this.sfx.play('crit');
     if (!o.quiet) {
       let stop = sfx.hitStopMs * (o.hitStopMul || 1);
@@ -840,9 +852,19 @@ export class MapScene extends Phaser.Scene {
     return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels);
   }
 
+  // 최대 체력 = 레벨 표 + 낀 장비의 maxHp(구슬 팔찌). 장비가 아직 없으면(처음 불러올 때) 레벨 표만
+  maxHpNow() {
+    const base = maxHpFor(this.progress.level, this.cfg.player.maxHp, this.d.economy.levels);
+    const eq = this.d.equip;
+    if (!eq) return base;
+    const defs = this.itemDefs || Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
+    return base + Object.values(eq.equipped).reduce((a, id) => a + ((id && defs[id] && defs[id].stats && defs[id].stats.maxHp) || 0), 0);
+  }
+
   // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
+  // + 팔찌 공격력(금 팔찌)
   levelDamage() {
-    return damageBonus(this.progress.level, this.d.economy.levels);
+    return damageBonus(this.progress.level, this.d.economy.levels) + this.stats().attackBonus;
   }
 
   // ---------- 쓰러뜨림: 경험치·전리품 ----------
@@ -875,7 +897,7 @@ export class MapScene extends Phaser.Scene {
       const fx = eco.levelUpFx;
       const fromHp = this.player.hp;
       const oldMax = this.player.maxHp;
-      this.player.maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, eco.levels);
+      this.player.maxHp = this.maxHpNow();
       this.player.hp = this.player.maxHp;
       this.hpFill = { from: fromHp, t: 0, ms: fx.hpFillMs };
       // 멈칫: slowMs 동안 게임이 slowScale 배속으로 느려짐(조작은 그대로 됨)
@@ -981,7 +1003,7 @@ export class MapScene extends Phaser.Scene {
     }
     const run = SKILL_KINDS[sk.kind];
     if (!run || !run(this, sk)) return;
-    this.cooldowns.start(id, sk.cooldownMs);
+    this.cooldowns.start(id, sk.cooldownMs * this.stats().cooldownMul); // 칠보 팔찌: 기다림 −
     this.refreshSkills();
   }
 
@@ -1125,7 +1147,7 @@ export class MapScene extends Phaser.Scene {
     const next = this.d.fetchMap(start);
     cam.once('camerafadeoutcomplete', async () => {
       const mapJson = await next;
-      const maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, this.d.economy.levels);
+      const maxHp = this.maxHpNow();
       this.d.player = { hp: maxHp, maxHp };
       this.scene.restart({ ...this.d, mapId: start, mapJson, arrive: { ...mapJson.spawn, facing: 'down' } });
     });
@@ -1243,7 +1265,7 @@ export class MapScene extends Phaser.Scene {
   // 레벨을 바로 정함: 최대 체력·데미지 보너스가 바로 바뀌고 체력 가득, 레벨업 연출 없음
   setLevelNow(level) {
     setLevel(this.progress, level, this.d.economy.levels);
-    this.player.maxHp = maxHpFor(this.progress.level, this.cfg.player.maxHp, this.d.economy.levels);
+    this.player.maxHp = this.maxHpNow();
     this.player.hp = this.player.maxHp;
     this.hpFill = null;
     this.playerView.setHp(1);
@@ -1401,6 +1423,9 @@ export class MapScene extends Phaser.Scene {
     this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || (this.punchMs > 0 ? 'punch' : null));
     // 물건 조각 뒤로 가려지면 가려진 부분에 윤곽선
     this.ghost.update(this.pos.y);
+
+    // 마을 사람: 레벨에 따라 보이기·오가기(방물장수 — 창이 열려 있으면 멈춤)
+    for (const v of this.npcViews) v.update(dt, this.progress.level, this.npcPanel.open);
 
     // 몬스터
     const target = { x: this.pos.x, y: this.pos.y, alive: !this.dead && !this.transitioning };

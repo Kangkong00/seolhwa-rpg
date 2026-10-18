@@ -73,3 +73,24 @@ export function smokeBurst(scene, x, y, cfg) {
     });
   }
 }
+
+// 독안개(구렁이 비늘검 hitFx "poison"): 맞힌 자리에서 작은 초록 원 5개가 퍼지며 부풀고 0.5초에 사라짐
+export function poisonPuff(scene, x, y, color) {
+  const c = hex(color);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + Math.random() * 0.6;
+    const dist = 6 + Math.random() * 8;
+    const puff = scene.add.circle(x, y, 3 + Math.random() * 2, c, 0.6).setDepth(TOP);
+    scene.tweens.add({
+      targets: puff,
+      x: x + Math.cos(a) * dist,
+      y: y + Math.sin(a) * dist * 0.6 - 3,
+      scale: 2.4,
+      alpha: 0,
+      duration: 500,
+      ease: 'Sine.easeOut',
+      onComplete: () => puff.destroy(),
+    });
+  }
+}
+
