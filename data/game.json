@@ -64,22 +64,23 @@
     "alpha": 1
   },
   "swingFx": {
-    "_설명": "무기 휘두르기 연출(임시값). trailMs=궤적이 다 그어진 뒤 흐려지는 시간(모양은 data/weapons.json trail), hitStopMs=맞는 순간 멈춤, shakeMs·shakeIntensity=화면 흔들림(아주 약하게), splashColor·splashCount·splashSize·splashMs=먹 튐 색·방울 수·크기·사라지는 시간",
+    "_설명": "무기 휘두르기 연출(임시값). trailMs=궤적이 다 그어진 뒤 흐려지는 시간(모양은 data/weapons.json trail), hitStopMs=맞는 순간 멈춤, shakeMs·shakeIntensity=화면 흔들림(2026-10-18 키움, docs/spec/skills_impact.md 1), splashColor·splashCount·splashSize·splashMs=먹 튐 색·방울 수·크기·사라지는 시간",
     "trailMs": 250,
-    "hitStopMs": 60,
-    "shakeMs": 90,
-    "shakeIntensity": 0.0025,
+    "hitStopMs": 85,
+    "shakeMs": 110,
+    "shakeIntensity": 0.004,
     "splashColor": "#1b1712",
-    "splashCount": 6,
-    "splashSize": 2.2,
+    "splashCount": 10,
+    "splashSize": 3,
     "splashMs": 260
   },
   "hitFx": {
-    "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, deathMs=쓰러져 사라지는 시간. 숫자(docs/spec/feedback_1015.md 2): numbers.<종류>=글자 크기·색(hit 몬스터가 맞음, skill 무예로 맞음, player 주인공이 맞음, heal 회복), damageStroke·strokePx=테두리, popScale·popMs=처음에 이만큼 커졌다가 줄어듦, floatPx=떠오르는 높이, damageHoldMs·damageFadeMs=그대로 보이는 시간·흐려지는 시간, spreadPx·spreadMs=이 시간 안에 여러 개가 뜨면 좌우로 흩뜨림",
-    "flashMs": 90,
+    "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, deathMs=쓰러져 사라지는 시간. 숫자(docs/spec/feedback_1015.md 2): numbers.<종류>=글자 크기·색(hit 몬스터가 맞음, skill 무예로 맞음, crit 회심(label 작은 글씨), player 주인공이 맞음, heal 회복), damageStroke·strokePx=테두리, popScale·popMs=처음에 이만큼 커졌다가 줄어듦, floatPx=떠오르는 높이, damageHoldMs·damageFadeMs=그대로 보이는 시간·흐려지는 시간, spreadPx·spreadMs=이 시간 안에 여러 개가 뜨면 좌우로 흩뜨림",
+    "flashMs": 120,
     "numbers": {
       "hit": { "fontPx": 22, "color": "#ffffff" },
       "skill": { "fontPx": 26, "color": "#ffd34d" },
+      "crit": { "fontPx": 32, "color": "#ffc83a", "label": "회심!", "labelPx": 14 },
       "player": { "fontPx": 22, "color": "#ff5a4a" },
       "heal": { "fontPx": 22, "color": "#7dff7a" }
     },
@@ -128,6 +129,15 @@
   "mapFadeMs": 250,
   "_mapFadeMs": "맵 이동할 때 어두워졌다(밝아졌다) 하는 시간",
   "autoSaveMs": 3000,
+  "impact": {
+    "_설명": "타격감(docs/spec/skills_impact.md 1, 모두 임시값). 맞는 순간: 흰 섬광 별 starSize(지름)→0, starMs / 베인 자국 slashLen·slashWidth·slashMs(흰 → 무기 궤적 색) / 몬스터 찌그러짐 squashX·squashY·squashMs. 무기 fx.fxTier(1~9)마다 섬광·베인 자국·먹 방울 크기 +tierStep. crit=회심: chance 확률로 damageMul배, 멈춤 hitStopMul배·섬광 starScale배(starColor)·흔들림 shakeMul배, 숫자는 hitFx.numbers.crit. kill=쓰러뜨릴 때: 마지막 한 대 멈춤 hitStopMul배, 맞은 방향으로 flyPx 튕겨 flyMs 동안 spinDeg 돌며 날아간 뒤 흰 연기 smokeCount방울(smokeMs)",
+    "starSize": 26, "starMs": 120, "starColor": "#ffffff",
+    "slashLen": 34, "slashWidth": 3, "slashMs": 180,
+    "squashX": 1.15, "squashY": 0.9, "squashMs": 100,
+    "tierStep": 0.08,
+    "crit": { "chance": 0.08, "damageMul": 1.8, "hitStopMul": 2, "starScale": 2, "starColor": "#ffd34d", "shakeMul": 2 },
+    "kill": { "hitStopMul": 1.5, "flyPx": 24, "flyMs": 260, "spinDeg": 40, "smokeCount": 8, "smokeColor": "#ffffff", "smokeMs": 420 }
+  },
   "testBoost": {
     "_설명": "시험 배율(docs/spec/test_boost.md). 진행 검증용 — 밸런스 조정 때 끔. exp=얻는 경험치, coins=떨어지는 엽전, dropChance=전리품이 떨어질 확률(곱한 뒤 최대 1), 개수는 그대로. 쥐왕·의뢰 보상도 같은 배율(경험치·엽전만)",
     "enabled": true,

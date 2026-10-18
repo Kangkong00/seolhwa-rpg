@@ -4,7 +4,7 @@ import { Grid } from '../core/grid.js';
 import { parseMap, serializeMap } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
-import { findTarget, hitMonster, hitPlayer, aimAssist } from '../core/combat.js';
+import { findTarget, hitMonster, hitPlayer, aimAssist, rollCrit } from '../core/combat.js';
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem, countItem, removeItem } from '../core/equipment.js';
 import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } from '../core/progress.js';
@@ -33,6 +33,7 @@ import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
 import { PortalFx } from './portalFx.js';
 import { showDamage } from './damageText.js';
+import { hitStar, slashMark } from './impactFx.js';
 import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
@@ -673,34 +674,86 @@ export class MapScene extends Phaser.Scene {
     });
   }
 
-  // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·먹 튐·화면 흔들림
+  // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·타격 불꽃·화면 흔들림
   strikeHit(w, mods = null) {
-    const fx = this.cfg.hitFx;
-    const sfx = this.cfg.swingFx;
     const m = mods || {};
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, w.reach, w.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, this.adminDamage(target, (w.damage + this.levelDamage()) * (m.damageMul || 1)), w.knockbackPx * (m.knockbackMul || 1), w.stunMs);
-    const def = this.monsterDefs[target.type];
-    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
-    const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
-    inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, d[0], d[1]);
-    this.hitStopMs = sfx.hitStopMs * (m.hitStopMul || 1);
-    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * (m.shakeMul || 1));
-    this.sfx.play('woodHit');
-    this.afterHit(target, result);
+    this.impactHit(target, this.facing, (w.damage + this.levelDamage()) * (m.damageMul || 1), {
+      kind: mods ? 'skill' : 'hit',
+      knockbackPx: w.knockbackPx * (m.knockbackMul || 1),
+      stunMs: w.stunMs,
+      hitStopMul: m.hitStopMul,
+      shakeMul: m.shakeMul,
+      starScale: m.starScale,
+    });
   }
 
-  // 맞힌 뒤: 소리, 번쩍 또는 쓰러짐(경험치·전리품)
-  afterHit(target, result) {
+  // ---------- 맞히기 한 번(모든 공격·무예 공통, docs/spec/skills_impact.md 1) ----------
+  // 회심 판정(규칙 쪽 rollCrit) → 체력 깎기 → 숫자 → 흰 섬광 별·베인 자국·먹 방울·찌그러짐 → 멈춤·흔들림·소리 → 쓰러뜨림.
+  // o: { kind 'hit'|'skill', knockbackPx, stunMs, hitStopMul, shakeMul, starScale(섬광 배율), color(베인 자국 색),
+  //      forceCrit(받아치기), quiet(여러 마리를 한꺼번에 칠 때 — 멈춤·흔들림·맞음 소리는 부르는 쪽이 한 번만) }
+  // 반환: { damage, killed, crit }
+  impactHit(target, dir, damage, o = {}) {
+    const im = this.cfg.impact;
+    const sfx = this.cfg.swingFx;
+    const fx = this.cfg.hitFx;
+    const roll = rollCrit(damage, im.crit, Math.random, !!o.forceCrit);
+    const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), o.knockbackPx ?? this.cfg.attack.knockbackPx, o.stunMs ?? this.cfg.attack.stunMs);
+    const def = this.monsterDefs[target.type];
+    const pr = this.d.getPixelRatio();
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, pr, roll.crit ? 'crit' : o.kind || 'hit');
+    // 무기 구간(fxTier)마다 섬광·베인 자국·먹 방울이 커짐
+    const w = this.canSwing ? this.weaponDef : null;
+    const tier = (w && w.fx && w.fx.fxTier) || 1;
+    const tierK = 1 + (tier - 1) * im.tierStep;
+    const hx = target.x;
+    const hy = target.y - def.height * 0.45;
+    const big = (o.starScale || 1) * (roll.crit ? im.crit.starScale : 1);
+    hitStar(this, hx, hy, im.starSize * tierK * big, roll.crit ? im.crit.starColor : im.starColor, im.starMs * (roll.crit ? 1.5 : 1));
+    if (w || o.color) slashMark(this, hx, hy, dir, im.slashLen * tierK * Math.sqrt(big), im.slashWidth * tierK, o.color || w.trailColor, im.slashMs);
+    const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
+    inkSplash(this, hx, hy, sfx.splashColor || '#1b1712', tierK === 1 ? sfx : { ...sfx, splashSize: sfx.splashSize * tierK }, v[0], v[1]);
+    const view = this.monsterViews.get(target.id);
+    if (view && !result.killed) view.squash(im.squashMs, im.squashX, im.squashY);
+    if (roll.crit) this.sfx.play('crit');
+    if (!o.quiet) {
+      let stop = sfx.hitStopMs * (o.hitStopMul || 1);
+      let shake = sfx.shakeIntensity * (o.shakeMul || 1);
+      if (roll.crit) {
+        stop *= im.crit.hitStopMul;
+        shake *= im.crit.shakeMul;
+      }
+      if (result.killed) stop *= im.kill.hitStopMul;
+      this.hitStopMs = Math.max(this.hitStopMs, stop);
+      this.cameras.main.shake(sfx.shakeMs, shake);
+      this.sfx.play(o.sound || (w ? 'woodHit' : 'punchHit'));
+    }
+    this.afterHit(target, result, dir);
+    return { ...result, crit: roll.crit };
+  }
+
+  // 여러 마리를 한꺼번에 친 뒤 멈춤·흔들림·소리를 한 번만(stopMul: 보통 멈춤의 배율)
+  multiHitFeedback(hits, stopMul = 0.5, shakeMul = 1) {
+    if (!hits.length) return;
+    const sfx = this.cfg.swingFx;
+    const killed = hits.some((h) => h.killed);
+    this.hitStopMs = Math.max(this.hitStopMs, sfx.hitStopMs * stopMul * (killed ? this.cfg.impact.kill.hitStopMul : 1));
+    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * shakeMul);
+    this.sfx.play(this.canSwing ? 'woodHit' : 'punchHit');
+  }
+
+  // 맞힌 뒤: 소리, 번쩍 또는 쓰러짐(맞은 방향으로 튕겨 날아가며 연기, 경험치·전리품)
+  afterHit(target, result, dir = this.facing) {
     const fx = this.cfg.hitFx;
     const view = this.monsterViews.get(target.id);
     this.playMonsterSound(target, result.killed);
     if (result.killed) {
-      // 규칙에서 바로 빼서 다시 생기는 시간이 흐르기 시작하고, 그림은 쓰러지는 연출 뒤 사라짐
+      // 규칙에서 바로 빼서 다시 생기는 시간이 흐르기 시작하고, 그림은 날아가는 연출 뒤 사라짐
       this.spawner.remove(target);
       this.monsterViews.delete(target.id);
-      if (view) view.die(fx.deathMs, fx.flashMs);
+      if (view) view.dieFly(dir, this.cfg.impact.kill, fx.flashMs);
+      this.sfx.play('kill');
       this.onMonsterKilled(target);
     } else if (view) {
       view.flash(fx.flashMs);
@@ -711,7 +764,6 @@ export class MapScene extends Phaser.Scene {
   // 바라보는 쪽으로 조금 내딛고, 바로 앞 몬스터 1마리를 맞힘 (mods: 힘껏 베기 배율)
   punch(mods = null) {
     const a = this.cfg.attack;
-    const fx = this.cfg.hitFx;
     const m = mods || {};
     this.punchMs = a.punchMs;
     this.attackCooldown = a.cooldownMs;
@@ -722,16 +774,15 @@ export class MapScene extends Phaser.Scene {
 
     const target = findTarget(this.pos, this.facing, this.spawner.monsters, a.reach, a.width);
     if (!target) return;
-    const result = hitMonster(target, this.facing, this.adminDamage(target, (a.damage + this.levelDamage()) * (m.damageMul || 1)), a.knockbackPx * (m.knockbackMul || 1), a.stunMs);
-    const def = this.monsterDefs[target.type];
-    this.sfx.play('punchHit');
-    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), mods ? 'skill' : 'hit');
-    if (mods) {
-      if (mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, mods);
-      this.hitStopMs = this.cfg.swingFx.hitStopMs * (m.hitStopMul || 1);
-      this.cameras.main.shake(this.cfg.swingFx.shakeMs, this.cfg.swingFx.shakeIntensity * (m.shakeMul || 1));
-    }
-    this.afterHit(target, result);
+    if (mods && mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, mods);
+    this.impactHit(target, this.facing, (a.damage + this.levelDamage()) * (m.damageMul || 1), {
+      kind: mods ? 'skill' : 'hit',
+      knockbackPx: a.knockbackPx * (m.knockbackMul || 1),
+      stunMs: a.stunMs,
+      hitStopMul: m.hitStopMul,
+      shakeMul: m.shakeMul,
+      starScale: m.starScale,
+    });
   }
 
   // ---------- 맞히기 도움 ----------
@@ -958,28 +1009,36 @@ export class MapScene extends Phaser.Scene {
   }
 
   spinHit(sk) {
-    const fx = this.cfg.hitFx;
-    const sfx = this.cfg.swingFx;
     const w = this.canSwing ? this.weaponDef : null;
-    const base = (w ? w.damage : this.cfg.attack.damage) + this.levelDamage();
-    const hits = this.spawner.monsters.filter((m) => m.hp > 0 && Math.hypot(m.x - this.pos.x, m.y - this.pos.y) <= sk.radius);
-    for (const target of hits) {
-      const dx = target.x - this.pos.x;
-      const dy = target.y - this.pos.y;
-      const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
-      const result = hitMonster(target, dir, this.adminDamage(target, base * (sk.damageMul || 1)), sk.knockbackPx, (w ? w.stunMs : this.cfg.attack.stunMs));
-      const def = this.monsterDefs[target.type];
-      showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, this.d.getPixelRatio(), 'skill');
-      const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
-      inkSplash(this, target.x, target.y - def.height * 0.45, sfx.splashColor || '#1b1712', sfx, v[0], v[1]);
-      this.afterHit(target, result);
-    }
-    if (hits.length) {
-      // 여러 번 때리므로 멈춤은 짧게
-      this.hitStopMs = sfx.hitStopMs * 0.5;
-      this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity);
-      this.sfx.play(w ? 'woodHit' : 'punchHit');
-    }
+    const base = this.skillBase();
+    const hits = this.monstersInCircle(this.pos.x, this.pos.y, sk.radius).map((target) =>
+      this.impactHit(target, this.dirTo(target), base * (sk.damageMul || 1), {
+        kind: 'skill',
+        knockbackPx: sk.knockbackPx,
+        stunMs: w ? w.stunMs : this.cfg.attack.stunMs,
+        quiet: true,
+      }));
+    // 여러 번 때리므로 멈춤은 짧게
+    this.multiHitFeedback(hits, 0.5);
+  }
+
+  // 무예 데미지 바탕: 든 무기(맨손이면 주먹) + 레벨 보너스
+  skillBase() {
+    return (this.canSwing ? this.weaponDef.damage : this.cfg.attack.damage) + this.levelDamage();
+  }
+
+  // 주인공 → 몬스터 쪽 4방향
+  dirTo(m, from = this.pos) {
+    const dx = m.x - from.x;
+    const dy = m.y - from.y;
+    return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
+  }
+
+  // (x, y)에서 반경 r 안의 살아 있는 몬스터(가까운 순)
+  monstersInCircle(x, y, r) {
+    return this.spawner.monsters
+      .filter((m) => m.hp > 0 && Math.hypot(m.x - x, m.y - y) <= r)
+      .sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y));
   }
 
   // 몬스터 맞음·쓰러짐 소리 (data/monsters.json의 sounds: { hit, die })

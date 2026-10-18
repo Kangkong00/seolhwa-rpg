@@ -3,6 +3,8 @@
   "master": 0.6,
   "pitchJitter": 0.08,
   "sounds": {
+    "crit": { "_뜻": "회심: 짧은 고음 챙(쇠가 부딪는 소리)", "volume": 0.55, "file": "" },
+    "kill": { "_뜻": "쓰러뜨림: 퍽 하고 터지는 소리 + 바람", "volume": 0.6, "file": "" },
     "swing": { "_뜻": "휘두르기 바람 소리(맞든 안 맞든)", "volume": 0.5, "file": "" },
     "woodHit": { "_뜻": "목검 맞음: 나무로 딱", "volume": 0.8, "file": "" },
     "punchHit": { "_뜻": "주먹 맞음: 둔탁한 퍽", "volume": 0.8, "file": "" },

@@ -44,6 +44,13 @@ export function hitMonster(m, facing, damage, knockbackPx, stunMs) {
   return { damage, killed: m.hp <= 0 };
 }
 
+// 회심(docs/spec/skills_impact.md 1): crit.chance 확률로 데미지 crit.damageMul배. force면 반드시(받아치기).
+// 반환: { damage, crit }
+export function rollCrit(damage, crit, rand = Math.random, force = false) {
+  const on = force || !!(crit && rand() < crit.chance);
+  return { damage: on ? damage * crit.damageMul : damage, crit: on };
+}
+
 // 주인공이 물렸을 때: 체력을 깎음. 반환: { damage, killed }
 export function hitPlayer(player, damage) {
   player.hp = Math.max(0, player.hp - damage);

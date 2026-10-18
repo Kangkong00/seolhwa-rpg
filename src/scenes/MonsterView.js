@@ -3,6 +3,7 @@
 import { loadImage, downscale } from './characterFrames.js';
 import { createMonsterShadow } from './shadow.js';
 import { HpBar } from '../ui/hpBar.js';
+import { smokeBurst } from './impactFx.js';
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
@@ -86,6 +87,15 @@ export class MonsterView {
     } else if (m.chargeState === 'dash') {
       step = true;
     }
+    // 맞아서 찌그러짐(가로로 퍼지고 세로로 눌렸다 돌아옴)
+    if (this.squashing) {
+      const q = this.squashing;
+      q.t += dtMs;
+      const k = Math.max(0, 1 - q.t / q.ms);
+      sx *= 1 + (q.sx - 1) * k;
+      sy *= 1 + (q.sy - 1) * k;
+      if (k <= 0) this.squashing = null;
+    }
     if (!this.dead) this.sprite.setScale(this.baseScale * sx, this.baseScale * sy);
     const key = this.textures.keys[step ? `${base}_step` : base];
     if (this.sprite.texture.key !== key) this.sprite.setTexture(key);
@@ -114,6 +124,39 @@ export class MonsterView {
     this.sprite.scene.time.delayedCall(ms, () => {
       if (this.sprite.active) this.clearFlash();
     });
+  }
+
+  // 맞았을 때 몸이 살짝 찌그러졌다 돌아옴(ms 동안). 바로 한 번 그려 둠(맞는 순간 멈춤 동안에도 보이게)
+  squash(ms, sx, sy) {
+    if (this.dead) return;
+    this.squashing = { t: 0, ms, sx, sy };
+    this.sprite.setScale(this.baseScale * sx, this.baseScale * sy);
+  }
+
+  // 쓰러뜨림(docs/spec/skills_impact.md 1): 하얗게 번쩍 → 맞은 방향으로 flyPx 튕겨 날아가며 조금 돌고 → 흰 연기 폭발 후 사라짐
+  dieFly(dir, k, flashMs) {
+    this.dead = true;
+    this.hpBar.set(0, 0, 0, false);
+    this.flash(flashMs);
+    const scene = this.sprite.scene;
+    const s = this.sprite;
+    const lift = s.displayHeight * (s.originY - 0.5);
+    s.setOrigin(0.5, 0.5).setY(s.y - lift);
+    const [dx, dy] = DIR[dir] || [0, 0];
+    const turn = (dx < 0 || (dx === 0 && Math.random() < 0.5) ? -1 : 1) * k.spinDeg;
+    scene.tweens.add({
+      targets: s,
+      x: s.x + dx * k.flyPx,
+      y: s.y + dy * k.flyPx * 0.6 - 6,
+      angle: turn,
+      duration: k.flyMs,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        smokeBurst(scene, s.x, s.y, k);
+        scene.tweens.add({ targets: s, alpha: 0, scale: s.scaleX * 0.6, duration: 120, onComplete: () => this.destroy() });
+      },
+    });
+    scene.tweens.add({ targets: this.shadow, alpha: 0, duration: k.flyMs });
   }
 
   // 쓰러짐: 하얗게 번쩍인 뒤 뒤집히며 흐려져 사라짐

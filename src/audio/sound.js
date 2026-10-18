@@ -111,6 +111,19 @@ const SYNTH = {
     tone(ctx, out, t, 0.3, { type: 'triangle', f0: 659 * p, peak: 0.5, attack: 0.005 });
     tone(ctx, out, t + 0.14, 0.45, { type: 'triangle', f0: 988 * p, peak: 0.5, attack: 0.005 });
   },
+  // 회심: 짧은 고음 '챙' — 쇠가 부딪는 맑은 소리(어긋난 배음 두 개) + 아주 짧은 딸깍
+  crit(ctx, out, t, p) {
+    noise(ctx, out, t, 0.015, { type: 'highpass', f0: 5000 * p, q: 0.7, peak: 0.6, attack: 0.001 });
+    tone(ctx, out, t, 0.22, { type: 'sine', f0: 2650 * p, peak: 0.5, attack: 0.001 });
+    tone(ctx, out, t, 0.16, { type: 'sine', f0: 3720 * p, peak: 0.3, attack: 0.001 });
+    tone(ctx, out, t, 0.06, { type: 'square', f0: 1900 * p, f1: 1500 * p, peak: 0.08, attack: 0.001 });
+  },
+  // 쓰러뜨림: 낮게 퍽 터지는 소리 + 위로 흩어지는 바람
+  kill(ctx, out, t, p) {
+    tone(ctx, out, t, 0.14, { type: 'sine', f0: 180 * p, f1: 55 * p, peak: 0.9, attack: 0.002 });
+    noise(ctx, out, t, 0.08, { type: 'lowpass', f0: 1200 * p, q: 0.7, peak: 0.6, attack: 0.002 });
+    noise(ctx, out, t + 0.04, 0.25, { type: 'bandpass', f0: 700 * p, f1: 2400 * p, q: 0.9, peak: 0.35, attack: 0.03 });
+  },
   // 주인공 물림: 둔탁한 소리 + 짧은 잡음
   playerHurt(ctx, out, t, p) {
     tone(ctx, out, t, 0.12, { type: 'sine', f0: 170 * p, f1: 80 * p, peak: 0.9, attack: 0.003 });
