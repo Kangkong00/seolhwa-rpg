@@ -296,13 +296,16 @@ export class AdminPanel {
       const n = s.respawnMonsters();
       this.note(n ? `몬스터 ${n}마리가 다시 생겼습니다` : '이 맵에는 몬스터가 없습니다');
     })));
-    const bossName = (s.monsterDefs[this.cfg.boss] || {}).name || this.cfg.boss;
-    body.appendChild(this.row(bossName, this.btn('바로 생기게', () => {
-      const n = s.spawnNow(this.cfg.boss);
-      if (n > 0) this.note(`${josa(bossName, '이', '가')} 나타났습니다`);
-      else if (n === 0) this.note(`${josa(bossName, '은', '는')} 이미 있습니다`);
-      else if (this.cfg.bossMap) go(this.cfg.bossMap); // 이 맵에 쥐왕 자리가 없으면 쥐왕 굴로(들어가면 바로 있음)
-    })));
+    // 우두머리(쥐왕·늙은 구렁이) 바로 생기게: 이 맵에 그 자리가 없으면 그 우두머리 굴로(들어가면 바로 있음)
+    for (const b of this.cfg.bosses || []) {
+      const bossName = (s.monsterDefs[b.monster] || {}).name || b.monster;
+      body.appendChild(this.row(bossName, this.btn('바로 생기게', () => {
+        const n = s.spawnNow(b.monster);
+        if (n > 0) this.note(`${josa(bossName, '이', '가')} 나타났습니다`);
+        else if (n === 0) this.note(`${josa(bossName, '은', '는')} 이미 있습니다`);
+        else if (b.map) go(b.map);
+      })));
+    }
   }
 
   // ---------- 설정 ----------
