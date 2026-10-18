@@ -124,6 +124,18 @@ const SYNTH = {
     noise(ctx, out, t, 0.08, { type: 'lowpass', f0: 1200 * p, q: 0.7, peak: 0.6, attack: 0.002 });
     noise(ctx, out, t + 0.04, 0.25, { type: 'bandpass', f0: 700 * p, f1: 2400 * p, q: 0.9, peak: 0.35, attack: 0.03 });
   },
+  // 호통: 낮게 울리는 고함(톱니파 두 개가 떨림) + 바람
+  shout(ctx, out, t, p) {
+    tone(ctx, out, t, 0.45, { type: 'sawtooth', f0: 150 * p, f1: 110 * p, peak: 0.35, attack: 0.03 });
+    tone(ctx, out, t, 0.4, { type: 'sawtooth', f0: 156 * p, f1: 112 * p, peak: 0.25, attack: 0.03 });
+    noise(ctx, out, t, 0.4, { type: 'bandpass', f0: 500 * p, f1: 300 * p, q: 0.8, peak: 0.4, attack: 0.03 });
+  },
+  // 번개: 짧게 찢어지는 소리 + 낮게 우르릉
+  thunder(ctx, out, t, p) {
+    noise(ctx, out, t, 0.12, { type: 'highpass', f0: 2500 * p, q: 0.7, peak: 0.8, attack: 0.001 });
+    noise(ctx, out, t + 0.03, 0.6, { type: 'lowpass', f0: 400 * p, f1: 120 * p, q: 0.8, peak: 0.7, attack: 0.02 });
+    tone(ctx, out, t, 0.35, { type: 'sine', f0: 90 * p, f1: 50 * p, peak: 0.6, attack: 0.01 });
+  },
   // 주인공 물림: 둔탁한 소리 + 짧은 잡음
   playerHurt(ctx, out, t, p) {
     tone(ctx, out, t, 0.12, { type: 'sine', f0: 170 * p, f1: 80 * p, peak: 0.9, attack: 0.003 });

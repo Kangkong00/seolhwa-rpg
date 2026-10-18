@@ -34,6 +34,44 @@ export function grantSkill(skill, learned) {
   return true;
 }
 
+// ---------- 무예 칸(docs/spec/skills_impact.md 2): 화면 단추 SLOT_COUNT칸, 칸마다 무예 id 또는 null ----------
+export const SLOT_COUNT = 4;
+
+// 저장된 칸을 정리(배운 무예만, 겹치지 않게). 저장된 칸이 없으면 배운 순서대로 앞에서부터 채움
+export function normalizeSlots(saved, learned, n = SLOT_COUNT) {
+  const slots = Array(n).fill(null);
+  if (Array.isArray(saved)) {
+    saved.slice(0, n).forEach((id, i) => {
+      if (id && learned.includes(id) && !slots.includes(id)) slots[i] = id;
+    });
+  } else {
+    learned.slice(0, n).forEach((id, i) => { slots[i] = id; });
+  }
+  return slots;
+}
+
+// i번 칸에 넣음. 다른 칸에 이미 있으면 두 칸을 맞바꿈
+export function placeInSlot(slots, i, id) {
+  const from = slots.indexOf(id);
+  if (from >= 0) slots[from] = slots[i];
+  slots[i] = id;
+  return slots;
+}
+
+export function clearSlot(slots, i) {
+  slots[i] = null;
+  return slots;
+}
+
+// 아직 칸에 없으면 첫 빈칸에 넣음. 반환: 들어간 칸 번호(빈칸이 없으면 -1)
+export function autoSlot(slots, id) {
+  const at = slots.indexOf(id);
+  if (at >= 0) return at;
+  const free = slots.indexOf(null);
+  if (free >= 0) slots[free] = id;
+  return free;
+}
+
 // 기다리는 시간: { 무예 id: 남은 ms }
 export class Cooldowns {
   constructor() {

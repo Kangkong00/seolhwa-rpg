@@ -10,7 +10,8 @@ import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem
 import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } from '../core/progress.js';
 import { totalStats, damageTaken, levelOk } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
-import { Cooldowns } from '../core/skills.js';
+import { Cooldowns, normalizeSlots, autoSlot } from '../core/skills.js';
+import { SKILL_KINDS, chainMods, pullMonsters } from './skillKinds.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
 import { ItemInfo } from '../ui/itemInfo.js';
@@ -24,7 +25,7 @@ import { NpcMenu } from './npcMenu.js';
 import { DropView, makeDropTexture } from './dropView.js';
 import { PickupFeed } from './pickupFeed.js';
 import { josa } from '../ui/josa.js';
-import { crescentWave, breathRings, WindRing } from './skillFx.js';
+import { crescentWave, WindRing, leafSwirl } from './skillFx.js';
 import { levelUpFx } from './levelUpFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
@@ -38,6 +39,7 @@ import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { AdminPanel } from '../ui/adminPanel.js';
+import { SkillPanel } from '../ui/skillPanel.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -129,10 +131,14 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.learned) this.d.learned = Array.isArray(save && save.skills) ? save.skills.filter((id) => this.d.skills.skills.some((s) => s.id === id)) : [];
     if (!this.d.quests) this.d.quests = save && save.quests && typeof save.quests === 'object' ? { ...save.quests } : {};
     if (!this.d.cooldowns) this.d.cooldowns = new Cooldowns();
+    // 무예 칸 4개(무예창에서 고름, 저장됨). 저장이 없으면 배운 순서대로
+    if (!this.d.skillSlots) this.d.skillSlots = normalizeSlots(save && save.skillSlots, this.d.learned);
     this.progress = this.d.progress;
     this.learned = this.d.learned;
     this.quests = this.d.quests;
     this.cooldowns = this.d.cooldowns;
+    this.skillSlots = this.d.skillSlots;
+    this.act = null; // 오래 걸리는 무예를 하는 중(skillKinds.js setAct)
     this.skills = this.d.skills.skills;
     this.questDefs = Object.fromEntries(this.d.questsData.quests.map((q) => [q.id, q]));
     // 주인공 체력: 맵을 옮겨도 이어짐. 처음이거나 쓰러졌다 다시 시작하면 가득. 최대 체력은 레벨에 따라
@@ -179,9 +185,15 @@ export class MapScene extends Phaser.Scene {
         },
         onGrid: () => this.d.scene.setGridMode(!this.d.scene.gridOn),
         onAdmin: () => this.d.adminPanel.toggle(),
+        onSkills: () => this.d.skillPanel.toggle(),
         adminEnabled: !!(this.cfg.admin && this.cfg.admin.enabled),
       });
       this.d.adminPanel = new AdminPanel(document.getElementById('admin-panel'), () => this.d.scene);
+      this.d.skillPanel = new SkillPanel(document.getElementById('skill-panel'), () => this.d.scene);
+      // PC는 K로 무예창
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyK' && !e.repeat) this.d.skillPanel.toggle();
+      });
       // PC는 F2로 관리자 창
       if (this.cfg.admin && this.cfg.admin.enabled) {
         window.addEventListener('keydown', (e) => {
@@ -209,7 +221,7 @@ export class MapScene extends Phaser.Scene {
       this.d.status = new StatusPanel(document.getElementById('status'));
       this.d.toast = new Toast(document.getElementById('toast'), this.d.economy.textFx.toastHoldMs);
       this.d.npcPanel = new NpcPanel(document.getElementById('npc-panel'));
-      this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id));
+      this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id), () => this.d.skillPanel.show());
       // 조이스틱 자리(왼쪽)에 선 사람을 눌러도 창이 뜨게
       this.d.joystick.tapHandler = (cx, cy) => this.d.scene.tapNpcAtClient(cx, cy);
       this.d.hud.setSoundOn(!this.d.sfx.muted);
@@ -433,7 +445,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   refreshSkills() {
-    this.skillButtons.update(this.learned, (id) => this.cooldowns.remaining(id));
+    this.skillButtons.update(this.skillSlots, (id) => this.cooldowns.remaining(id), !!this.canSwing);
   }
 
   // ---------- 사람(NPC) ----------
@@ -517,6 +529,7 @@ export class MapScene extends Phaser.Scene {
       equipment: { equipped: { ...this.equip.equipped }, bag: this.equip.bag.map((e) => ({ ...e })), coins: this.equip.coins, grants: [...(this.equip.grants || [])] },
       progress: { ...this.progress },
       skills: [...this.learned],
+      skillSlots: [...this.skillSlots],
       quests: { ...this.quests },
     });
   }
@@ -593,7 +606,8 @@ export class MapScene extends Phaser.Scene {
   // 무기 휘두르기 시작 (칼이 앞을 지나는 순간 맞힘 판정)
   // mods: 힘껏 베기 등 무예 배율 { damageMul, knockbackMul, hitStopMul, trailWidthMul, shakeMul } (없으면 보통 휘두르기)
   startSwing(mods = null) {
-    const w = this.weaponDef;
+    // 삼연참처럼 빠르게 휘두르는 무예는 swingMsMul배 시간
+    const w = mods && mods.swingMsMul ? { ...this.weaponDef, swingMs: this.weaponDef.swingMs * mods.swingMsMul } : this.weaponDef;
     this.sfx.play('swing');
     this.swing = { weapon: w, t: 0, hitDone: false, trail: null, mods };
     if (mods && mods.chargeMs) this.playerView.setWeaponGlow(mods.chargeColor, 0.9, mods.chargeMs + 260);
@@ -634,6 +648,12 @@ export class MapScene extends Phaser.Scene {
     if (s.t >= pre + w.swingMs + sw.recoverMs) {
       if (s.trail) s.trail.fadeOut();
       this.swing = null;
+      // 연속 무예(삼연참): 다음 휘두르기를 바로 이어감
+      const ch = s.mods && s.mods.chain;
+      if (ch && ch.index + 1 < ch.sk.hits) {
+        this.startSwing(chainMods(ch.sk, ch.index + 1));
+        return this.updateSwing(0);
+      }
       return null;
     }
     const lean = this.swingLean(s.t, w, pre);
@@ -642,7 +662,9 @@ export class MapScene extends Phaser.Scene {
     // 칼이 앞을 지나는 순간(hitTheta) 맞힘 판정
     if (!s.hitDone && theta >= sw.hitTheta) {
       s.hitDone = true;
-      this.strikeHit(w, s.mods);
+      // 지축 가르기·검풍·받아치기처럼 내려치는 순간 다른 일을 하는 무예는 onStrike
+      if (s.mods && s.mods.onStrike) s.mods.onStrike();
+      else this.strikeHit(w, s.mods);
       if (s.mods && s.mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, s.mods);
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
@@ -666,11 +688,12 @@ export class MapScene extends Phaser.Scene {
       cfg: tr,
       k: w.tipFromGrip / tr.refTip,
       color: (mods && mods.trailColor) || w.trailColor,
-      toMap: (px, py) => pv.posePoint(px, py, x, y, facing === 'right'),
+      toMap: (px, py) => pv.posePoint(px, py, x, y + ((mods && mods.trailOffset) || 0), facing === 'right'),
       res: this.pixelScale(),
       // 칼(몸 앞 +0.01)·손 덮개(+0.02) 아래, 몸 위. 뒷면은 몸 뒤
       depth: y + (shape.behind ? -0.03 : 0.005),
-      fx: this.cfg.swingFx,
+      // 삼연참: 궤적이 trailHoldMs 동안 남아 엇갈려 보임
+      fx: mods && mods.trailHoldMs ? { ...this.cfg.swingFx, trailMs: mods.trailHoldMs } : this.cfg.swingFx,
     });
   }
 
@@ -950,24 +973,37 @@ export class MapScene extends Phaser.Scene {
     }
     if (this.dead || this.transitioning || this.gridOn || this.equipPanel.open || this.npcPanel.open) return;
     if (!this.cooldowns.ready(id)) return;
-    if (this.swing || this.spin || this.punchMs > 0) return;
-    if (sk.kind === 'powerSlash') {
-      this.attackWithAssist(sk);
-    } else if (sk.kind === 'heal') {
-      if (this.player.hp >= this.player.maxHp) {
-        this.toast.show('체력이 가득합니다');
-        return;
-      }
-      breathRings(this, () => this.pos, sk);
-      this.playerView.setGlow(sk.glowColor, 0.5, sk.glowMs);
-      this.healPlayer(Math.max(1, Math.ceil(this.player.maxHp * sk.healRatio)));
-      this.sfx.play('heal');
-    } else if (sk.kind === 'spin') {
-      this.startSpin(sk);
-    } else {
+    if (this.swing || this.spin || this.act || this.punchMs > 0) return;
+    // 칼이 있어야 하는 무예(지축 가르기·검풍·백호일섬·칠성검무)
+    if (sk.needsBlade && !this.canSwing) {
+      this.toast.show('칼이 있어야 합니다');
       return;
     }
+    const run = SKILL_KINDS[sk.kind];
+    if (!run || !run(this, sk)) return;
     this.cooldowns.start(id, sk.cooldownMs);
+    this.refreshSkills();
+  }
+
+  // 오래 걸리는 무예 '하는 중' 상태(skillKinds.js). act: { dur, lockMove, update(dt, t) → 자세, onEnd, guard }
+  setAct(act) {
+    this.act = { t: 0, ...act };
+  }
+
+  updateAct(dt) {
+    const a = this.act;
+    a.t += dt;
+    const pose = a.update ? a.update(dt, a.t) : null;
+    if (this.act === a && a.t >= a.dur) {
+      this.act = null;
+      if (a.onEnd) a.onEnd();
+    }
+    return pose;
+  }
+
+  // 무예 칸에 넣음(배울 때 빈칸이 있으면 자동으로)
+  autoSlotSkill(id) {
+    autoSlot(this.skillSlots, id);
     this.refreshSkills();
   }
 
@@ -983,7 +1019,10 @@ export class MapScene extends Phaser.Scene {
       startFacing: this.facing,
       order: [...order.slice(order.indexOf(this.facing)), ...order.slice(0, order.indexOf(this.facing))],
       ring: new WindRing(this, sk),
+      // 회오리 베기: 안쪽에 반대로 도는 고리 하나 더 + 나뭇잎 회오리
+      ring2: sk.rings2 ? new WindRing(this, { ...sk, radius: sk.radius * 0.62, turnMs: -sk.turnMs * 0.8 }) : null,
     };
+    if (sk.leafCount) leafSwirl(this, () => this.pos, sk, sk.spinMs);
     this.attackCooldown = Math.max(this.attackCooldown, sk.spinMs);
   }
 
@@ -993,6 +1032,7 @@ export class MapScene extends Phaser.Scene {
     s.t += dt;
     this.facing = s.order[Math.floor(s.t / (sk.turnMs / 4)) % 4];
     s.ring.update(this.pos, s.t, dt);
+    if (s.ring2) s.ring2.update(this.pos, s.t, dt);
     while (s.t >= s.nextTick && s.nextTick <= sk.spinMs) {
       s.nextTick += sk.tickMs;
       this.sfx.play('swing');
@@ -1000,6 +1040,7 @@ export class MapScene extends Phaser.Scene {
     }
     if (s.t >= sk.spinMs) {
       s.ring.fadeOut();
+      if (s.ring2) s.ring2.fadeOut();
       this.facing = s.startFacing;
       this.spin = null;
       return null;
@@ -1020,6 +1061,7 @@ export class MapScene extends Phaser.Scene {
       }));
     // 여러 번 때리므로 멈춤은 짧게
     this.multiHitFeedback(hits, 0.5);
+    if (sk.pullPx) pullMonsters(this, sk);
   }
 
   // 무예 데미지 바탕: 든 무기(맨손이면 주먹) + 레벨 보너스
@@ -1051,6 +1093,11 @@ export class MapScene extends Phaser.Scene {
   // ---------- 주인공이 물림 ----------
   onBitten(bite) {
     if (this.dead || this.transitioning) return;
+    // 받아치기 자세: 데미지 0 + 바로 반격
+    if (this.act && this.act.guard) {
+      this.act.guard.counter(bite.monster);
+      return;
+    }
     this.sfx.play('playerHurt');
     this.cancelRecall('맞아서 귀환이 끊겼습니다');
     const ph = this.cfg.playerHit;
@@ -1304,16 +1351,18 @@ export class MapScene extends Phaser.Scene {
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     this.cooldowns.update(dt);
-    const wantAttack = this.attackCooldown <= 0 && !this.swing && !this.spin && this.attackButton.consume();
+    const wantAttack = this.attackCooldown <= 0 && !this.swing && !this.spin && !this.act && this.attackButton.consume();
     if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead && !this.equipPanel.open && !this.npcPanel.open) {
       this.attackWithAssist(null);
     }
     const spinPose = this.spin ? this.updateSpin(dt) : null;
-    const swingPose = this.swing ? this.updateSwing(dt) : spinPose;
+    const actPose = this.act ? this.updateAct(dt) : null;
+    const swingPose = this.swing ? this.updateSwing(dt) : spinPose || actPose;
     const punching = this.punchMs > 0 || !!swingPose;
 
-    // 주먹 지르는 동안은 걷지 않음(휘돌려 베기는 도는 동안 천천히 걸을 수 있음)
-    const v = this.transitioning || (punching && !this.spin) ? { x: 0, y: 0 } : this.d.input.getVector();
+    // 주먹 지르는 동안·무예를 하는 동안은 걷지 않음(휘돌려 베기는 도는 동안 천천히 걸을 수 있음)
+    const locked = this.transitioning || (punching && !this.spin) || (this.act && this.act.lockMove);
+    const v = locked ? { x: 0, y: 0 } : this.d.input.getVector();
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 
     this.moving = false;

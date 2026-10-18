@@ -1,26 +1,364 @@
 {
-  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림, icon=그림을 못 받으면 대신 쓰는 한자, key=PC 단축키. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. 모두 임시값",
+  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs, 돌 rockCount) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. 모두 임시값",
   "skills": [
     {
-      "id": "power_slash", "image": "assets/items/icons/skill_power_slash.png", "name": "힘껏 베기", "icon": "斬", "key": "1", "kind": "powerSlash",
+      "id": "power_slash",
+      "image": "assets/items/icons/skill_power_slash.png",
+      "name": "힘껏 베기",
+      "icon": "斬",
+      "kind": "powerSlash",
       "desc": "앞으로 한 번 크게 벰. 데미지 2배, 밀어내기 2배",
-      "requires": { "level": 2 }, "cost": { "coins": 30, "items": { "loot_rat_meat": 5 } }, "cooldownMs": 6000,
-      "damageMul": 2, "knockbackMul": 2, "hitStopMul": 2.5, "trailWidthMul": 1.7, "shakeMul": 2,
-      "chargeMs": 250, "chargeColor": "#ffd75e", "trailColor": "#ffd75e", "waveRadius": 60, "waveMs": 250, "waveColor": "#ffd75e"
+      "requires": {
+        "level": 2
+      },
+      "cost": {
+        "coins": 30,
+        "items": {
+          "loot_rat_meat": 5
+        }
+      },
+      "cooldownMs": 6000,
+      "damageMul": 2,
+      "knockbackMul": 2,
+      "hitStopMul": 2.5,
+      "trailWidthMul": 1.7,
+      "shakeMul": 2,
+      "chargeMs": 250,
+      "chargeColor": "#ffd75e",
+      "trailColor": "#ffd75e",
+      "waveRadius": 60,
+      "waveMs": 250,
+      "waveColor": "#ffd75e",
+      "job": "geomgaek"
     },
     {
-      "id": "breath", "image": "assets/items/icons/skill_breath.png", "name": "숨 고르기", "icon": "息", "key": "2", "kind": "heal",
+      "id": "breath",
+      "image": "assets/items/icons/skill_breath.png",
+      "name": "숨 고르기",
+      "icon": "息",
+      "kind": "heal",
       "desc": "제자리에서 숨을 골라 최대 체력의 30%를 되찾음",
-      "requires": { "level": 3 }, "cost": { "coins": 60, "items": { "loot_rice": 5 } }, "cooldownMs": 30000,
-      "healRatio": 0.3, "glowColor": "#bfe8ff", "glowMs": 900,
-      "rings": 2, "ringGapMs": 150, "ringFrom": 20, "ringTo": 70, "ringMs": 600, "ringColor": "#7fd0ff", "particleCount": 10, "particleMs": 1200, "particleColor": "#bfe8ff"
+      "requires": {
+        "level": 3
+      },
+      "cost": {
+        "coins": 60,
+        "items": {
+          "loot_rice": 5
+        }
+      },
+      "cooldownMs": 30000,
+      "healRatio": 0.3,
+      "glowColor": "#bfe8ff",
+      "glowMs": 900,
+      "rings": 2,
+      "ringGapMs": 150,
+      "ringFrom": 20,
+      "ringTo": 70,
+      "ringMs": 600,
+      "ringColor": "#7fd0ff",
+      "particleCount": 10,
+      "particleMs": 1200,
+      "particleColor": "#bfe8ff",
+      "job": "geomgaek"
     },
     {
-      "id": "whirl", "image": "assets/items/icons/skill_whirl.png", "name": "휘돌려 베기", "icon": "旋", "key": "3", "kind": "spin",
+      "id": "whirl",
+      "image": "assets/items/icons/skill_whirl.png",
+      "name": "휘돌려 베기",
+      "icon": "旋",
+      "kind": "spin",
       "desc": "2초 동안 몸을 계속 돌리며 0.4초마다 주변 몬스터를 모두 벰. 도는 동안 천천히 움직일 수 있음",
-      "requires": { "level": 5 }, "cost": { "coins": 150, "items": { "loot_rat_hide": 5, "loot_rat_tooth": 2 } }, "cooldownMs": 12000,
-      "radius": 48, "spinMs": 2000, "turnMs": 400, "tickMs": 400, "damageMul": 0.7, "moveMul": 0.6, "knockbackPx": 6,
-      "ringColor": "#ffffff", "ringAlpha": 0.55, "dustEveryMs": 110, "dustColor": "#c8b48c"
+      "requires": {
+        "level": 5
+      },
+      "cost": {
+        "coins": 150,
+        "items": {
+          "loot_rat_hide": 5,
+          "loot_rat_tooth": 2
+        }
+      },
+      "cooldownMs": 12000,
+      "radius": 48,
+      "spinMs": 2000,
+      "turnMs": 400,
+      "tickMs": 400,
+      "damageMul": 0.7,
+      "moveMul": 0.6,
+      "knockbackPx": 6,
+      "ringColor": "#ffffff",
+      "ringAlpha": 0.55,
+      "dustEveryMs": 110,
+      "dustColor": "#c8b48c",
+      "job": "geomgaek"
+    },
+    {
+      "id": "triple_cut",
+      "name": "삼연참",
+      "icon": "參",
+      "kind": "chain",
+      "job": "geomgaek",
+      "desc": "앞으로 3번 빠르게 벰(각 0.8배), 마지막 한 번은 밀어내기 2배",
+      "requires": {
+        "level": 8
+      },
+      "cost": {
+        "coins": 300,
+        "items": {
+          "loot_rat_hide": 8,
+          "loot_rat_whisker": 4
+        }
+      },
+      "cooldownMs": 5000,
+      "hits": 3,
+      "damageMul": 0.8,
+      "swingMsMul": 0.7,
+      "lastKnockbackMul": 2,
+      "lastStarScale": 1.8,
+      "trailHoldMs": 500,
+      "trailOffsetPx": 5,
+      "image": "assets/items/icons/skill_triple_cut.png"
+    },
+    {
+      "id": "dash_cut",
+      "name": "질풍참",
+      "icon": "疾",
+      "kind": "dash",
+      "job": "geomgaek",
+      "desc": "바라보는 쪽으로 80px 순식간에 미끄러지며 지나가는 길의 몬스터를 모두 벰(1.5배), 벽에서 멈춤",
+      "requires": {
+        "level": 10
+      },
+      "cost": {
+        "coins": 500,
+        "items": {
+          "loot_weasel_hide": 3
+        }
+      },
+      "cooldownMs": 7000,
+      "distance": 80,
+      "dashMs": 140,
+      "width": 30,
+      "damageMul": 1.5,
+      "knockbackPx": 10,
+      "ghosts": 3,
+      "ghostColor": "#ffffff",
+      "windColor": "#ffffff",
+      "windMs": 420,
+      "image": "assets/items/icons/skill_dash_cut.png"
+    },
+    {
+      "id": "roar",
+      "name": "호통",
+      "icon": "喝",
+      "kind": "shout",
+      "job": "geomgaek",
+      "desc": "반경 70 몬스터를 1.2초 멈칫하게 함, 데미지 0.5배",
+      "requires": {
+        "level": 12
+      },
+      "cost": {
+        "coins": 800,
+        "items": {
+          "loot_weasel_meat": 5
+        }
+      },
+      "cooldownMs": 14000,
+      "radius": 70,
+      "stunMs": 1200,
+      "damageMul": 0.5,
+      "rings": 3,
+      "ringGapMs": 90,
+      "ringMs": 450,
+      "ringColor": "#ffe9b0",
+      "shakeMul": 2.5,
+      "markText": "!",
+      "markColor": "#ffd34d",
+      "image": "assets/items/icons/skill_roar.png"
+    },
+    {
+      "id": "earth_split",
+      "name": "지축 가르기",
+      "icon": "裂",
+      "kind": "line",
+      "job": "geomgaek",
+      "needsBlade": true,
+      "desc": "칼을 땅에 내리찍어 앞으로 120px 직선 위 몬스터를 모두 벰(2배)",
+      "requires": {
+        "level": 15
+      },
+      "cost": {
+        "coins": 1200,
+        "items": {
+          "loot_hwangmo": 2
+        }
+      },
+      "cooldownMs": 9000,
+      "length": 120,
+      "width": 30,
+      "damageMul": 2,
+      "knockbackPx": 8,
+      "crackMs": 300,
+      "crackColor": "#3a2a18",
+      "glowColor": "#ffcf7a",
+      "rockCount": 14,
+      "rockColor": "#8a7458",
+      "image": "assets/items/icons/skill_earth_split.png"
+    },
+    {
+      "id": "sword_wind",
+      "name": "검풍",
+      "icon": "風",
+      "kind": "projectile",
+      "job": "geomgaek",
+      "needsBlade": true,
+      "desc": "반달 모양 검기가 앞으로 160px 날아가며 닿는 몬스터를 모두 벰(1.3배, 꿰뚫음)",
+      "requires": {
+        "level": 18
+      },
+      "cost": {
+        "coins": 1800
+      },
+      "cooldownMs": 6000,
+      "distance": 160,
+      "speed": 420,
+      "radius": 18,
+      "damageMul": 1.3,
+      "knockbackPx": 8,
+      "size": 24,
+      "colorFromWeapon": true,
+      "color": "#e9f3ff",
+      "image": "assets/items/icons/skill_sword_wind.png"
+    },
+    {
+      "id": "counter",
+      "name": "받아치기",
+      "icon": "返",
+      "kind": "stance",
+      "job": "geomgaek",
+      "desc": "0.8초 동안 막는 자세. 그 사이 물리면 데미지 0 + 바로 반격(3배, 반드시 회심)",
+      "requires": {
+        "level": 21
+      },
+      "cost": {
+        "coins": 2500
+      },
+      "cooldownMs": 10000,
+      "guardMs": 800,
+      "counterMul": 3,
+      "knockbackPx": 16,
+      "shieldColor": "#ffd75e",
+      "image": "assets/items/icons/skill_counter.png"
+    },
+    {
+      "id": "whirlwind",
+      "name": "회오리 베기",
+      "icon": "渦",
+      "kind": "spin",
+      "job": "geomgaek",
+      "desc": "휘돌려 베기 강화판: 3초 동안 반경 64를 돌며 베고, 몬스터를 가운데로 조금씩 끌어당김",
+      "requires": {
+        "level": 24
+      },
+      "cost": {
+        "coins": 3500
+      },
+      "cooldownMs": 18000,
+      "radius": 64,
+      "spinMs": 3000,
+      "turnMs": 350,
+      "tickMs": 400,
+      "damageMul": 0.8,
+      "moveMul": 0.6,
+      "knockbackPx": 0,
+      "pullPx": 10,
+      "pullRadius": 110,
+      "ringColor": "#ffffff",
+      "ringAlpha": 0.6,
+      "rings2": true,
+      "dustEveryMs": 90,
+      "dustColor": "#c8b48c",
+      "leafCount": 12,
+      "leafColor": "#7fae4a",
+      "image": "assets/items/icons/skill_whirlwind.png"
+    },
+    {
+      "id": "thunder_cut",
+      "name": "뇌전참",
+      "icon": "雷",
+      "kind": "multi",
+      "job": "geomgaek",
+      "desc": "반경 140 안 몬스터 최대 5마리에 하늘에서 번개(각 2.5배)",
+      "requires": {
+        "level": 28
+      },
+      "cost": {
+        "coins": 5000
+      },
+      "cooldownMs": 20000,
+      "radius": 140,
+      "maxTargets": 5,
+      "gapMs": 90,
+      "damageMul": 2.5,
+      "knockbackPx": 6,
+      "boltColor": "#cfe6ff",
+      "scorchMs": 1500,
+      "flashAlpha": 0.35,
+      "image": "assets/items/icons/skill_thunder_cut.png"
+    },
+    {
+      "id": "tiger_flash",
+      "name": "백호일섬",
+      "icon": "虎",
+      "kind": "dash",
+      "job": "geomgaek",
+      "needsBlade": true,
+      "desc": "앞쪽 160px를 한 줄기 빛처럼 지나가며 벰(4배), 지나간 뒤 0.3초 늦게 한꺼번에 터짐",
+      "requires": {
+        "level": 33
+      },
+      "cost": {
+        "coins": 8000
+      },
+      "cooldownMs": 16000,
+      "distance": 160,
+      "dashMs": 110,
+      "width": 34,
+      "damageMul": 4,
+      "knockbackPx": 18,
+      "delayMs": 300,
+      "ghosts": 5,
+      "ghostColor": "#ffffff",
+      "windColor": "#ffffff",
+      "windMs": 700,
+      "tiger": true,
+      "image": "assets/items/icons/skill_tiger_flash.png"
+    },
+    {
+      "id": "seven_star_dance",
+      "name": "칠성검무",
+      "icon": "星",
+      "kind": "ultimate",
+      "job": "geomgaek",
+      "needsBlade": true,
+      "desc": "3초 동안 북두칠성 자리 7곳을 차례로 베며 각 자리 반경 40 안 몬스터를 모두 벰(각 2배), 마지막에 가운데 큰 폭발(5배)",
+      "requires": {
+        "level": 40
+      },
+      "cost": {
+        "coins": 15000
+      },
+      "cooldownMs": 60000,
+      "durationMs": 3000,
+      "starRadius": 40,
+      "damageMul": 2,
+      "finalDamageMul": 5,
+      "finalRadius": 80,
+      "size": 110,
+      "color": "#ffd75e",
+      "knockbackPx": 10,
+      "image": "assets/items/icons/skill_seven_star_dance.png"
     }
   ]
 }
