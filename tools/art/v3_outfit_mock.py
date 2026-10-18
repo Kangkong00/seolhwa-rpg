@@ -1,9 +1,11 @@
-# 옷 6종 무기 자세 시안: 두건 + 박달 목검(또는 인자로 무기 id), 들고 서 있기 3방향 + 치켜들기·휘두르기·내려치기(옆면) + 정면 휘두르기 + 뒷면 내려치기
+# 옷 6종 무기 자세 시안(인자: 무기 id, 머리 장비 폴더, 출력 이름): 두건 + 박달 목검(또는 인자로 무기 id), 들고 서 있기 3방향 + 치켜들기·휘두르기·내려치기(옆면) + 정면 휘두르기 + 뒷면 내려치기
 # + 휘두르기 GIF(3방향). docs/outfit_weapons_mock.png, docs/outfit_weapons_swing.gif
 import json, math, sys, numpy as np
 from PIL import Image, ImageDraw, ImageFont
 G='/home/claude/seolhwa-rpg/'
 WID=sys.argv[1] if len(sys.argv)>1 else 'wood_bakdal'
+HAT=sys.argv[2] if len(sys.argv)>2 else 'hood_mumyeong'
+OUTP=sys.argv[3] if len(sys.argv)>3 else 'outfit_weapons'
 WP=json.load(open(G+'data/weapons.json')); REF=WP['attach']['outfit1_hotot']
 AN=json.load(open(G+'assets/equipment/head/head_anchor.json'))
 OUT=['outfit1_hotot','outfit2_mumyeong','outfit3_dopo','outfit4_cheollik','outfit5_dujeonggap','outfit6_sinseon']
@@ -33,9 +35,9 @@ def to640(im):
     c=Image.new('RGBA',(640,720)); c.alpha_composite(im,(120,0)); return c
 def hooded(o,n):
     b=Image.open(G+f'assets/characters/{o}/{n}.png').convert('RGBA'); a=AN[f'{o}/{n}']
-    tk=np.array(Image.open(G+f'assets/equipment/head/hood_mumyeong/topknot/{o}/{n}.png').convert('RGBA'))[...,3]
+    tk=np.array(Image.open(G+f'assets/equipment/head/{HAT}/topknot/{o}/{n}.png').convert('RGBA'))[...,3]
     ba=np.array(b); ba[tk>0,3]=0; b=Image.fromarray(ba)
-    hd=Image.open(G+'assets/equipment/head/hood_mumyeong/'+n.split('_')[0]+'.png').convert('RGBA')
+    hd=Image.open(G+'assets/equipment/head/'+HAT+'/'+n.split('_')[0]+'.png').convert('RGBA')
     s=a['scale']; big=Image.new('RGBA',(1400,1400)); fx,fy=a['from']; big.alpha_composite(hd,(int(700-fx),int(700-fy)))
     big=big.resize((round(1400*s),)*2).rotate(-a['rotDeg'],center=(700*s,700*s))
     tx,ty=a['to']; L=Image.new('RGBA',b.size); L.alpha_composite(big,(int(tx-700*s),int(ty-700*s)))
@@ -51,15 +53,15 @@ SW=WP['swing']; LATFB=SW['latFrontBack']
 cols=[('hold','front',REF['hold']['front']['theta'],REF['hold']['front']['lat']),('hold','side',REF['hold']['side']['theta'],0),
       ('hold','back',REF['hold']['back']['theta'],REF['hold']['back']['lat']),('raise','side',-40,0),('swing','side',40,0),
       ('strike','side',125,0),('swing','front',40,LATFB),('strike','back',125,LATFB)]
-CW,CH=300,520
+CW,CH=330,520
 sh=Image.new('RGB',(CW*len(cols),CH*len(OUT)),'white'); D=ImageDraw.Draw(sh)
 try: f=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc',28)
 except: f=None
 for r,o in enumerate(OUT):
     for c,(p,v,th,lat) in enumerate(cols):
-        t=frame(o,p,v,th,lat).crop((170,0,470,520)); sh.paste(t.convert('RGB'),(c*CW,r*CH))
+        t=frame(o,p,v,th,lat).crop((155,0,485,520)); sh.paste(t.convert('RGB'),(c*CW,r*CH))
     D.text((8,r*CH+6),NAME[r],fill=(0,0,0),font=f)
-sh.resize((sh.width//2,sh.height//2),Image.LANCZOS).save(G+'docs/outfit_weapons_mock.png')
+sh.resize((sh.width//2,sh.height//2),Image.LANCZOS).save(G+f'docs/{OUTP}_mock.png')
 # 휘두르기 GIF (옷 6종 × 3방향, 홑옷 시안과 같은 단계 전환)
 def stage(th): return 'raise' if th<SW['poseSwingTheta'] else ('swing' if th<SW['poseStrikeTheta'] else 'strike')
 frames=[]
@@ -71,5 +73,5 @@ for u in [0,0,0.12,0.25,0.35,0.45,0.55,0.65,0.75,0.88,1,1,1]:
             t=frame(o,stage(th),v,th,0 if v=='side' else LATFB).crop((120,0,520,480)).resize((200,240))
             row.paste(t.convert('RGB'),(((i%3)*3+j)*200,(i//3)*240))
     frames.append(row)
-frames[0].save(G+'docs/outfit_weapons_swing.gif',save_all=True,append_images=frames[1:],duration=[300,300]+[70]*8+[500,500,500],loop=0)
+frames[0].save(G+f'docs/{OUTP}_swing.gif',save_all=True,append_images=frames[1:],duration=[300,300]+[70]*8+[500,500,500],loop=0)
 print('ok')
