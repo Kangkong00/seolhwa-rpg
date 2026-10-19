@@ -8,7 +8,10 @@
   "portals": [
     {"id": "to_rat_1", "name": "곳간 옆 쥐구멍(들쥐굴로)", "label": "들쥐굴", "x": 320, "y": 150, "w": 40, "h": 16, "fx": {"shape": "ellipse", "x": 328, "y": 137, "w": 28, "h": 20}, "to": "dungeon_rat_1", "arrive": {"x": 690, "y": 696, "facing": "down"}},
     {"id": "to_weasel_1", "name": "닭장 마당 안쪽 닭장 옆(족제비굴로)", "label": "족제비굴", "x": 1192, "y": 482, "w": 58, "h": 24, "fx": {"shape": "ellipse", "x": 1190, "y": 480, "w": 62, "h": 28}, "to": "dungeon_weasel_1", "arrive": {"x": 690, "y": 690, "facing": "up"}},
-    {"id": "to_snake_1", "name": "우물 앞(뱀굴로)", "label": "뱀굴", "x": 672, "y": 418, "w": 56, "h": 16, "fx": {"shape": "ellipse", "x": 700, "y": 426, "w": 58, "h": 22}, "to": "dungeon_snake_1", "arrive": {"x": 700, "y": 690, "facing": "up"}}
+    {"id": "to_snake_1", "name": "우물 앞(뱀굴로)", "label": "뱀굴", "x": 672, "y": 418, "w": 56, "h": 16, "fx": {"shape": "ellipse", "x": 671, "y": 415, "w": 58, "h": 22}, "to": "dungeon_snake_1", "arrive": {"x": 700, "y": 690, "facing": "up"}},
+    {"id": "to_dog_1", "name": "들개 소굴", "label": "들개 소굴", "x": 165, "y": 690, "w": 50, "h": 20, "fx": {"shape": "ellipse", "x": 165, "y": 694, "w": 50, "h": 14}, "to": "dungeon_dog_1", "arrive": {"x": 700, "y": 300, "facing": "down"}},
+    {"id": "to_raccoon_1", "name": "너구리굴", "label": "너구리굴", "x": 60, "y": 80, "w": 40, "h": 16, "fx": {"shape": "ellipse", "x": 60, "y": 84, "w": 40, "h": 14}, "to": "dungeon_raccoon_1", "arrive": {"x": 680, "y": 680, "facing": "up"}},
+    {"id": "to_back_mountain", "name": "뒷산 오솔길", "label": "뒷산 오솔길", "x": 340, "y": 4, "w": 52, "h": 20, "fx": {"shape": "ellipse", "x": 340, "y": 8, "w": 52, "h": 14}, "to": "back_mountain", "arrive": {"x": 690, "y": 700, "facing": "up"}}
   ],
   "spawnZones": [
   ],

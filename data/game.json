@@ -155,11 +155,30 @@
       { "id": "dungeon_rat_3", "name": "들쥐굴 3층(쥐왕)" },
       { "id": "dungeon_weasel_1", "name": "족제비굴" },
       { "id": "dungeon_snake_1", "name": "뱀굴 1층" },
-      { "id": "dungeon_snake_2", "name": "구렁이의 방" }
+      { "id": "dungeon_snake_2", "name": "구렁이의 방" },
+      { "id": "back_mountain", "name": "뒷산 오솔길" },
+      { "id": "dungeon_dog_1", "name": "들개 소굴" },
+      { "id": "dungeon_dog_2", "name": "개왕의 방" },
+      { "id": "dungeon_raccoon_1", "name": "너구리굴" },
+      { "id": "dungeon_raccoon_2", "name": "둔갑 너구리의 방" },
+      { "id": "dungeon_fox_1", "name": "여우굴" },
+      { "id": "dungeon_fox_2", "name": "구미호의 방" },
+      { "id": "dungeon_boar_1", "name": "멧돼지굴" },
+      { "id": "dungeon_boar_2", "name": "산저의 방" },
+      { "id": "dungeon_bear_1", "name": "곰굴" },
+      { "id": "dungeon_bear_2", "name": "흑웅의 방" },
+      { "id": "dungeon_tiger_1", "name": "산군굴" },
+      { "id": "dungeon_tiger_2", "name": "산군의 방" }
     ],
     "bosses": [
       { "monster": "rat_king", "map": "dungeon_rat_3" },
-      { "monster": "snake_boss", "map": "dungeon_snake_2" }
+      { "monster": "snake_boss", "map": "dungeon_snake_2" },
+      { "monster": "dog_boss", "map": "dungeon_dog_2" },
+      { "monster": "raccoon_boss", "map": "dungeon_raccoon_2" },
+      { "monster": "fox_boss", "map": "dungeon_fox_2" },
+      { "monster": "boar_boss", "map": "dungeon_boar_2" },
+      { "monster": "bear_boss", "map": "dungeon_bear_2" },
+      { "monster": "tiger_boss", "map": "dungeon_tiger_2" }
     ],
     "longPressMs": 450
   }

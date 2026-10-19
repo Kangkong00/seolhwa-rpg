@@ -6,8 +6,8 @@
   "cellSize": 8,
   "spawn": {"x": 700, "y": 690},
   "portals": [
-    {"id": "to_village", "name": "사다리 아래(마을 우물 앞으로)", "label": "마을", "x": 575, "y": 660, "w": 60, "h": 40, "fx": {"shape": "ellipse", "x": 602, "y": 682, "w": 56, "h": 26}, "to": "village", "arrive": {"x": 695, "y": 450, "facing": "down"}},
-    {"id": "to_snake_2", "name": "오른쪽 위 바위 틈(구렁이의 방으로)", "label": "구렁이의 방", "x": 1180, "y": 245, "w": 70, "h": 50, "fx": {"shape": "ellipse", "x": 1212, "y": 272, "w": 56, "h": 30}, "to": "dungeon_snake_2", "arrive": {"x": 300, "y": 620, "facing": "right"}}
+    {"id": "to_village", "name": "사다리 아래(마을 우물 앞으로)", "label": "마을", "x": 575, "y": 660, "w": 60, "h": 40, "fx": {"shape": "ellipse", "x": 577, "y": 667, "w": 56, "h": 26}, "to": "village", "arrive": {"x": 695, "y": 450, "facing": "down"}},
+    {"id": "to_snake_2", "name": "오른쪽 위 바위 틈(구렁이의 방으로)", "label": "구렁이의 방", "x": 1180, "y": 245, "w": 70, "h": 50, "fx": {"shape": "ellipse", "x": 1187, "y": 255, "w": 56, "h": 30}, "to": "dungeon_snake_2", "arrive": {"x": 300, "y": 620, "facing": "right"}}
   ],
   "noSpawnNearPortal": 140,
   "spawnZones": [

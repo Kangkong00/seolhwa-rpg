@@ -48,6 +48,21 @@ export class PortalFx {
         .setResolution(pixelRatio * 2)
         .setDepth(1e6)
         .setAlpha(0);
+      // 레벨 안내(뒷산 오솔길 굴 입구: portal.hint "레벨 30~") — 이름표 아래 작은 글씨, 막지는 않음
+      if (portal.hint) {
+        this.hint = scene.add
+          .text(this.center.x, shape.y - cfg.labelOffsetY + 1, portal.hint, {
+            fontFamily: '-apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+            fontSize: `${Math.max(8, cfg.labelFontPx - 3)}px`,
+            color: '#ffd98a',
+            backgroundColor: cfg.labelBackground,
+            padding: { x: 4, y: 1 },
+          })
+          .setOrigin(0.5, 0)
+          .setResolution(pixelRatio * 2)
+          .setDepth(1e6)
+          .setAlpha(0);
+      }
     }
     this.labelShown = false;
     this.scene = scene;
@@ -58,6 +73,7 @@ export class PortalFx {
     this.visible = v;
     this.glow.setVisible(v);
     if (!v && this.label) this.label.setAlpha(0);
+    if (!v && this.hint) this.hint.setAlpha(0);
     if (!v) this.labelShown = false;
   }
 
@@ -67,7 +83,8 @@ export class PortalFx {
     const near = Math.hypot(px - this.center.x, py - this.center.y) <= this.cfg.labelDistance;
     if (near === this.labelShown) return;
     this.labelShown = near;
-    this.scene.tweens.killTweensOf(this.label);
-    this.scene.tweens.add({ targets: this.label, alpha: near ? 1 : 0, duration: 200 });
+    const targets = this.hint ? [this.label, this.hint] : this.label;
+    this.scene.tweens.killTweensOf(targets);
+    this.scene.tweens.add({ targets, alpha: near ? 1 : 0, duration: 200 });
   }
 }

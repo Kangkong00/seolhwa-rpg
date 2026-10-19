@@ -6,7 +6,7 @@
   "cellSize": 8,
   "spawn": {"x": 300, "y": 620},
   "portals": [
-    {"id": "to_snake_1", "name": "왼쪽 아래 굴(뱀굴 1층으로)", "label": "뱀굴 1층", "x": 190, "y": 545, "w": 60, "h": 55, "fx": {"shape": "ellipse", "x": 205, "y": 572, "w": 50, "h": 34}, "to": "dungeon_snake_1", "arrive": {"x": 1080, "y": 390, "facing": "down"}}
+    {"id": "to_snake_1", "name": "왼쪽 아래 굴(뱀굴 1층으로)", "label": "뱀굴 1층", "x": 190, "y": 545, "w": 60, "h": 55, "fx": {"shape": "ellipse", "x": 195, "y": 556, "w": 50, "h": 34}, "to": "dungeon_snake_1", "arrive": {"x": 1080, "y": 390, "facing": "down"}}
   ],
   "noSpawnNearPortal": 140,
   "spawnZones": [
