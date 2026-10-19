@@ -39,7 +39,7 @@ export class NpcView {
       this.sprite = scene.add
         .image(npc.x, npc.y, tex.key)
         .setOrigin(0.5, canvas.footY / canvas.height)
-        .setScale(canvas.displayHeight / canvas.refHeight / tex.texScale)
+        .setScale((canvas.displayHeight / canvas.refHeight / tex.texScale) * (npc.scale || 1))
         .setDepth(npc.y);
       // 이름표는 실제 머리 위(사람마다 키가 다름)
       labelY = npc.y - this.sprite.displayHeight * (canvas.footY / canvas.height) + this.topPad(scene, tex.key) - 3;
@@ -97,7 +97,13 @@ export class NpcView {
     const st = this.walk;
     if (st.pause > 0) {
       st.pause -= dt;
+      if (this.sprite) this.sprite.y = n.y;
       return;
+    }
+    // 걷는 그림이 없으므로 걸을 때 몸을 위아래로 살짝 흔듦(bob)
+    if (n.bob && this.sprite) {
+      st.bobT = (st.bobT || 0) + dt;
+      this.sprite.y = n.y - Math.abs(Math.sin((st.bobT / n.bob.ms) * Math.PI)) * n.bob.px;
     }
     this.x += st.dir * (w.speed * dt) / 1000;
     if (this.x >= w.x1 || this.x <= w.x0) {
