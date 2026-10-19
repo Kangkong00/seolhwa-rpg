@@ -146,6 +146,39 @@ const SYNTH = {
     noise(ctx, out, t, 0.3, { type: 'bandpass', f0: 1800 * p, f1: 260 * p, q: 1.1, peak: 1, attack: 0.04 });
     tone(ctx, out, t + 0.05, 0.2, { type: 'sine', f0: 140 * p, f1: 70 * p, peak: 0.35, attack: 0.02 });
   },
+  // 개 '왕': 짧게 꺾이는 울음(톱니파가 위로 갔다 내려옴)
+  bark(ctx, out, t, p) {
+    tone(ctx, out, t, 0.12, { type: 'sawtooth', f0: 380 * p, f1: 620 * p, peak: 0.35, attack: 0.005 });
+    tone(ctx, out, t + 0.1, 0.14, { type: 'sawtooth', f0: 600 * p, f1: 300 * p, peak: 0.3, attack: 0.005 });
+    noise(ctx, out, t, 0.18, { type: 'bandpass', f0: 1200 * p, q: 1.5, peak: 0.25, attack: 0.005 });
+  },
+  // 여우불 '화르륵': 잡음이 부풀며 위로 훑음
+  fireWhoosh(ctx, out, t, p) {
+    noise(ctx, out, t, 0.35, { type: 'bandpass', f0: 500 * p, f1: 2600 * p, q: 0.9, peak: 0.6, attack: 0.06 });
+    noise(ctx, out, t + 0.05, 0.25, { type: 'highpass', f0: 3000 * p, q: 0.5, peak: 0.25, attack: 0.04 });
+  },
+  // 돌진 '두두두': 낮은 발소리 4번
+  rumble(ctx, out, t, p) {
+    for (let i = 0; i < 4; i++) {
+      tone(ctx, out, t + i * 0.08, 0.07, { type: 'sine', f0: 110 * p, f1: 60 * p, peak: 0.6, attack: 0.003 });
+      noise(ctx, out, t + i * 0.08, 0.04, { type: 'lowpass', f0: 500, q: 0.7, peak: 0.3, attack: 0.002 });
+    }
+  },
+  // 내려찍기·충격파 '쿵': 아주 낮게 울림
+  thud(ctx, out, t, p) {
+    tone(ctx, out, t, 0.35, { type: 'sine', f0: 90 * p, f1: 40 * p, peak: 1, attack: 0.003 });
+    noise(ctx, out, t, 0.12, { type: 'lowpass', f0: 700, q: 0.7, peak: 0.6, attack: 0.002 });
+  },
+  // 포효 '어흥': 낮은 톱니파 두 개가 떨며 길게 + 숨소리
+  roar(ctx, out, t, p) {
+    tone(ctx, out, t, 0.9, { type: 'sawtooth', f0: 120 * p, f1: 80 * p, peak: 0.5, attack: 0.08 });
+    tone(ctx, out, t, 0.85, { type: 'sawtooth', f0: 126 * p, f1: 84 * p, peak: 0.35, attack: 0.08 });
+    noise(ctx, out, t, 0.8, { type: 'bandpass', f0: 400 * p, f1: 200 * p, q: 0.8, peak: 0.45, attack: 0.08 });
+  },
+  // 펑(분신·순간이동 연기)
+  poof(ctx, out, t, p) {
+    noise(ctx, out, t, 0.18, { type: 'bandpass', f0: 900 * p, f1: 400 * p, q: 0.8, peak: 0.5, attack: 0.005 });
+  },
   // 주인공 물림: 둔탁한 소리 + 짧은 잡음
   playerHurt(ctx, out, t, p) {
     tone(ctx, out, t, 0.12, { type: 'sine', f0: 170 * p, f1: 80 * p, peak: 0.9, attack: 0.003 });

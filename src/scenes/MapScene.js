@@ -25,7 +25,7 @@ import { NpcMenu } from './npcMenu.js';
 import { DropView, makeDropTexture } from './dropView.js';
 import { PickupFeed } from './pickupFeed.js';
 import { josa } from '../ui/josa.js';
-import { crescentWave, WindRing, leafSwirl } from './skillFx.js';
+import { crescentWave, WindRing, leafSwirl, CrescentShot } from './skillFx.js';
 import { levelUpFx } from './levelUpFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
 import { swingTheta } from './weaponPose.js';
@@ -34,7 +34,7 @@ import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
 import { PortalFx } from './portalFx.js';
 import { showDamage } from './damageText.js';
-import { hitStar, slashMark, poisonPuff } from './impactFx.js';
+import { hitStar, slashMark, weaponHitFx, trailParticle, sevenStar } from './impactFx.js';
 import { AttackButton } from '../ui/attackButton.js';
 import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
@@ -556,6 +556,8 @@ export class MapScene extends Phaser.Scene {
   // ---------- 몬스터 ----------
   async prepareMonsterTextures() {
     const types = new Set(this.map.spawnZones.map((z) => z.monster));
+    // 우두머리가 부르는 것(개왕 → 들개)도 미리
+    for (const t of [...types]) for (const mv of (this.monsterDefs[t] && this.monsterDefs[t].moves) || []) if (mv.kind === 'summon') types.add(mv.monster);
     this.monsterTextures = {};
     for (const t of types) {
       const def = this.monsterDefs[t];
@@ -678,47 +680,90 @@ export class MapScene extends Phaser.Scene {
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
     if (!s.trail) s.trail = this.makeTrail(w, s.mods);
-    s.trail.draw((theta - sw.thetaFrom) / (sw.thetaTo - sw.thetaFrom));
+    const prog = (theta - sw.thetaFrom) / (sw.thetaTo - sw.thetaFrom);
+    s.trail.draw(prog);
+    this.swingParticles(s, w, prog, dt);
     if (s.t >= pre + w.swingMs) s.trail.fadeOut();
     return { theta, lean };
   }
 
-  makeTrail(w, mods = null) {
+  makeTrail(w, mods = null, edge = false) {
     const tr = this.d.weapons.trail;
     const facing = this.facing;
     const base = tr[facing === 'up' ? 'back' : facing === 'down' ? 'front' : 'side'];
     // 힘껏 베기: 궤적을 굵게
-    const shape = mods && mods.trailWidthMul ? { ...base, thickness: base.thickness * mods.trailWidthMul } : base;
+    let shape = mods && mods.trailWidthMul ? { ...base, thickness: base.thickness * mods.trailWidthMul } : base;
+    if (edge) shape = { ...shape, thickness: shape.thickness * 1.35 };
     const x = this.pos.x;
     const y = this.pos.y;
     const pv = this.playerView;
+    // 흑웅 대검: 검은 궤적 뒤에 금빛 테두리(trailEdge)
+    if (w.trailEdge && !edge && !(mods && mods.trailColor)) {
+      const back = this.makeTrail(w, mods, true);
+      const front = this.makeTrail({ ...w, trailEdge: null }, mods);
+      return { draw: (u) => { back.draw(u); front.draw(u); }, fadeOut: () => { back.fadeOut(); front.fadeOut(); }, pointAt: (u) => front.pointAt(u) };
+    }
     return new SwingTrail(this, {
       shape,
       cfg: tr,
       k: w.tipFromGrip / tr.refTip,
-      color: (mods && mods.trailColor) || w.trailColor,
+      color: edge ? w.trailEdge : (mods && mods.trailColor) || w.trailColor,
       toMap: (px, py) => pv.posePoint(px, py, x, y + ((mods && mods.trailOffset) || 0), facing === 'right'),
       res: this.pixelScale(),
       // 칼(몸 앞 +0.01)·손 덮개(+0.02) 아래, 몸 위. 뒷면은 몸 뒤
-      depth: y + (shape.behind ? -0.03 : 0.005),
+      depth: y + (shape.behind ? -0.03 : 0.005) - (edge ? 0.001 : 0),
       // 삼연참: 궤적이 trailHoldMs 동안 남아 엇갈려 보임
       fx: mods && mods.trailHoldMs ? { ...this.cfg.swingFx, trailMs: mods.trailHoldMs } : this.cfg.swingFx,
     });
   }
 
+  // 휘두르는 동안 칼끝을 따라 무기 고유 알갱이(trailParticles: cloud·petal·flame·dust·star, 칠성검 sevenStars)
+  swingParticles(s, w, prog, dt) {
+    const kind = w.fx && w.fx.trailParticles;
+    if (!kind || !s.trail.pointAt || prog <= 0.05) return;
+    if (kind === 'sevenStars') {
+      s.starsLit = s.starsLit || 0;
+      while (s.starsLit < 7 && prog >= (s.starsLit + 0.5) / 7.5) {
+        const p = s.trail.pointAt((s.starsLit + 0.5) / 7.5);
+        sevenStar(this, p.x, p.y);
+        s.starsLit += 1;
+      }
+      return;
+    }
+    s.particleT = (s.particleT || 0) - dt;
+    if (s.particleT > 0 || prog >= 1) return;
+    s.particleT = 22;
+    const p = s.trail.pointAt(prog);
+    trailParticle(this, p.x, p.y, kind, w.trailColor);
+  }
+
   // 내려치는 순간: 앞의 몬스터 1마리 맞힘 + 히트스톱·타격 불꽃·화면 흔들림
   strikeHit(w, mods = null) {
     const m = mods || {};
-    const target = findTarget(this.pos, this.facing, this.spawner.monsters, w.reach, w.width);
+    const hf = w.fx && w.fx.hitFx;
+    // 청풍검: 바람 칼날이 앞으로 16 더 날아가 맞힘
+    const reach = w.reach + (hf === 'windBlade' ? 16 : 0);
+    if (hf === 'windBlade') this.windBladeFx(w);
+    const target = findTarget(this.pos, this.facing, this.spawner.monsters, reach, w.width);
     if (!target) return;
     this.impactHit(target, this.facing, (w.damage + this.levelDamage()) * (m.damageMul || 1), {
       kind: mods ? 'skill' : 'hit',
-      knockbackPx: w.knockbackPx * (m.knockbackMul || 1),
+      knockbackPx: w.knockbackPx * (m.knockbackMul || 1) * (hf === 'crack' ? 1.5 : 1), // 쇠엄니 대도: 밀어내기 큼
       stunMs: w.stunMs,
-      hitStopMul: m.hitStopMul,
+      hitStopMul: (m.hitStopMul || 1) * (w.hitStopMul || 1), // 무거운 칼(쇠엄니·산저·흑웅)은 조금 길게
       shakeMul: m.shakeMul,
       starScale: m.starScale,
     });
+  }
+
+  // 청풍검 바람 칼날: 작은 반달이 앞으로 짧게 날아가 사라짐
+  windBladeFx(w) {
+    const [dx, dy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
+    const shot = new CrescentShot(this, dx, dy, 18, w.trailColor);
+    const x0 = this.pos.x + dx * 14;
+    const y0 = this.pos.y + dy * 6;
+    const o = { d: 0 };
+    this.tweens.add({ targets: o, d: w.reach + 16, duration: 160, onUpdate: () => shot.draw(x0 + dx * o.d, y0 + dy * o.d, 1 - o.d / (w.reach + 40)), onComplete: () => shot.destroy() });
   }
 
   // ---------- 맞히기 한 번(모든 공격·무예 공통, docs/spec/skills_impact.md 1) ----------
@@ -750,7 +795,7 @@ export class MapScene extends Phaser.Scene {
     const view = this.monsterViews.get(target.id);
     if (view && !result.killed) view.squash(im.squashMs, im.squashX, im.squashY);
     // 무기 고유 타격 연출(weapon_list.md: 구렁이 비늘검 독안개)
-    if (w && w.fx && w.fx.hitFx === 'poison') poisonPuff(this, hx, hy, w.trailColor);
+    if (w && w.fx && w.fx.hitFx) weaponHitFx(this, w.fx.hitFx, hx, hy, dir, w.trailColor, tierK);
     if (roll.crit) this.sfx.play('crit');
     if (!o.quiet) {
       let stop = sfx.hitStopMs * (o.hitStopMul || 1);
@@ -783,6 +828,14 @@ export class MapScene extends Phaser.Scene {
     const fx = this.cfg.hitFx;
     const view = this.monsterViews.get(target.id);
     this.playMonsterSound(target, result.killed);
+    if (result.killed && target.clone) {
+      // 분신(둔갑 너구리): 연기로 사라짐, 경험치·전리품 없음
+      this.spawner.remove(target);
+      this.monsterViews.delete(target.id);
+      if (view) view.vanish();
+      this.sfx.play('poof');
+      return;
+    }
     if (result.killed) {
       // 규칙에서 바로 빼서 다시 생기는 시간이 흐르기 시작하고, 그림은 날아가는 연출 뒤 사라짐
       this.spawner.remove(target);
@@ -1120,6 +1173,13 @@ export class MapScene extends Phaser.Scene {
       this.act.guard.counter(bite.monster);
       return;
     }
+    // 데미지 없는 포효(산군): 몸만 굳음
+    if (!bite.damage && bite.rootMs) {
+      this.rootMs = Math.max(this.rootMs || 0, bite.rootMs);
+      this.cancelRecall('포효에 귀환이 끊겼습니다');
+      this.toast.show('포효에 몸이 굳었습니다', 1200);
+      return;
+    }
     this.sfx.play('playerHurt');
     this.cancelRecall('맞아서 귀환이 끊겼습니다');
     const ph = this.cfg.playerHit;
@@ -1134,6 +1194,11 @@ export class MapScene extends Phaser.Scene {
     this.playerView.flash(ph.flashColor, ph.flashMs);
     showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 8, result.damage, this.cfg.hitFx, this.d.getPixelRatio(), 'player');
     this.knock = { dir: bite.dir, left: bite.knockbackPx ?? ph.knockbackPx }; // 쥐왕 돌진은 더 많이 밀려남
+    // 산군 포효: rootMs 동안 못 움직임
+    if (bite.rootMs) {
+      this.rootMs = Math.max(this.rootMs || 0, bite.rootMs);
+      this.toast.show('포효에 몸이 굳었습니다', 1200);
+    }
     if (result.killed) this.die();
   }
 
@@ -1254,6 +1319,24 @@ export class MapScene extends Phaser.Scene {
         cam.fadeIn(this.cfg.mapFadeMs);
       }
     });
+  }
+
+  // 날아가는 여우불(spawner.shots): 푸른 불덩이 + 꼬리 빛
+  drawShots() {
+    const shots = this.spawner.shots;
+    if (!this.shotG) this.shotG = this.add.graphics().setDepth(1e6 - 4).setBlendMode(Phaser.BlendModes.ADD);
+    const g = this.shotG;
+    g.clear();
+    for (const sh of shots) {
+      const c = Phaser.Display.Color.HexStringToColor(sh.color || '#58a8ff').color;
+      for (let k = 0; k < 4; k++) {
+        const t = k * 0.04;
+        g.fillStyle(c, 0.5 - k * 0.1);
+        g.fillCircle(sh.x - sh.vx * t, sh.y - sh.vy * t, sh.radius * (1 - k * 0.18));
+      }
+      g.fillStyle(0xffffff, 0.85);
+      g.fillCircle(sh.x, sh.y, sh.radius * 0.45);
+    }
   }
 
   // ---------- 관리자 모드에서 부르는 것(docs/spec/admin_mode.md, 창은 src/ui/adminPanel.js) ----------
@@ -1383,7 +1466,8 @@ export class MapScene extends Phaser.Scene {
     const punching = this.punchMs > 0 || !!swingPose;
 
     // 주먹 지르는 동안·무예를 하는 동안은 걷지 않음(휘돌려 베기는 도는 동안 천천히 걸을 수 있음)
-    const locked = this.transitioning || (punching && !this.spin) || (this.act && this.act.lockMove);
+    if (this.rootMs > 0) this.rootMs -= dt;
+    const locked = this.transitioning || (punching && !this.spin) || (this.act && this.act.lockMove) || this.rootMs > 0;
     const v = locked ? { x: 0, y: 0 } : this.d.input.getVector();
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 
@@ -1429,9 +1513,16 @@ export class MapScene extends Phaser.Scene {
 
     // 몬스터
     const target = { x: this.pos.x, y: this.pos.y, alive: !this.dead && !this.transitioning };
-    const { born, bites } = this.spawner.update(dt, target);
+    const { born, bites, gone } = this.spawner.update(dt, target);
     for (const m of born) this.addMonsterView(m);
     for (const b of bites) this.onBitten(b);
+    // 포기해 사라진 분신: 연기
+    for (const m of gone || []) {
+      const v = this.monsterViews.get(m.id);
+      if (v) v.vanish();
+      this.monsterViews.delete(m.id);
+    }
+    this.drawShots();
     for (const m of this.spawner.monsters) {
       const view = this.monsterViews.get(m.id);
       if (view) view.update(dt, m);

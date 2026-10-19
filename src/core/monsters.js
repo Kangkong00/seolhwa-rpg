@@ -64,6 +64,7 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     moving: false,
     hp: def.hp,
     maxHp: def.hp,
+    superArmor: !!def.boss, // 우두머리: 맞아도 멈칫하지 않음(combat.hitMonster)
     // 맞았을 때: 밀려날 남은 거리·방향, 잠깐 멈춤
     knockLeft: 0,
     knockDir: null,
@@ -83,11 +84,18 @@ export function createMonster(def, zoneIndex, point, rng = Math.random) {
     chargeHit: false,
     // 웅크렸다 물기(물뱀, def.biteWindupMs): 무는 동작 전 웅크리는 남은 시간
     biteWindup: 0,
-    // 꼬리 휘두르기(늙은 구렁이, def.tail): tailState = null | 'windup', tailCount = 휘두른 횟수(그림·소리용)
-    tailTimer: def.tail ? def.tail.everyMs : 0,
-    tailState: null,
-    tailMs: 0,
-    tailCount: 0,
+    // 특기(def.moves — 우두머리·여우·멧돼지·곰 등, docs/spec/tier4_9.md 3): 기술마다 남은 시간,
+    // move = 하는 중 { i, state: 'windup' | 'act', ms, hitsLeft }, moveCount = 쓴 횟수(그림·소리용), moveLast = 마지막에 쓴 기술 번호
+    moveTimers: (def.moves || []).map((mv) => mv.firstMs ?? mv.everyMs * 0.5),
+    move: null,
+    moveCount: 0,
+    moveLast: -1,
+    // 맞은 횟수(너구리 순간이동·늑대 물러서기가 봄), 물러서는 남은 시간(늑대)
+    hitCount: 0,
+    hitSeen: 0,
+    retreatMs: 0,
+    blinkCount: 0,
+    blinkFrom: null,
   };
 }
 
@@ -120,9 +128,9 @@ function stepToward(m, def, map, tx, ty, dist) {
   return false;
 }
 
-// 돌진 한 프레임. 반환: 닿았으면 { type: 'bite', damage, dir, knockbackPx }
-function updateCharge(m, def, map, dtMs, target) {
-  const c = def.charge;
+// 돌진 한 프레임(c = def.charge 또는 특기 charge). 반환: 닿았으면 { type: 'bite', damage, dir, knockbackPx }
+// c.untilWall이면 벽에 부딪힐 때까지 달리고, 부딪히면 wallStunMs 동안 멈칫(산저 — 때릴 기회)
+function updateCharge(m, c, def, map, dtMs, target) {
   if (m.chargeState === 'windup') {
     m.chargeMs -= dtMs;
     if (m.chargeMs <= 0) {
@@ -161,7 +169,12 @@ function updateCharge(m, def, map, dtMs, target) {
   }
   if (!moved || m.chargeLeft <= 0) {
     m.chargeState = null;
-    m.chargeTimer = c.everyMs;
+    if (!moved && c.wallStunMs) {
+      m.stunMs = c.wallStunMs;
+      m.wallHits = (m.wallHits || 0) + 1;
+    }
+    if (c === def.charge) m.chargeTimer = c.everyMs;
+    else m.move = null;
   }
   return ev;
 }
@@ -175,42 +188,125 @@ function attackInterval(m, def, ms) {
   return isEnraged(m, def) ? ms * def.enrage.intervalMul : ms;
 }
 
-// 꼬리 휘두르기 한 프레임(늙은 구렁이): windupMs 예고(몸을 비틂) 뒤 바라보는 쪽 반원(반경 radius) 안이면 맞음.
-// 반환: 맞았으면 { type: 'bite', damage, dir, knockbackPx }
-function updateTail(m, def, dtMs, target) {
-  const t = def.tail;
-  m.tailMs -= dtMs;
-  if (m.tailMs > 0) return null;
-  m.tailState = null;
-  m.tailTimer = attackInterval(m, def, t.everyMs);
-  m.tailCount += 1;
+const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+// 몬스터 → 주인공 쪽 4방향(밀려나는 쪽)
+function dirToward(m, target) {
   const dx = target.x - m.x;
   const dy = target.y - m.y;
-  const [fx, fy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[m.facing];
-  if (Math.hypot(dx, dy) > t.radius || dx * fx + dy * fy < -6) return null;
-  m.calmMs = 0;
-  // 밀려나는 쪽 = 구렁이에서 주인공 쪽
-  const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
-  return { type: 'bite', damage: t.damage, dir, knockbackPx: t.knockbackPx };
+  return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down';
 }
 
-// 반격 중 한 프레임. 반환: 이번 프레임에 문 경우 { type: 'bite', damage } 아니면 null
+// 범위 공격이 닿는지: shape 'front'면 바라보는 쪽 반원, 'full'이면 원 전체(반경 radius)
+function inSweep(m, mv, target) {
+  const dx = target.x - m.x;
+  const dy = target.y - m.y;
+  if (Math.hypot(dx, dy) > mv.radius) return false;
+  if (mv.shape === 'full') return true;
+  const [fx, fy] = VEC[m.facing];
+  return dx * fx + dy * fy >= -6;
+}
+
+// 특기 실행(예고가 끝난 순간). kind별:
+//  sweep  — 범위 공격(꼬리 휘두르기·내려찍기·충격파·발톱 연타 hits번)
+//  charge — 돌진(updateCharge로 넘김)
+//  summon — 같은 편 부르기(울부짖음: monster를 count마리, 함께 있는 수 max까지)
+//  clones — 분신(체력 1, 맞으면 연기로 사라짐, 보상 없음)
+//  shoot  — 여우불 날리기(count개를 부채꼴 spreadDeg로, speed·life·radius·damage)
+//  roar   — 포효(반경 안이면 rootMs 동안 못 움직임 + damage)
+// 반환: { ev: 주인공에게 닿은 일(없으면 null), spawn: [{ type, clone }], shots: [...] }
+function actMove(m, def, mv, target) {
+  const out = { ev: null, spawn: [], shots: [] };
+  if (mv.kind === 'sweep') {
+    if (inSweep(m, mv, target)) {
+      m.calmMs = 0;
+      out.ev = { type: 'bite', damage: mv.damage, dir: dirToward(m, target), knockbackPx: mv.knockbackPx || 0 };
+    }
+  } else if (mv.kind === 'summon') {
+    for (let i = 0; i < mv.count; i++) out.spawn.push({ type: mv.monster, clone: false });
+  } else if (mv.kind === 'clones') {
+    for (let i = 0; i < mv.count; i++) out.spawn.push({ type: m.type, clone: true });
+  } else if (mv.kind === 'shoot') {
+    const base = Math.atan2(target.y - m.y, target.x - m.x);
+    const spread = ((mv.spreadDeg || 0) * Math.PI) / 180;
+    for (let i = 0; i < mv.count; i++) {
+      const a = mv.count > 1 ? base - spread / 2 + (spread * i) / (mv.count - 1) : base;
+      out.shots.push({ x: m.x, y: m.y - def.height * 0.4, vx: Math.cos(a) * mv.speed, vy: Math.sin(a) * mv.speed, life: mv.life, radius: mv.radius, damage: mv.damage, color: mv.color, owner: m.id });
+    }
+  } else if (mv.kind === 'roar') {
+    if (Math.hypot(target.x - m.x, target.y - m.y) <= mv.radius) {
+      m.calmMs = 0;
+      out.ev = { type: 'bite', damage: mv.damage || 0, dir: dirToward(m, target), knockbackPx: 0, rootMs: mv.rootMs };
+    }
+  }
+  return out;
+}
+
+// 특기 한 프레임(하는 중). 반환: actMove 꼴 또는 null
+function updateMove(m, def, map, dtMs, target) {
+  const mv = def.moves[m.move.i];
+  if (m.move.state === 'charge') {
+    const ev = updateCharge(m, mv, def, map, dtMs, target);
+    return ev ? { ev, spawn: [], shots: [] } : null;
+  }
+  m.move.ms -= dtMs;
+  if (m.move.ms > 0) return null;
+  if (m.move.state === 'windup') {
+    m.moveCount += 1;
+    m.moveLast = m.move.i;
+    if (mv.kind === 'charge') {
+      // 돌진은 예고를 move가 했으므로 바로 달림
+      m.move.state = 'charge';
+      m.chargeState = 'windup';
+      m.chargeMs = 0;
+      return null;
+    }
+    m.move.state = 'act';
+    m.move.hitsLeft = (mv.hits || 1) - 1;
+    const out = actMove(m, def, mv, target);
+    if (m.move.hitsLeft <= 0) m.move = null;
+    else m.move.ms = mv.gapMs || 200;
+    return out;
+  }
+  // 연타(발톱 3연타): gapMs마다 한 번 더
+  m.moveCount += 1;
+  m.move.hitsLeft -= 1;
+  const out = actMove(m, def, mv, target);
+  if (m.move.hitsLeft <= 0) m.move = null;
+  else m.move.ms = mv.gapMs || 200;
+  return out;
+}
+
+// 반격 중 한 프레임. 반환: { ev, spawn, shots } 또는 null
 function updateAggro(m, def, map, dtMs, target) {
   const dist = Math.hypot(target.x - m.x, target.y - m.y);
   m.calmMs += dtMs;
   if (!target.alive || dist > def.giveUpDistance || m.calmMs > def.giveUpMs) {
+    if (m.clone) m.hp = 0; // 분신은 포기하면 사라짐
     m.aggro = false;
     m.state = 'rest';
     m.timer = 300;
     m.chargeState = null;
-    m.tailState = null;
+    m.move = null;
     m.biteWindup = 0;
+    m.retreatMs = 0;
     return null;
   }
   m.biteCooldown = Math.max(0, m.biteCooldown - dtMs);
+  // 물러서기(늑대): 맞으면 retreatMs 동안 주인공 반대쪽으로 물러섰다가 다시 달려듦
+  if (m.retreatMs > 0) {
+    m.retreatMs -= dtMs;
+    const away = { x: m.x * 2 - target.x, y: m.y * 2 - target.y };
+    stepToward(m, def, map, away.x, away.y, ((def.retreatOnHit.speed || def.chaseSpeed) * dtMs) / 1000);
+    m.facing = towardPoint(m, target.x, target.y);
+    return null;
+  }
   // 돌진: 무는 중이 아닐 때 everyMs마다, 주인공이 range 안이면 웅크려 예고 → 돌진
   if (def.charge) {
-    if (m.chargeState) return updateCharge(m, def, map, dtMs, target);
+    if (m.chargeState) {
+      const ev = updateCharge(m, def.charge, def, map, dtMs, target);
+      return ev ? { ev, spawn: [], shots: [] } : null;
+    }
     m.chargeTimer -= dtMs;
     if (m.chargeTimer <= 0 && m.biteMs <= 0 && dist <= def.charge.range) {
       m.chargeState = 'windup';
@@ -220,15 +316,19 @@ function updateAggro(m, def, map, dtMs, target) {
     }
   }
 
-  // 꼬리 휘두르기: everyMs마다(성나면 짧게), 주인공이 반경 1.5배 안이면 예고 → 휘두름
-  if (def.tail) {
-    if (m.tailState) return updateTail(m, def, dtMs, target);
-    m.tailTimer -= dtMs;
-    if (m.tailTimer <= 0 && m.biteMs <= 0 && m.biteWindup <= 0 && dist <= def.tail.radius * 1.5) {
-      m.tailState = 'windup';
-      m.tailMs = def.tail.windupMs;
-      m.facing = towardPoint(m, target.x, target.y);
-      return null;
+  // 특기: 하는 중이면 계속, 아니면 준비된 것(가까운 range 안) 하나를 골라 예고
+  if (def.moves) {
+    if (m.move) return updateMove(m, def, map, dtMs, target);
+    def.moves.forEach((mv, i) => { m.moveTimers[i] -= dtMs; });
+    if (m.biteMs <= 0 && m.biteWindup <= 0) {
+      const i = def.moves.findIndex((mv, k) => m.moveTimers[k] <= 0 && dist <= mv.range && (!mv.minRange || dist >= mv.minRange));
+      if (i >= 0) {
+        const mv = def.moves[i];
+        m.moveTimers[i] = attackInterval(m, def, mv.everyMs);
+        m.move = { i, state: 'windup', ms: mv.windupMs, hitsLeft: 0 };
+        m.facing = towardPoint(m, target.x, target.y);
+        return null;
+      }
     }
   }
 
@@ -249,7 +349,7 @@ function updateAggro(m, def, map, dtMs, target) {
       m.bitePending = false;
       if (dist <= def.biteRange + 6) {
         m.calmMs = 0;
-        return { type: 'bite', damage: def.biteDamage, dir: m.facing };
+        return { ev: { type: 'bite', damage: m.clone ? Math.ceil(def.biteDamage / 2) : def.biteDamage, dir: m.facing }, spawn: [], shots: [] };
       }
     }
     return null;
@@ -278,11 +378,38 @@ export function provoke(m) {
   m.calmMs = 0;
 }
 
+// 맞은 뒤 한 번(맞은 횟수가 늘었을 때): 너구리 순간이동(blinkOnHit), 늑대 물러서기(retreatOnHit)
+function reactToHit(m, def, map, rng) {
+  if (m.hitCount === m.hitSeen) return;
+  m.hitSeen = m.hitCount;
+  if (m.hp <= 0) return;
+  if (def.retreatOnHit) m.retreatMs = def.retreatOnHit.ms;
+  const b = def.blinkOnHit;
+  if (b && rng() < (b.chance ?? 1)) {
+    // 바라보는 쪽과 직각으로 distance만큼(양쪽 중 설 수 있는 곳)
+    const side = m.facing === 'left' || m.facing === 'right' ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]];
+    if (rng() < 0.5) side.reverse();
+    for (const [sx, sy] of side) {
+      const x = m.x + sx * b.distance;
+      const y = m.y + sy * b.distance;
+      if (isStandable(map.grid, x, y, def.footBox)) {
+        m.blinkFrom = { x: m.x, y: m.y };
+        m.x = x;
+        m.y = y;
+        m.knockLeft = 0;
+        m.blinkCount += 1;
+        break;
+      }
+    }
+  }
+}
+
 // 한 프레임 진행. dtMs: 지난 프레임 이후 시간, target: 주인공 { x, y, alive }
-// 반환: 무는 데 성공했으면 { type: 'bite', damage, dir }, 아니면 null
+// 반환: 무엇이 일어났는지 { ev: 주인공에게 닿은 일, spawn, shots } 또는 null
 export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
   const zone = map.spawnZones[m.zoneIndex];
   m.moving = false;
+  reactToHit(m, def, map, rng);
 
   // 맞아서 밀려나는 중: 벽은 통과하지 않음, 구역 밖으로는 조금 밀려나도 됨
   if (m.knockLeft > 0) {
@@ -298,9 +425,10 @@ export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
     m.bitePending = false;
     m.biteWindup = 0;
     if (m.chargeState === 'windup') m.chargeState = null;
-    if (m.tailState === 'windup') {
-      m.tailState = null;
-      m.tailTimer = attackInterval(m, def, def.tail.everyMs) * 0.5;
+    // 예고 중이던 특기는 끊김(조금 뒤 다시)
+    if (m.move && m.move.state === 'windup') {
+      m.moveTimers[m.move.i] = def.moves[m.move.i].everyMs * 0.4;
+      m.move = null;
     }
     return null;
   }
@@ -349,13 +477,34 @@ export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
   return null;
 }
 
-// 구역별 마릿수 관리: 처음엔 가득 채우고, 줄어들면 respawnMs 뒤에 한 마리씩 다시 생김
+// 날아가는 것(여우불) 한 프레임: 움직이고, 벽·수명이면 사라지고, 주인공에 닿으면 데미지.
+// 반환: 닿은 일 [{ damage, dir }]
+function updateShots(shots, map, dtMs, target) {
+  const hits = [];
+  for (const s of shots) {
+    s.x += (s.vx * dtMs) / 1000;
+    s.y += (s.vy * dtMs) / 1000;
+    s.life -= dtMs;
+    if (s.life <= 0 || map.grid.isPointBlocked(s.x, s.y + 20)) s.dead = true;
+    else if (target.alive && Math.hypot(target.x - s.x, target.y - 20 - s.y) <= s.radius + 8) {
+      s.dead = true;
+      hits.push({ damage: s.damage, dir: Math.abs(s.vx) > Math.abs(s.vy) ? (s.vx < 0 ? 'left' : 'right') : s.vy < 0 ? 'up' : 'down', knockbackPx: 6, shot: true });
+    }
+  }
+  return hits;
+}
+
+let nextShotId = 1;
+
+// 구역별 마릿수 관리: 처음엔 가득 채우고, 줄어들면 respawnMs 뒤에 한 마리씩 다시 생김.
+// 부른 것(summoned)·분신(clone)은 구역 마릿수에 세지 않음
 export class MonsterSpawner {
   constructor(map, defs, rng = Math.random) {
     this.map = map;
     this.defs = defs;
     this.rng = rng;
     this.monsters = [];
+    this.shots = []; // 날아가는 여우불 { id, x, y, vx, vy, life, radius, damage, color }
     this.timers = map.spawnZones.map(() => 0);
     map.spawnZones.forEach((zone, i) => {
       for (let n = 0; n < zone.count; n++) this.spawn(i);
@@ -373,6 +522,42 @@ export class MonsterSpawner {
     return m;
   }
 
+  // 구역에 세는 마릿수(부른 것·분신 빼고)
+  zoneCount(i) {
+    return this.monsters.filter((m) => m.zoneIndex === i && !m.extra).length;
+  }
+
+  // 우두머리 둘레에 부른 것·분신을 세움(설 수 있는 곳, 바로 반격 상태)
+  spawnNear(owner, type, clone) {
+    const def = this.defs[type];
+    if (!def) return null;
+    const limitOf = (o) => this.monsters.filter((m) => m.ownerId === o.id).length;
+    const ownerDef = this.defs[owner.type];
+    const mv = (ownerDef.moves || []).find((x) => (clone ? x.kind === 'clones' : x.kind === 'summon'));
+    if (mv && mv.max && limitOf(owner) >= mv.max) return null;
+    for (let k = 0; k < 12; k++) {
+      const a = this.rng() * Math.PI * 2;
+      const r = 28 + this.rng() * 30;
+      const x = owner.x + Math.cos(a) * r;
+      const y = owner.y + Math.sin(a) * r * 0.6;
+      if (!isStandable(this.map.grid, x, y, def.footBox)) continue;
+      const m = createMonster(def, owner.zoneIndex, { x, y }, this.rng);
+      m.extra = true;
+      m.ownerId = owner.id;
+      if (clone) {
+        m.clone = true;
+        m.hp = 1;
+        m.maxHp = 1;
+        m.moves = null;
+        m.moveTimers = m.moveTimers.map(() => Infinity); // 분신은 특기를 쓰지 않음
+      }
+      provoke(m);
+      this.monsters.push(m);
+      return m;
+    }
+    return null;
+  }
+
   remove(m) {
     this.monsters = this.monsters.filter((x) => x !== m);
   }
@@ -382,7 +567,7 @@ export class MonsterSpawner {
     const born = [];
     this.map.spawnZones.forEach((zone, i) => {
       if (type && zone.monster !== type) return;
-      let alive = this.monsters.filter((m) => m.zoneIndex === i).length;
+      let alive = this.zoneCount(i);
       for (; alive < zone.count; alive++) {
         const m = this.spawn(i);
         if (m) born.push(m);
@@ -396,16 +581,16 @@ export class MonsterSpawner {
   reset() {
     const removed = this.monsters;
     this.monsters = [];
+    this.shots = [];
     return { removed, born: this.fill() };
   }
 
   // target: 주인공 { x, y, alive }
-  // 반환: { born: 새로 생긴 몬스터, bites: [{ monster, damage, dir }] }
+  // 반환: { born: 새로 생긴 몬스터, bites: [{ monster, damage, dir, knockbackPx, rootMs }], gone: 사라진 분신 }
   update(dtMs, target) {
     const born = [];
     this.map.spawnZones.forEach((zone, i) => {
-      const alive = this.monsters.filter((m) => m.zoneIndex === i).length;
-      if (alive >= zone.count) {
+      if (this.zoneCount(i) >= zone.count) {
         this.timers[i] = 0;
         return;
       }
@@ -417,10 +602,30 @@ export class MonsterSpawner {
       }
     });
     const bites = [];
-    for (const m of this.monsters) {
-      const ev = updateMonster(m, this.defs[m.type], this.map, dtMs, target, this.rng);
-      if (ev) bites.push({ monster: m, ...ev });
+    for (const m of [...this.monsters]) {
+      const def = this.defs[m.type];
+      const out = updateMonster(m, def, this.map, dtMs, target, this.rng);
+      if (!out) continue;
+      if (out.ev) bites.push({ monster: m, ...out.ev });
+      for (const sp of out.spawn || []) {
+        const b = this.spawnNear(m, sp.type, sp.clone);
+        if (b) born.push(b);
+      }
+      for (const sh of out.shots || []) this.shots.push({ id: nextShotId++, ...sh });
     }
-    return { born, bites };
+    // 무리(들개): 하나가 덤비면 pack.radius 안 같은 종류도 함께 덤빔
+    for (const m of this.monsters) {
+      const pack = this.defs[m.type].pack;
+      if (!pack || !m.aggro) continue;
+      for (const o of this.monsters) {
+        if (o !== m && !o.aggro && o.type === m.type && Math.hypot(o.x - m.x, o.y - m.y) <= pack.radius) provoke(o);
+      }
+    }
+    for (const h of updateShots(this.shots, this.map, dtMs, target)) bites.push({ monster: null, ...h });
+    this.shots = this.shots.filter((s) => !s.dead);
+    // 포기한 분신은 사라짐
+    const gone = this.monsters.filter((m) => m.clone && m.hp <= 0);
+    if (gone.length) this.monsters = this.monsters.filter((m) => !gone.includes(m));
+    return { born, bites, gone };
   }
 }

@@ -36,8 +36,10 @@ export function hitMonster(m, facing, damage, knockbackPx, stunMs) {
   damage = Math.max(1, Math.round(damage)); // 무예 배율로 소수가 되면 반올림(최소 1)
   m.hp = Math.max(0, m.hp - damage);
   m.knockDir = facing;
-  m.knockLeft = knockbackPx;
-  m.stunMs = stunMs;
+  // 우두머리(superArmor)는 맞아도 멈칫하지 않고 조금만 밀려남 — 예고·공격이 끊기지 않게(docs/spec/tier4_9.md 3)
+  m.knockLeft = m.superArmor ? Math.min(knockbackPx, 4) : knockbackPx;
+  if (!m.superArmor) m.stunMs = stunMs;
+  m.hitCount = (m.hitCount || 0) + 1;
   m.state = 'rest';
   m.timer = stunMs;
   provoke(m);
