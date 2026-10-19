@@ -2,14 +2,16 @@
 # 쓰는 법: python3 hat_mock.py <모자 폴더 이름>  → docs/hat_<이름>_test.png
 import json, sys, numpy as np
 from PIL import Image
-G='/home/claude/seolhwa-rpg/'; AN=json.load(open(G+'assets/equipment/head/head_anchor.json')); HD=sys.argv[1]
+G='/home/claude/seolhwa-rpg/'; AN=json.load(open(G+'assets/equipment/head/head_anchor.json')); HD=sys.argv[1]; NOERASE=len(sys.argv)>2 and sys.argv[2]=='noerase'   # 상투 위에 얹는 관(백옥관)은 상투를 지우지 않음
 def to640(im):
     if im.width==640: return im
     c=Image.new('RGBA',(640,720)); c.alpha_composite(im,(120,0)); return c
 def wear(o,n):
     b=Image.open(G+f'assets/characters/{o}/{n}.png').convert('RGBA'); a=AN[f'{o}/{n}']
     tk=np.array(Image.open(G+f'assets/equipment/head/hood_mumyeong/topknot/{o}/{n}.png').convert('RGBA'))[...,3]
-    ba=np.array(b); ba[tk>0,3]=0; b=Image.fromarray(ba)
+    ba=np.array(b)
+    if not NOERASE: ba[tk>0,3]=0
+    b=Image.fromarray(ba)
     hd=Image.open(G+f'assets/equipment/head/{HD}/'+n.split('_')[0]+'.png').convert('RGBA')
     s=a['scale']; big=Image.new('RGBA',(1400,1400)); fx,fy=a['from']; big.alpha_composite(hd,(int(700-fx),int(700-fy)))
     big=big.resize((round(1400*s),)*2).rotate(-a['rotDeg'],center=(700*s,700*s))

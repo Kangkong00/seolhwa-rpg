@@ -26,12 +26,16 @@ def fit(im,name,N=256,PAD=18):
 out={}
 for (name,T),(s0,e0) in zip(spec,ss):
     T=int(T); c=cutout(sh,(max(0,s0-10),0,min(sh.width,e0+10),sh.height))
-    a=np.array(c)[...,3]>128; ys,xs=np.nonzero(a); k=np.polyfit(ys,xs,1)[0]; ang=np.degrees(np.arctan(k))
+    # 기울기: 칼날(위 55%)만으로 잼 — 손잡이 끝 술이 옆으로 늘어져도 칼이 기울지 않게 (2026-10-19)
+    a=np.array(c)[...,3]>128; h0=a.shape[0]; ys,xs=np.nonzero(a[:int(h0*0.55)]); k=np.polyfit(ys,xs,1)[0]; ang=np.degrees(np.arctan(k))
     if abs(ang)>0.3: c=c.rotate(-ang,resample=Image.BICUBIC,expand=True); c=c.crop(c.getbbox())
-    a=np.array(c)[...,3]>128; h=a.shape[0]; wid=a.sum(1)
+    a=np.array(c)[...,3]>128; h=a.shape[0]
+    # 칼 가운데 축(위 55%의 가운데) ± 띠 안에서만 폭을 잼 → 옆으로 늘어진 술은 셈에서 뺌
+    ys,xs=np.nonzero(a[:int(h*0.55)]); ax=int(np.median(xs)); band=max(40,int(h*0.10))
+    ab=a[:,max(0,ax-band):ax+band]; wid=ab.sum(1)
     lower=np.arange(int(h*0.55),int(h*0.85)); guard=int(lower[np.argmax(wid[lower])])
-    # 손잡이 끝 고리(환두)·구슬이 있으면 손잡이 끝을 고리 위로: 아래 15%에서 폭이 손잡이보다 1.6배 넘게 넓어지는 첫 줄
     grip_w=np.median(wid[guard+10:int(h*0.85)]); end=h
+    # 손잡이 끝: 아래 15%에서 띠 안 폭이 손잡이의 1.6배 넘게 넓어지는 첫 줄(고리·구슬·술 매듭)
     for y in range(int(h*0.85),h):
         if wid[y]>1.6*grip_w: end=y; break
     grip=(guard+end)/2; s=T/grip

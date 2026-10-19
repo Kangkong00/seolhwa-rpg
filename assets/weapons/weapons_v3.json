@@ -30,5 +30,53 @@
 "serpent_scale": {
 "tipFromGrip": 520,
 "note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"iron_ring_great": {
+"tipFromGrip": 540,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"black_fang": {
+"tipFromGrip": 545,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"cloud_long": {
+"tipFromGrip": 560,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"clear_wind": {
+"tipFromGrip": 565,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"white_lotus": {
+"tipFromGrip": 575,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"fox_fire": {
+"tipFromGrip": 580,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"iron_tusk": {
+"tipFromGrip": 595,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"boar_cleaver": {
+"tipFromGrip": 600,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"black_bear": {
+"tipFromGrip": 610,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"big_dipper_long": {
+"tipFromGrip": 620,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"sain": {
+"tipFromGrip": 630,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
+},
+"seven_star": {
+"tipFromGrip": 640,
+"note": "tools/art/v3_weapon_sheet.py, 칼끝 = 800 − tipFromGrip, 쥐는 점 = 코등이와 손잡이 끝(고리 위)의 가운데"
 }
 }
