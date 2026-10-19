@@ -26,6 +26,8 @@
 - 시험 함정: 느리게 돌려 찍으려면 `s.sys.sceneUpdate`를 감싸야 함(`s.update`를 바꾸면 안 먹음) + `s.tweens.timeScale`·`s.time.timeScale`.
 - 구간 3(10-18): 우두머리 꼬리·성남은 `src/core/monsters.js`(`def.tail`·`def.enrage`·`biteWindupMs`), 꿈틀·예고 그림은 `MonsterView`. 팔찌 능력치는 `stats.totalStats`(maxHp·healMul·critChance·attack·cooldownMul) → `MapScene.maxHpNow`·`levelDamage`·`healPlayer`·`impactHit`·`useSkill`. 오가는 이름표는 `NpcView.update`.
 - 시험 함정: 마을처럼 몬스터 구역이 없는 맵에서 시험용 몬스터를 세우려면 구역을 하나 넣어 줘야 함(`spawner.spawn`이 구역을 씀). 무예창이 열려 있으면 바깥 어두운 곳이 위쪽 단추를 덮음(닫기·바깥 누르기로 닫음).
+- 구간 4~9(10-19): 몬스터 특기는 `def.moves`(sweep·charge·summon·clones·shoot·roar) — 규칙 `core/monsters.js`(`updateMove`·`actMove`, 여우불은 `spawner.shots`, 부른 것·분신은 `extra`로 구역 마릿수에서 뺌), 그림 `MonsterView.moveFx`. 우두머리는 `superArmor`(맞아도 멈칫 없음). 무기 연출은 `impactFx.weaponHitFx`·`trailParticle`, 칼끝은 `SwingTrail.pointAt`.
+- 시험 함정: 몬스터를 멈추려고 `spawner.update`를 바꾸면 `{ born, bites, gone }`을 돌려줘야 함. 입구 `fx`의 x·y는 왼쪽 위 기준(가운데 아님).
 - `src/ui/adminPanel.js` — 관리자 창(나·물건·맵·설정, `docs/spec/admin_mode.md`). 안 죽기·한 방은 `this.d.admin`(저장 안 함), 저장 지우기 중엔 `this.d.noSave`.
 - `src/ui/` — DOM 화면: 조이스틱(왼쪽에 선 NPC를 누르면 `tapHandler`), 공격·무예 단추, `hud`(소리·귀환·가방·격자), 장비창·가방, 사람 창, 정보창, 왼쪽 위 상태, 알림, `josa`(조사 고르기).
 - `src/save/localSave.js` — 자동 저장(localStorage `seolhwa-rpg:save:v1`). 저장 내용: 맵·위치·장비/가방/엽전/선물·레벨·배운 무예·의뢰. 체력·재사용 시간은 저장 안 함.
