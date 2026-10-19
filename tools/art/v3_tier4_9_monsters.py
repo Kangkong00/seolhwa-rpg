@@ -13,13 +13,12 @@ for mid,(tf,wf) in cfg.items():
     os.makedirs(M+mid,exist_ok=True); info={}
     if tf:
         im=Image.open(V+tf).convert('RGB'); bx=boxes(im); fs=[fig(im,s,e,10) for s,e in bx]
-        if faces_right(fs[1]): fs[1]=ImageOps.mirror(fs[1]); info['mirror']=True
+        # 이 시트들은 옆모습이 모두 이미 왼쪽을 봄 — faces_right 자동 판정이 반대로 걸려 뒤로 걷는 문제(10-20 강콩) → 뒤집지 않음
         scale=240/fs[0].height
         for n,c in zip(['front','side','back'],fs): place(c,scale).save(M+mid+f'/{n}.png')
     else:
         a=Image.open(M+mid+'/front.png'); scale=None
     im=Image.open(V+wf).convert('RGB'); bx=boxes(im); fs=[fig(im,s,e,10) for s,e in bx]
-    if faces_right(fs[1]): fs[1]=ImageOps.mirror(fs[1]); info['mirror_step']=True
     if scale is None:   # 뱀: 서 있기 그림의 몸 폭에 맞춤(움직이기는 몸을 펴서 키가 다름)
         st=Image.open(M+mid+'/side.png'); w0=st.getbbox()[2]-st.getbbox()[0]; scale=w0/fs[1].width*1.0
     for n,c in zip(['front','side','back'],fs):
