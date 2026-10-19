@@ -1047,6 +1047,7 @@ export class MapScene extends Phaser.Scene {
       return;
     }
     if (this.dead || this.transitioning || this.gridOn || this.equipPanel.open || this.npcPanel.open) return;
+    if ((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open)) return;
     if (!this.cooldowns.ready(id)) return;
     if (this.swing || this.spin || this.act || this.punchMs > 0) return;
     // 칼이 있어야 하는 무예(지축 가르기·검풍·백호일섬·칠성검무)
@@ -1456,7 +1457,9 @@ export class MapScene extends Phaser.Scene {
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     this.cooldowns.update(dt);
-    const wantAttack = this.attackCooldown <= 0 && !this.swing && !this.spin && !this.act && this.attackButton.consume();
+    // 관리자 창·무예창이 열려 있으면 게임 입력을 막음(docs/spec/feedback_1020.md 3)
+    const modal = !!((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open));
+    const wantAttack = !modal && this.attackCooldown <= 0 && !this.swing && !this.spin && !this.act && this.attackButton.consume();
     if (wantAttack && !this.swing && !this.transitioning && !this.gridOn && !this.dead && !this.equipPanel.open && !this.npcPanel.open) {
       this.attackWithAssist(null);
     }
@@ -1467,7 +1470,7 @@ export class MapScene extends Phaser.Scene {
 
     // 주먹 지르는 동안·무예를 하는 동안은 걷지 않음(휘돌려 베기는 도는 동안 천천히 걸을 수 있음)
     if (this.rootMs > 0) this.rootMs -= dt;
-    const locked = this.transitioning || (punching && !this.spin) || (this.act && this.act.lockMove) || this.rootMs > 0;
+    const locked = modal || this.transitioning || (punching && !this.spin) || (this.act && this.act.lockMove) || this.rootMs > 0;
     const v = locked ? { x: 0, y: 0 } : this.d.input.getVector();
     this.dir = dirFromVector(v.x, v.y, this.cfg.joystick.deadZone, this.dir);
 

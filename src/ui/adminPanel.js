@@ -48,6 +48,8 @@ export class AdminPanel {
       if (e.target === root) this.close();
     });
     root.addEventListener('contextmenu', (e) => e.preventDefault());
+    // 휠·터치가 게임으로 새지 않게(목록은 창 안에서만 넘어감)
+    for (const ev of ['wheel', 'touchstart', 'touchmove']) root.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   }
 
   get s() {
@@ -108,6 +110,7 @@ export class AdminPanel {
         this.tab = t.id;
         this.message = '';
         this.confirmClear = 0;
+        this.confirmEmpty = false;
         this.render();
       });
       if (t.id === this.tab) b.classList.add('on');
@@ -200,7 +203,32 @@ export class AdminPanel {
   // ---------- 물건 ----------
   items(body) {
     const s = this.s;
-    body.appendChild(el('div', 'ad-help', '누르면 1개, 길게 누르면 10개. "끼기"는 레벨 제한 없이 바로 낌.'));
+    // 수량: 1 · 10 · 100(기본 1, 장비는 늘 1개) — 길게 누르기는 뺌(스크롤하다 10개씩 들어가던 것)
+    this.qty = this.qty || 1;
+    const qrow = el('div', 'ad-row ad-qty');
+    qrow.appendChild(el('span', 'ad-label', '한 번에'));
+    const qctl = el('div', 'ad-ctrl');
+    for (const n of [1, 10, 100]) {
+      const b = this.btn(`${n}개`, () => { this.qty = n; this.render(); }, n === this.qty ? 'on' : '');
+      qctl.appendChild(b);
+    }
+    qrow.appendChild(qctl);
+    body.appendChild(qrow);
+    // 가방 비우기(낀 것은 그대로) — 두 번 눌러 확인
+    const emptyLabel = this.confirmEmpty ? '정말 비울까요? 한 번 더' : '가방 비우기';
+    body.appendChild(this.row('가방', this.btn(emptyLabel, () => {
+      if (!this.confirmEmpty) {
+        this.confirmEmpty = true;
+        return this.render();
+      }
+      this.confirmEmpty = false;
+      const n = s.equip.bag.length;
+      s.equip.bag = [];
+      if (s.equipPanel.open) s.renderBag();
+      s.save();
+      this.note(`가방을 비웠습니다(${n}칸, 낀 것은 그대로)`);
+    }, this.confirmEmpty ? 'ad-danger on' : 'ad-danger')));
+    body.appendChild(el('div', 'ad-help', '누르면 고른 수량만큼 가방에. 장비는 1개씩. "끼기"는 레벨 제한 없이 바로 낌.'));
     const defs = s.d.items.items;
     for (const g of GROUPS) {
       const list = defs.filter(g.test);
@@ -219,29 +247,7 @@ export class AdminPanel {
     give.type = 'button';
     give.appendChild(itemIcon(def));
     give.appendChild(el('span', 'ad-item-name', def.name));
-    // 길게 누르면 10개(눌렀다 떼는 click은 그때 건너뜀)
-    let timer = null;
-    let long = false;
-    const cancel = () => {
-      if (timer) clearTimeout(timer);
-      timer = null;
-    };
-    give.addEventListener('pointerdown', () => {
-      long = false;
-      cancel();
-      timer = setTimeout(() => {
-        timer = null;
-        long = true;
-        this.give(def, 10);
-      }, this.cfg.longPressMs || 450);
-    });
-    give.addEventListener('pointerup', cancel);
-    give.addEventListener('pointerleave', cancel);
-    give.addEventListener('pointercancel', cancel);
-    give.addEventListener('click', () => {
-      if (long) return;
-      this.give(def, 1);
-    });
+    give.addEventListener('click', () => this.give(def, def.slot ? 1 : this.qty || 1));
     cell.appendChild(give);
     if (def.slot) {
       const worn = s.equip.equipped[def.slot] === def.id;

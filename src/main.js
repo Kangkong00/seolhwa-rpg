@@ -13,9 +13,10 @@ async function fetchJson(url) {
 
 // 아이폰 사파리의 확대·당겨서 새로고침·두 손가락 제스처 막기
 function lockPageGestures() {
-  // 장비창은 물건이 많아지면 위아래로 밀어 볼 수 있게 둠
+  // 창(장비창·관리자·무예창·사람 창·정보창)은 손가락으로 위아래로 밀어 볼 수 있게 둠(docs/spec/feedback_1020.md 3)
+  const SCROLLABLE = '#equip-panel, #admin-panel, #skill-panel, #npc-panel, #item-info';
   document.addEventListener('touchmove', (e) => {
-    if (!(e.target.closest && e.target.closest('#equip-panel'))) e.preventDefault();
+    if (!(e.target.closest && e.target.closest(SCROLLABLE))) e.preventDefault();
   }, { passive: false });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('dblclick', (e) => e.preventDefault());
