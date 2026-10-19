@@ -46,7 +46,8 @@ const headCache = new Map();
 export function loadHeadImages(headDef, outfit, bodyImages) {
   const key = `${headDef.id}|${outfit.id}`;
   if (!headCache.has(key)) {
-    const names = BODY_FILES.filter((f) => bodyImages[f]);
+    // noTopknotErase(백옥관): 상투 위에 얹는 관이라 상투를 지우지 않음
+    const names = headDef.noTopknotErase ? [] : BODY_FILES.filter((f) => bodyImages[f]);
     const p = Promise.all([
       Promise.all(['front', 'side', 'back'].map((d) => loadImage(`${headDef.head}/${d}.png`))),
       Promise.all(names.map((f) => loadImage(`${headDef.topknot || headDef.head}/topknot/${outfit.id}/${f}.png`))),

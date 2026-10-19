@@ -108,6 +108,12 @@ export class SwingTrail {
     return { alpha: c.alphaMax * (0.75 + 0.25 * r), white: c.whiten * r };
   }
 
+  // 진행 u(0~1)의 칼끝 자리(바깥 가장자리, 맵 좌표) — 무기 고유 알갱이(trailParticles)를 뿌릴 자리
+  pointAt(u) {
+    const i = Math.max(0, Math.min(this.samples.length - 1, Math.round(u * (this.samples.length - 1))));
+    return this.samples[i].a;
+  }
+
   // 진행 u(0~1)까지 그림
   draw(u) {
     if (this.destroyed) return;
