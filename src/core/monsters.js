@@ -36,16 +36,48 @@ function nearPortal(portals, minDist, x, y) {
   });
 }
 
-// 구역 안에서 설 수 있고 이동 지점과 먼 자리를 찾음. 못 찾으면 null
-export function findSpawnPoint(map, zone, def, rng = Math.random, tries = 60) {
+// 몸 반경(docs/spec/feedback_1020.md 2): 키의 약 20%, 최소 4px → 발밑 충돌 상자(가로 2r × 세로 r)
+export function bodyBox(def) {
+  const r = Math.max(4, def.height * 0.2);
+  return { w: r * 2, h: Math.max(4, r) };
+}
+
+// 주인공이 갈 수 있는 곳과 이어진 칸인지(reach = grid.connectedFrom 결과, 없으면 따지지 않음)
+export function inReach(map, reach, x, y) {
+  if (!reach) return true;
+  const { c, r } = map.grid.cellAt(x, y);
+  return !!reach[r * map.grid.cols + c];
+}
+
+// 몬스터가 설 수 있는 자리: 몸 상자가 막히지 않고, 주인공이 갈 수 있는 곳과 이어진 칸
+export function canStand(map, reach, def, x, y) {
+  return isStandable(map.grid, x, y, def.footBox) && inReach(map, reach, x, y);
+}
+
+// 구역 안에서 설 수 있고 이동 지점과 먼 자리를 찾음. 10번 무작위로 골라 안 되면 구역 안에서 가운데와 가장 가까운 설 수 있는 칸. 못 찾으면 null
+export function findSpawnPoint(map, zone, def, rng = Math.random, reach = null, tries = 10) {
   for (let i = 0; i < tries; i++) {
     const x = zone.x + rng() * zone.w;
     const y = zone.y + rng() * zone.h;
-    if (!isStandable(map.grid, x, y, def.footBox)) continue;
+    if (!canStand(map, reach, def, x, y)) continue;
     if (nearPortal(map.portals, map.noSpawnNearPortal, x, y)) continue;
     return { x, y };
   }
-  return null;
+  const cs = map.grid.cellSize;
+  const cx = zone.x + zone.w / 2;
+  const cy = zone.y + zone.h / 2;
+  let best = null;
+  let bestD = Infinity;
+  for (let y = zone.y + cs / 2; y < zone.y + zone.h; y += cs) {
+    for (let x = zone.x + cs / 2; x < zone.x + zone.w; x += cs) {
+      const d = (x - cx) ** 2 + (y - cy) ** 2;
+      if (d >= bestD || !canStand(map, reach, def, x, y)) continue;
+      if (nearPortal(map.portals, map.noSpawnNearPortal, x, y)) continue;
+      best = { x, y };
+      bestD = d;
+    }
+  }
+  return best;
 }
 
 let nextId = 1;
@@ -379,7 +411,7 @@ export function provoke(m) {
 }
 
 // 맞은 뒤 한 번(맞은 횟수가 늘었을 때): 너구리 순간이동(blinkOnHit), 늑대 물러서기(retreatOnHit)
-function reactToHit(m, def, map, rng) {
+function reactToHit(m, def, map, rng, reach) {
   if (m.hitCount === m.hitSeen) return;
   m.hitSeen = m.hitCount;
   if (m.hp <= 0) return;
@@ -392,7 +424,7 @@ function reactToHit(m, def, map, rng) {
     for (const [sx, sy] of side) {
       const x = m.x + sx * b.distance;
       const y = m.y + sy * b.distance;
-      if (isStandable(map.grid, x, y, def.footBox)) {
+      if (canStand(map, reach, def, x, y)) {
         m.blinkFrom = { x: m.x, y: m.y };
         m.x = x;
         m.y = y;
@@ -406,10 +438,10 @@ function reactToHit(m, def, map, rng) {
 
 // 한 프레임 진행. dtMs: 지난 프레임 이후 시간, target: 주인공 { x, y, alive }
 // 반환: 무엇이 일어났는지 { ev: 주인공에게 닿은 일, spawn, shots } 또는 null
-export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
+export function updateMonster(m, def, map, dtMs, target, rng = Math.random, reach = null) {
   const zone = map.spawnZones[m.zoneIndex];
   m.moving = false;
-  reactToHit(m, def, map, rng);
+  reactToHit(m, def, map, rng, reach);
 
   // 맞아서 밀려나는 중: 벽은 통과하지 않음, 구역 밖으로는 조금 밀려나도 됨
   if (m.knockLeft > 0) {
@@ -460,7 +492,7 @@ export function updateMonster(m, def, map, dtMs, target, rng = Math.random) {
 
   // 걷기: 벽에 막히거나 구역 밖으로 나가려 하면 그 자리에서 쉬기로 돌아감
   const step = Math.min(m.walkLeft, (def.speed * dtMs) / 1000);
-  const res = moveStep(map.grid, m, m.facing, step, def.footBox, 0);
+  const res = moveStep(map.grid, m, m.facing, step, def.footBox, 2); // 모서리는 조금 비켜 지나감
   const wasInside = inZone(zone, m.x, m.y);
   if (!res.moved || (wasInside && !inZone(zone, res.x, res.y))) {
     m.walkLeft = 0;
@@ -503,6 +535,15 @@ export class MonsterSpawner {
     this.map = map;
     this.defs = defs;
     this.rng = rng;
+    // 몸 반경으로 막힘 검사(데이터의 footBox 대신, 한 번만)
+    for (const d of Object.values(defs)) {
+      if (d._bodyBox) continue;
+      d.footBox = bodyBox(d);
+      d._bodyBox = true;
+    }
+    // 주인공이 갈 수 있는 곳(시작 자리와 이어진 칸): 몬스터는 여기에서만 생기고 순간이동함
+    this.reach = map.grid.connectedFrom(map.spawn.x, map.spawn.y - 2);
+    if (!this.reach.some((v) => v)) this.reach = null; // 시작 자리가 막힌 칸이면 따지지 않음
     this.monsters = [];
     this.shots = []; // 날아가는 여우불 { id, x, y, vx, vy, life, radius, damage, color }
     this.timers = map.spawnZones.map(() => 0);
@@ -515,7 +556,7 @@ export class MonsterSpawner {
     const zone = this.map.spawnZones[zoneIndex];
     const def = this.defs[zone.monster];
     if (!def) return null;
-    const p = findSpawnPoint(this.map, zone, def, this.rng);
+    const p = findSpawnPoint(this.map, zone, def, this.rng, this.reach);
     if (!p) return null;
     const m = createMonster(def, zoneIndex, p, this.rng);
     this.monsters.push(m);
@@ -540,7 +581,7 @@ export class MonsterSpawner {
       const r = 28 + this.rng() * 30;
       const x = owner.x + Math.cos(a) * r;
       const y = owner.y + Math.sin(a) * r * 0.6;
-      if (!isStandable(this.map.grid, x, y, def.footBox)) continue;
+      if (!canStand(this.map, this.reach, def, x, y)) continue;
       const m = createMonster(def, owner.zoneIndex, { x, y }, this.rng);
       m.extra = true;
       m.ownerId = owner.id;
@@ -604,7 +645,7 @@ export class MonsterSpawner {
     const bites = [];
     for (const m of [...this.monsters]) {
       const def = this.defs[m.type];
-      const out = updateMonster(m, def, this.map, dtMs, target, this.rng);
+      const out = updateMonster(m, def, this.map, dtMs, target, this.rng, this.reach);
       if (!out) continue;
       if (out.ev) bites.push({ monster: m, ...out.ev });
       for (const sp of out.spawn || []) {

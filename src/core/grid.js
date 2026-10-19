@@ -84,4 +84,28 @@ export class Grid {
     }
     return false;
   }
+
+  // (x, y) 칸과 이어진 갈 수 있는 칸 전부(4방향). 반환: 칸마다 1/0 (Uint8Array, 몬스터가 섬처럼 떨어진 곳에 생기거나 가지 않게)
+  connectedFrom(x, y) {
+    const mask = new Uint8Array(this.cols * this.rows);
+    const { c, r } = this.cellAt(x, y);
+    if (!this.inBounds(c, r) || this.isCellBlocked(c, r)) return mask;
+    const stack = [r * this.cols + c];
+    mask[stack[0]] = 1;
+    while (stack.length) {
+      const i = stack.pop();
+      const cc = i % this.cols;
+      const rr = (i - cc) / this.cols;
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nc = cc + dc;
+        const nr = rr + dr;
+        if (!this.inBounds(nc, nr) || this.isCellBlocked(nc, nr)) continue;
+        const j = nr * this.cols + nc;
+        if (mask[j]) continue;
+        mask[j] = 1;
+        stack.push(j);
+      }
+    }
+    return mask;
+  }
 }
