@@ -7,7 +7,8 @@ export class EditorPanel {
     this.brushSize = 1;
     this.el.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.brushBtn.addEventListener('click', () => {
-      this.brushSize = this.brushSize === 1 ? 3 : 1;
+      // 1 → 3 → 5칸(4px 정밀 격자에서는 3×3·5×5가 편함, docs/spec/feedback_1020.md 1)
+      this.brushSize = this.brushSize === 1 ? 3 : this.brushSize === 3 ? 5 : 1;
       this.brushBtn.textContent = `붓 ${this.brushSize}칸`;
     });
     document.getElementById('ed-export').addEventListener('click', () => onExport());
