@@ -54,6 +54,18 @@ export function slashMark(scene, x, y, dir, len, width, color, ms) {
   scene.tweens.add({ targets: o, k: 1, duration: ms, onUpdate: draw, onComplete: () => g.destroy() });
 }
 
+// 먹물 터짐(docs/spec/feedback_1020.md 9): inkCount방울이 사방으로 튀며 작아지고 흐려짐
+export function inkBurst(scene, x, y, cfg) {
+  const c = hex(cfg.inkColor);
+  for (let i = 0; i < cfg.inkCount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const d = 10 + Math.random() * 22;
+    const r = 1.5 + Math.random() * 3;
+    const g = scene.add.circle(x, y, r, c, 0.9).setDepth(TOP - 1);
+    scene.tweens.add({ targets: g, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * 0.7 + 6, scale: 0.3, alpha: 0, duration: cfg.inkMs * (0.6 + Math.random() * 0.5), ease: 'Cubic.easeOut', onComplete: () => g.destroy() });
+  }
+}
+
 // 흰 연기 폭발: count방울이 사방으로 퍼지며 부풀고 흐려짐
 export function smokeBurst(scene, x, y, cfg) {
   const c = hex(cfg.smokeColor);

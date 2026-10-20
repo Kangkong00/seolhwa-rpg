@@ -169,6 +169,16 @@ const SYNTH = {
     tone(ctx, out, t, 0.35, { type: 'sine', f0: 90 * p, f1: 40 * p, peak: 1, attack: 0.003 });
     noise(ctx, out, t, 0.12, { type: 'lowpass', f0: 700, q: 0.7, peak: 0.6, attack: 0.002 });
   },
+  // 맞힘 밑의 낮은 '퍽'(docs/spec/feedback_1020.md 9): 짧고 둔탁하게
+  pok(ctx, out, t, p) {
+    tone(ctx, out, t, 0.09, { type: 'sine', f0: 140 * p, f1: 55 * p, peak: 1, attack: 0.002 });
+    noise(ctx, out, t, 0.05, { type: 'lowpass', f0: 420 * p, q: 0.9, peak: 0.7, attack: 0.001 });
+  },
+  // '타다닥' 한 번: 짧고 마른 소리
+  tick(ctx, out, t, p) {
+    noise(ctx, out, t, 0.035, { type: 'bandpass', f0: 2600 * p, q: 1.4, peak: 0.8, attack: 0.001 });
+    tone(ctx, out, t, 0.04, { type: 'triangle', f0: 420 * p, f1: 260 * p, peak: 0.4, attack: 0.001 });
+  },
   // 포효 '어흥': 낮은 톱니파 두 개가 떨며 길게 + 숨소리
   roar(ctx, out, t, p) {
     tone(ctx, out, t, 0.9, { type: 'sawtooth', f0: 120 * p, f1: 80 * p, peak: 0.5, attack: 0.08 });
@@ -315,14 +325,15 @@ export class SoundPlayer {
     this.applyVolume();
   }
 
-  play(name) {
+  // opts: { pitch: 높낮이 배율, volume: 크기 배율 }
+  play(name, opts = null) {
     const s = this.cfg.sounds[name];
     if (!s || this.muted || !this.ctx || this.ctx.state !== 'running') return;
     const ctx = this.ctx;
     const j = this.cfg.pitchJitter || 0;
-    const p = 1 + (Math.random() * 2 - 1) * j;
+    const p = (1 + (Math.random() * 2 - 1) * j) * ((opts && opts.pitch) || 1);
     const out = ctx.createGain();
-    out.gain.value = s.volume;
+    out.gain.value = s.volume * ((opts && opts.volume) || 1);
     out.connect(this.master);
     const t = ctx.currentTime + 0.005;
     const buf = this.buffers[name];

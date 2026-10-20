@@ -3,7 +3,7 @@
 import { loadImage, downscale } from './characterFrames.js';
 import { createMonsterShadow } from './shadow.js';
 import { HpBar } from '../ui/hpBar.js';
-import { smokeBurst } from './impactFx.js';
+import { smokeBurst, inkBurst } from './impactFx.js';
 import { isEnraged } from '../core/monsters.js';
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -340,6 +340,7 @@ export class MonsterView {
       ease: 'Cubic.easeOut',
       onComplete: () => {
         smokeBurst(scene, s.x, s.y, k);
+        if (k.inkCount) inkBurst(scene, s.x, s.y, k);
         scene.tweens.add({ targets: s, alpha: 0, scale: s.scaleX * 0.6, duration: 120, onComplete: () => this.destroy() });
       },
     });

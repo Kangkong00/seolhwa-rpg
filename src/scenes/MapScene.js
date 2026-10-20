@@ -40,6 +40,7 @@ import { GridOverlay } from './gridOverlay.js';
 import { Hud } from '../ui/hud.js';
 import { AdminPanel } from '../ui/adminPanel.js';
 import { SkillPanel } from '../ui/skillPanel.js';
+import { SkillCommonFx } from './skillCommonFx.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -270,6 +271,8 @@ export class MapScene extends Phaser.Scene {
     this.ground = new GroundDrops(this.d.economy.groundDrops);
     this.pickupFeed = new PickupFeed(this, this.d.economy.textFx, this.d.getPixelRatio());
     this.dropViews = new Map();
+    // 무예 공통 연출 층(어둡게·이름·3겹 빛·알갱이·빛 번짐, docs/spec/feedback_1020.md 5)
+    this.skillFx = new SkillCommonFx(this, this.d.skills.fxCommon);
     this.prepareIconTextures();
     // 마을 사람(NPC): 이 맵에 선 사람만
     this.npcViews = [];
@@ -807,10 +810,15 @@ export class MapScene extends Phaser.Scene {
     damage *= st.attackMul * (this.monsterDefs[target.type].boss ? st.bossDamageMul : 1);
     this.calmMs = 0;
     const roll = rollCrit(damage, critCfg, Math.random, !!o.forceCrit);
-    const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), o.knockbackPx ?? this.cfg.attack.knockbackPx, o.stunMs ?? this.cfg.attack.stunMs);
+    const isSkill = o.kind === 'skill';
+    // 평타는 조금 더 밀려남(impact.knockbackMul)
+    const knock = (o.knockbackPx ?? this.cfg.attack.knockbackPx) * (isSkill ? 1 : im.knockbackMul);
+    const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), knock, o.stunMs ?? this.cfg.attack.stunMs);
     const def = this.monsterDefs[target.type];
     const pr = this.d.getPixelRatio();
-    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, pr, roll.crit ? 'crit' : o.kind || 'hit');
+    const fxc = this.d.skills.fxCommon;
+    const skillColor = o.color || this.skillFx.color || '#ffd75e';
+    showDamage(this, target.x, target.y - def.height - 2, result.damage, fx, pr, roll.crit ? 'crit' : o.kind || 'hit', isSkill ? { scale: fxc.numberScale, stroke: skillColor } : null);
     // 무기 구간(fxTier)마다 섬광·베인 자국·먹 방울이 커짐
     const w = this.canSwing ? this.weaponDef : null;
     const tier = (w && w.fx && w.fx.fxTier) || 1;
@@ -822,14 +830,19 @@ export class MapScene extends Phaser.Scene {
     if (w || o.color) slashMark(this, hx, hy, dir, im.slashLen * tierK * Math.sqrt(big), im.slashWidth * tierK, o.color || w.trailColor, im.slashMs);
     const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
     inkSplash(this, hx, hy, sfx.splashColor || '#1b1712', tierK === 1 ? sfx : { ...sfx, splashSize: sfx.splashSize * tierK }, v[0], v[1]);
+    // 작은 파편(무기 궤적 색), 무예로 맞히면 큰 섬광 + X자 베인 자국 + 파편 더
+    this.skillFx.shards(hx, hy, (w && w.trailColor) || '#f3ead6', Math.round(im.shards * tierK), 20 * tierK);
+    if (isSkill) this.skillFx.hit(hx, hy, dir, skillColor);
+    // 회심: 화면 가장자리가 하얗게
+    if (roll.crit) this.skillFx.edgeFlash(im.crit.edgeAlpha, im.crit.edgeMs);
     const view = this.monsterViews.get(target.id);
     if (view && !result.killed) view.squash(im.squashMs, im.squashX, im.squashY);
     // 무기 고유 타격 연출(weapon_list.md: 구렁이 비늘검 독안개)
     if (w && w.fx && w.fx.hitFx) weaponHitFx(this, w.fx.hitFx, hx, hy, dir, w.trailColor, tierK);
     if (roll.crit) this.sfx.play('crit');
     if (!o.quiet) {
-      let stop = sfx.hitStopMs * (o.hitStopMul || 1);
-      let shake = sfx.shakeIntensity * (o.shakeMul || 1);
+      let stop = sfx.hitStopMs * (o.hitStopMul || 1) * (isSkill ? fxc.hitStopMul : 1);
+      let shake = sfx.shakeIntensity * (o.shakeMul || 1) * (isSkill ? fxc.shakeMul : 1);
       if (roll.crit) {
         stop *= im.crit.hitStopMul;
         shake *= im.crit.shakeMul;
@@ -838,19 +851,34 @@ export class MapScene extends Phaser.Scene {
       this.hitStopMs = Math.max(this.hitStopMs, stop);
       this.cameras.main.shake(sfx.shakeMs, shake);
       this.sfx.play(o.sound || (w ? 'woodHit' : 'punchHit'));
+      this.playPok(tier);
     }
     this.afterHit(target, result, dir);
     return { ...result, crit: roll.crit };
   }
 
   // 여러 마리를 한꺼번에 친 뒤 멈춤·흔들림·소리를 한 번만(stopMul: 보통 멈춤의 배율)
+  // 무예 중이면 멈춤·흔들림 fxCommon 배율, 맞힌 수만큼 '타다닥'
   multiHitFeedback(hits, stopMul = 0.5, shakeMul = 1) {
     if (!hits.length) return;
     const sfx = this.cfg.swingFx;
+    const fxc = this.d.skills.fxCommon;
+    const k = this.skillFx.active ? 1 : 0;
     const killed = hits.some((h) => h.killed);
-    this.hitStopMs = Math.max(this.hitStopMs, sfx.hitStopMs * stopMul * (killed ? this.cfg.impact.kill.hitStopMul : 1));
-    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * shakeMul);
+    this.hitStopMs = Math.max(this.hitStopMs, sfx.hitStopMs * stopMul * (killed ? this.cfg.impact.kill.hitStopMul : 1) * (k ? fxc.hitStopMul : 1));
+    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * shakeMul * (k ? fxc.shakeMul : 1));
     this.sfx.play(this.canSwing ? 'woodHit' : 'punchHit');
+    const w = this.canSwing ? this.weaponDef : null;
+    this.playPok((w && w.fx && w.fx.fxTier) || 1);
+    if (hits.length > 1) {
+      for (let i = 0; i < Math.min(hits.length, fxc.tickMax); i++) this.time.delayedCall(i * fxc.tickGapMs, () => this.sfx.play('tick'));
+    }
+  }
+
+  // 맞힘 밑의 낮은 '퍽': 무기 구간이 높을수록 낮고 크게
+  playPok(tier) {
+    const pk = this.cfg.impact.pok;
+    this.sfx.play('pok', { pitch: Math.max(0.5, 1 - (tier - 1) * pk.tierPitchStep), volume: 1 + (tier - 1) * pk.tierVolumeStep });
   }
 
   // 맞힌 뒤: 소리, 번쩍 또는 쓰러짐(맞은 방향으로 튕겨 날아가며 연기, 경험치·전리품)
@@ -872,6 +900,9 @@ export class MapScene extends Phaser.Scene {
       this.monsterViews.delete(target.id);
       if (view) view.dieFly(dir, this.cfg.impact.kill, fx.flashMs);
       this.sfx.play('kill');
+      // 쓰러뜨림: 아주 잠깐 느린 화면(이미 더 느리면 그대로)
+      const kc = this.cfg.impact.kill;
+      if (!this.slowMo || this.slowMo.scale > kc.slowScale) this.slowMo = { left: kc.slowMs, scale: kc.slowScale };
       this.onMonsterKilled(target);
     } else if (view) {
       view.flash(fx.flashMs);
@@ -1150,9 +1181,21 @@ export class MapScene extends Phaser.Scene {
       return;
     }
     const run = SKILL_KINDS[sk.kind];
-    if (!run || !run(this, sk)) return;
+    if (!run || !run(this, this.fxScaled(sk))) return;
+    this.skillFx.start(sk, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
     this.cooldowns.start(id, sk.cooldownMs * this.stats().cooldownMul); // 칠보 팔찌: 기다림 −
     this.refreshSkills();
+  }
+
+  // 무예 연출 크기·알갱이 수를 키운 사본(fxCommon.sizeKeys×sizeMul, countKeys×particleMul). 맞는 범위(radius 등)는 그대로.
+  // 칠성검무는 별 자리(size)가 곧 맞는 자리라 키우지 않음
+  fxScaled(sk) {
+    const c = this.d.skills.fxCommon;
+    if (!c || sk.kind === 'ultimate') return sk;
+    const out = { ...sk };
+    for (const k of c.sizeKeys) if (typeof out[k] === 'number') out[k] *= c.sizeMul;
+    for (const k of c.countKeys) if (typeof out[k] === 'number') out[k] = Math.round(out[k] * c.particleMul);
+    return out;
   }
 
   // 오래 걸리는 무예 '하는 중' 상태(skillKinds.js). act: { dur, lockMove, update(dt, t) → 자세, onEnd, guard }
@@ -1555,6 +1598,7 @@ export class MapScene extends Phaser.Scene {
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     this.cooldowns.update(dt);
     this.updateRecovery(dt);
+    this.skillFx.update(dt, !!(this.act || this.spin || (this.swing && this.swing.mods)));
     // 관리자 창·무예창이 열려 있으면 게임 입력을 막음(docs/spec/feedback_1020.md 3)
     const modal = !!((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open));
     const wantAttack = !modal && this.attackCooldown <= 0 && !this.swing && !this.spin && !this.act && this.attackButton.consume();

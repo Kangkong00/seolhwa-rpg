@@ -4,8 +4,10 @@
 // spreadMs 안에 가까운 자리에 여러 개가 뜨면 좌우로 ±spreadPx 흩뜨려 겹치지 않게.
 const recent = []; // { x, y, at, n }
 
-export function showDamage(scene, x, y, amount, fx, pixelRatio, kind = 'hit') {
-  const style = (fx.numbers && fx.numbers[kind]) || { fontPx: 22, color: '#ffffff' };
+// opt: { scale: 글자 크기 배율, stroke: 테두리 색 } — 무예로 맞힌 숫자는 1.3배 + 무예 색 테두리(docs/spec/feedback_1020.md 5)
+export function showDamage(scene, x, y, amount, fx, pixelRatio, kind = 'hit', opt = null) {
+  const base = (fx.numbers && fx.numbers[kind]) || { fontPx: 22, color: '#ffffff' };
+  const style = opt && opt.scale ? { ...base, fontPx: Math.round(base.fontPx * opt.scale) } : base;
   const now = scene.time.now;
   for (let i = recent.length - 1; i >= 0; i--) if (now - recent[i].at > fx.spreadMs) recent.splice(i, 1);
   const near = recent.filter((r) => Math.abs(r.x - x) < 30 && Math.abs(r.y - y) < 30).length;
@@ -18,7 +20,7 @@ export function showDamage(scene, x, y, amount, fx, pixelRatio, kind = 'hit') {
       fontSize: `${px}px`,
       fontStyle: 'bold',
       color: style.color,
-      stroke: fx.damageStroke,
+      stroke: (opt && opt.stroke) || fx.damageStroke,
       strokeThickness: fx.strokePx,
     })
     .setOrigin(0.5, 1)

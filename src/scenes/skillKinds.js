@@ -330,6 +330,7 @@ export const SKILL_KINDS = {
           if (done.has(i) || t < (i + 0.5) * step) return;
           done.add(i);
           map.light(i);
+          scene.skillFx.skyStar(i); // 하늘의 북두칠성도 켜지고 터짐
           scene.facing = scene.dirTo(p, c);
           scene.sfx.play('swing');
           slashMark(scene, p.x, p.y - 14, scene.facing, 46, 4, color, 260);
@@ -341,6 +342,7 @@ export const SKILL_KINDS = {
         if (!done.has('final') && t >= 7.6 * step) {
           done.add('final');
           bigBurst(scene, c.x, c.y, sk.finalRadius * 1.2, sk.color, 520);
+          scene.skillFx.ultimateFinal(); // 화면 흰 섬광 + 느린 화면
           scene.sfx.play('thunder');
           scene.cameras.main.flash(120, 255, 230, 160);
           const hits = scene.monstersInCircle(c.x, c.y, sk.finalRadius)
