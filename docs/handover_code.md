@@ -28,6 +28,8 @@
 - 시험 함정: 마을처럼 몬스터 구역이 없는 맵에서 시험용 몬스터를 세우려면 구역을 하나 넣어 줘야 함(`spawner.spawn`이 구역을 씀). 무예창이 열려 있으면 바깥 어두운 곳이 위쪽 단추를 덮음(닫기·바깥 누르기로 닫음).
 - 구간 4~9(10-19): 몬스터 특기는 `def.moves`(sweep·charge·summon·clones·shoot·roar) — 규칙 `core/monsters.js`(`updateMove`·`actMove`, 여우불은 `spawner.shots`, 부른 것·분신은 `extra`로 구역 마릿수에서 뺌), 그림 `MonsterView.moveFx`. 우두머리는 `superArmor`(맞아도 멈칫 없음). 무기 연출은 `impactFx.weaponHitFx`·`trailParticle`, 칼끝은 `SwingTrail.pointAt`.
 - 시험 함정: 몬스터를 멈추려고 `spawner.update`를 바꾸면 `{ born, bites, gone }`을 돌려줘야 함. 입구 `fx`의 x·y는 왼쪽 위 기준(가운데 아님).
+- 10-20 피드백: 무예 공통 연출은 `src/scenes/skillCommonFx.js`(`scene.skillFx`, `useSkill`에서 `start`, 매 프레임 `update`, 맞힘 `hit`·`shards`·`edgeFlash`), 값은 `skills.json` `fxCommon`. 화면에 붙는 그림은 카메라 확대(= 픽셀 배율)를 고려해 `skillFx.view()` 좌표로. 패시브는 `stats.passiveSum` → `totalStats`(`MapScene.passive()`가 배운 수로 캐시), 버프·저절로 차는 체력은 `MapScene.updateRecovery`. 버리기는 `MapScene.dropFromBag` + `GroundDrops.drop`(`held`). 단추 누름은 `src/ui/press.js`(`onPress`·`vibrate`).
+- 시험 함정(10-20): CDP 멀티터치에서 한 손가락만 떼려면 `touchEnd`에 **뗄 손가락**만 넣음(남는 손가락을 넣으면 그게 떼어짐). 무예 목록을 돌 때 패시브(`type: 'passive'`)는 빼야 함.
 - `src/ui/adminPanel.js` — 관리자 창(나·물건·맵·설정, `docs/spec/admin_mode.md`). 안 죽기·한 방은 `this.d.admin`(저장 안 함), 저장 지우기 중엔 `this.d.noSave`.
 - `src/ui/` — DOM 화면: 조이스틱(왼쪽에 선 NPC를 누르면 `tapHandler`), 공격·무예 단추, `hud`(소리·귀환·가방·격자), 장비창·가방, 사람 창, 정보창, 왼쪽 위 상태, 알림, `josa`(조사 고르기).
 - `src/save/localSave.js` — 자동 저장(localStorage `seolhwa-rpg:save:v1`). 저장 내용: 맵·위치·장비/가방/엽전/선물·레벨·배운 무예·의뢰. 체력·재사용 시간은 저장 안 함.
@@ -68,3 +70,4 @@
 - 10-10~11: 시제품(걷기·격자·지붕 가림)·들쥐굴 1층·싸움·목검 휘두르기·궤적·소리.
 - 10-11~12: 장비창·두건·초보 구간(경험치·드랍·가게·무예·의뢰)·맞히기 도움·레벨업 연출·앞뒤 가림 v1/v2·2차 다듬기·레벨 15.
 - 10-14~15: 새 그림체 값, 굴 들쥐·쥐왕·족제비·새 맵 3·마을 사람 그림·성황당, 10-15 피드백(무예 연출·숫자·귀환·정보창·능력치·새 무기 데이터).
+- 10-20: 피드백 11가지(정밀 격자 4px·몬스터 걷기·관리자 창·무예 공통 연출·숨 고르기·단추·패시브 9·타격·버리기·몬스터 수).
