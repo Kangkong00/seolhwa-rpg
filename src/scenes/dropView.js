@@ -133,7 +133,7 @@ export class DropView {
   }
 
   update() {
-    const left = this.cfg.lifetimeMs - this.d.age;
+    const left = (this.d.lifeMs || this.cfg.lifetimeMs) - this.d.age;
     if (left < this.cfg.fadeMs) {
       const k = left / this.cfg.fadeMs;
       this.box.setAlpha((0.35 + 0.65 * Math.abs(Math.sin(this.d.age / 120))) * Math.max(0.2, k));

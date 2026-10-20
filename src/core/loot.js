@@ -62,6 +62,14 @@ export class GroundDrops {
     return born;
   }
 
+  // 가방에서 버린 물건(docs/spec/feedback_1020.md 10): 그 자리에 그대로, lifeMs 뒤 사라짐.
+  // 버리자마자 다시 줍지 않게, 주인공이 줍는 거리 밖으로 한 번 나갔다 와야 주움(held)
+  drop(x, y, entry, lifeMs) {
+    const d = { id: this.nextId++, x, y, fromX: x, fromY: y - 10, age: 0, lifeMs, held: true, ...entry };
+    this.list.push(d);
+    return d;
+  }
+
   // 시간 흐름 + 주인공 가까이 온 것 줍기. 반환: { picked: [...], expired: [...] }
   update(dt, player) {
     const picked = [];
@@ -72,12 +80,13 @@ export class GroundDrops {
       if (player && d.age >= this.cfg.pickupDelayMs) {
         const dx = d.x - player.x;
         const dy = d.y - player.y;
-        if (dx * dx + dy * dy <= r2) {
+        if (d.held && dx * dx + dy * dy > r2 * 2.25) d.held = false;
+        if (!d.held && dx * dx + dy * dy <= r2) {
           picked.push(d);
           return false;
         }
       }
-      if (d.age >= this.cfg.lifetimeMs) {
+      if (d.age >= (d.lifeMs || this.cfg.lifetimeMs)) {
         expired.push(d);
         return false;
       }

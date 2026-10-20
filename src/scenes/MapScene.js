@@ -509,6 +509,24 @@ export class MapScene extends Phaser.Scene {
     if (id) openItemInfo(this, id, { type: 'slot', slot });
   }
 
+  // 가방에서 버리기: 발 앞 바닥에 떨어짐(다시 주울 수 있음, dropLifetimeMs 뒤 사라짐)
+  dropFromBag(id, n) {
+    const def = this.itemDefs[id];
+    if (!def || !removeItem(this.equip, id, n)) return;
+    const g = this.d.economy.groundDrops;
+    const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing] || [0, 1];
+    let x = this.pos.x + v[0] * g.dropAheadPx;
+    let y = this.pos.y + v[1] * g.dropAheadPx;
+    if (this.map.grid.isPointBlocked(x, y)) {
+      x = this.pos.x;
+      y = this.pos.y;
+    }
+    const d = this.ground.drop(x, y, { item: id, n }, g.dropLifetimeMs);
+    this.dropViews.set(d.id, new DropView(this, d, def, g, this.d.getPixelRatio(), this.cfg.shadow, `drop:${id}`, this.dropTexRes()));
+    this.renderBag(`${josa(`${def.name} ${n}개`, '을', '를')} 버렸습니다`);
+    this.save();
+  }
+
   takeOff(slot) {
     if (this.swing || this.spin) return;
     const id = this.equip.equipped[slot];

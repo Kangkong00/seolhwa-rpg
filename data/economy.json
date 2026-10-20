@@ -13,9 +13,11 @@
     "smallLimit": 100
   },
   "groundDrops": {
-    "_설명": "바닥에 떨어진 전리품·엽전. pickupRadius=이 거리(맵 픽셀) 안에 들어오면 저절로 주움, lifetimeMs=이 시간이 지나면 사라짐(끝 fadeMs 동안 깜빡이며 흐려짐), scatterPx=쓰러진 자리에서 흩어지는 거리, pickupDelayMs=떨어진 직후 이 시간 동안은 줍지 않음(튀어나오는 모습이 보이게), size=바닥에 보이는 크기(아이콘), coinIcon=엽전 아이콘 그림, shadowWidth·shadowHeight·shadowAlpha=발밑 그림자. 테두리(2차 다듬기): borderPx·borderColor=밝은 크림색 테두리, edgePx·edgeColor=그 바깥 진한 갈색 테두리, rareItems=드문 물건(테두리 rareColor 금색 + 반짝임), sparkleMs=반짝임 주기. bobPx·bobMs=위아래 둥실 높이·한 바퀴 시간. labelFontPx=아이콘 아래 이름 글자 크기, labelOverlapPx=이름끼리 이 거리 안이면 하나만",
+    "_설명": "바닥에 떨어진 전리품·엽전. pickupRadius=이 거리(맵 픽셀) 안에 들어오면 저절로 주움, lifetimeMs=이 시간이 지나면 사라짐(끝 fadeMs 동안 깜빡이며 흐려짐), scatterPx=쓰러진 자리에서 흩어지는 거리, pickupDelayMs=떨어진 직후 이 시간 동안은 줍지 않음(튀어나오는 모습이 보이게), size=바닥에 보이는 크기(아이콘), coinIcon=엽전 아이콘 그림, shadowWidth·shadowHeight·shadowAlpha=발밑 그림자. 테두리(2차 다듬기): borderPx·borderColor=밝은 크림색 테두리, edgePx·edgeColor=그 바깥 진한 갈색 테두리, rareItems=드문 물건(테두리 rareColor 금색 + 반짝임), sparkleMs=반짝임 주기. bobPx·bobMs=위아래 둥실 높이·한 바퀴 시간. labelFontPx=아이콘 아래 이름 글자 크기, labelOverlapPx=이름끼리 이 거리 안이면 하나만. 가방에서 버리기(docs/spec/feedback_1020.md 10): dropAheadPx=주인공 발 앞 이 거리에 떨어짐, dropLifetimeMs=이 시간 뒤 사라짐(버린 직후엔 주인공이 한 번 멀어졌다 와야 주움)",
     "pickupRadius": 20,
     "lifetimeMs": 30000,
+    "dropLifetimeMs": 60000,
+    "dropAheadPx": 16,
     "fadeMs": 4000,
     "scatterPx": 20,
     "pickupDelayMs": 350,

@@ -98,8 +98,10 @@ export function openItemInfo(s, id, context) {
   if (context.type === 'bag') {
     if (def.slot) actions.push({ label: '끼기', primary: true, disabled: !!warn, onClick: () => { s.itemInfo.hide(); s.equipFromBagIndex(context.index); } });
     else if (def.use) actions.push({ label: '쓰기', primary: true, onClick: () => { s.itemInfo.hide(); s.useBagItem(context.index); } });
+    actions.push({ label: '버리기', onClick: () => openDrop(s, id, 1) });
   } else if (context.type === 'slot') {
     if (def.slot !== 'outfit') actions.push({ label: '벗기', primary: true, onClick: () => { s.itemInfo.hide(); s.takeOff(context.slot); } });
+    actions.push({ label: '벗고 버리기', disabled: true, onClick: () => {} }); // 낀 것은 버릴 수 없음
   } else if (context.type === 'buy') {
     actions.push({ label: '사기', primary: true, onClick: () => { s.itemInfo.hide(); context.onBuy(); } });
   } else if (context.type === 'sell') {
@@ -112,6 +114,30 @@ export function openItemInfo(s, id, context) {
     warn,
     desc: itemDesc(s, def),
     price: context.type === 'buy' && context.price ? `값 ${context.price}` : def.sellPrice ? `파는 값 ${s.coinsText(def.sellPrice)}` : '',
+    actions,
+  });
+}
+
+// 버리기(docs/spec/feedback_1020.md 10): 여러 개면 수량 고르기(1 · 10 · 전부 · −/+), "○○ N개를 버릴까요?"
+export function openDrop(s, id, n) {
+  const def = s.itemDefs[id];
+  const have = s.equip.bag.reduce((a, e) => a + (e.id === id ? e.n : 0), 0);
+  if (!def || have <= 0) return s.itemInfo.hide();
+  n = Math.max(1, Math.min(have, n));
+  const actions = [];
+  if (have > 1) {
+    const q = (label, v) => actions.push({ label, onClick: () => openDrop(s, id, v) });
+    q('−', n - 1);
+    q('+', n + 1);
+    q('1', 1);
+    if (have >= 10) q('10', 10);
+    q('전부', have);
+  }
+  actions.push({ label: `버리기 ${n}개`, primary: true, onClick: () => { s.itemInfo.hide(); s.dropFromBag(id, n); } });
+  s.itemInfo.show({
+    def,
+    kind: `${kindLabel(def)} · 가진 것 ${have}개`,
+    desc: [`${def.name} ${n}개를 버릴까요?`, '발 앞 바닥에 떨어지고, 60초 안에는 다시 주울 수 있습니다.'],
     actions,
   });
 }
