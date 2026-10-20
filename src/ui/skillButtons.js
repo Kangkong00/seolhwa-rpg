@@ -2,6 +2,7 @@
 // 칸에 무엇을 넣을지는 무예창(src/ui/skillPanel.js)에서 고름. 빈칸을 누르면 무예창이 열림.
 // 기다리는 동안은 어둡게 덮고 남은 초를 보여 줌. 칼이 필요한 무예는 맨손이면 흐리게.
 import { SLOT_COUNT } from '../core/skills.js';
+import { vibrate } from './press.js';
 
 export class SkillButtons {
   // skills: data/skills.json skills, onUse(skillId), onEmpty(): 빈칸을 눌렀을 때
@@ -27,10 +28,16 @@ export class SkillButtons {
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        b.classList.add('pressed');
+        vibrate();
         const id = this.slots[i];
         if (id) onUse(id);
         else onEmpty();
       });
+      const up = () => b.classList.remove('pressed');
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+      b.addEventListener('pointerleave', up);
       container.appendChild(b);
       this.buttons.push({ b, face, cd, t, id: undefined, last: '' });
     }

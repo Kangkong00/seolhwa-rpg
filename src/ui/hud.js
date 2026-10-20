@@ -1,5 +1,7 @@
 // 오른쪽 위 버튼(소리 켜기/끄기, 귀환, 무예창, 가방(장비창) 열고 닫기, 격자 보기, 관리자)과 FPS 표시.
 
+import { onPress } from './press.js';
+
 export class Hud {
   constructor({ onBag, onGrid, onSound, onRecall, onAdmin, adminEnabled, onSkills }) {
     this.soundBtn = document.getElementById('btn-sound');
@@ -16,12 +18,13 @@ export class Hud {
     for (const b of [this.bagBtn, this.gridBtn, this.soundBtn, this.recallBtn, this.adminBtn, this.skillsBtn]) {
       b.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
-    this.bagBtn.addEventListener('click', () => onBag());
-    this.recallBtn.addEventListener('click', () => onRecall());
-    this.gridBtn.addEventListener('click', () => onGrid());
-    this.soundBtn.addEventListener('click', () => onSound());
-    this.adminBtn.addEventListener('click', () => onAdmin());
-    this.skillsBtn.addEventListener('click', () => onSkills());
+    // 누르는 순간 반응(손을 뗄 때가 아니라) + 눌린 모양 + 짧은 진동
+    onPress(this.bagBtn, () => onBag());
+    onPress(this.recallBtn, () => onRecall());
+    onPress(this.gridBtn, () => onGrid());
+    onPress(this.soundBtn, () => onSound());
+    onPress(this.adminBtn, () => onAdmin());
+    onPress(this.skillsBtn, () => onSkills());
   }
 
   setSkillsOn(on) {

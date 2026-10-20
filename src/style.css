@@ -147,11 +147,11 @@ html, body {
   right: calc(env(safe-area-inset-right) + 28px);
   bottom: calc(env(safe-area-inset-bottom) + 28px);
   z-index: 15;
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: bold;
   color: #f3ead6;
   background: rgba(120, 40, 25, 0.55);
@@ -164,7 +164,7 @@ html, body {
 
 #btn-attack.active {
   background: rgba(170, 55, 30, 0.85);
-  transform: scale(0.94);
+  transform: scale(0.9);
 }
 
 #btn-attack[hidden] {
@@ -505,8 +505,8 @@ html, body {
 .skill-btn {
   position: fixed;
   z-index: 15;
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   padding: 0;
   border-radius: 50%;
   overflow: hidden;
@@ -521,25 +521,25 @@ html, body {
   user-select: none;
 }
 
-/* 무예 칸 4개: 공격 버튼(가운데 오른쪽 아래) 둘레 반지름 108 호 위에 180°·150°·120°·90° */
+/* 무예 칸 4개: 공격 단추(지름 96, 가운데 오른쪽·아래 76) 둘레 반지름 118, 칸 58px 호 위에 180°·150°·120°·90°(docs/spec/feedback_1020.md 7) */
 .skill-btn:nth-child(1) {
-  right: calc(env(safe-area-inset-right) + 152px);
-  bottom: calc(env(safe-area-inset-bottom) + 44px);
+  right: calc(env(safe-area-inset-right) + 165px);
+  bottom: calc(env(safe-area-inset-bottom) + 47px);
 }
 
 .skill-btn:nth-child(2) {
-  right: calc(env(safe-area-inset-right) + 137px);
-  bottom: calc(env(safe-area-inset-bottom) + 98px);
+  right: calc(env(safe-area-inset-right) + 149px);
+  bottom: calc(env(safe-area-inset-bottom) + 106px);
 }
 
 .skill-btn:nth-child(3) {
-  right: calc(env(safe-area-inset-right) + 98px);
-  bottom: calc(env(safe-area-inset-bottom) + 137px);
+  right: calc(env(safe-area-inset-right) + 106px);
+  bottom: calc(env(safe-area-inset-bottom) + 149px);
 }
 
 .skill-btn:nth-child(4) {
-  right: calc(env(safe-area-inset-right) + 44px);
-  bottom: calc(env(safe-area-inset-bottom) + 152px);
+  right: calc(env(safe-area-inset-right) + 47px);
+  bottom: calc(env(safe-area-inset-bottom) + 165px);
 }
 
 .skill-btn.empty {
@@ -1308,4 +1308,50 @@ html, body {
     padding: 4px 8px;
   }
 }
+
+/* ---------- 단추 누르기 (docs/spec/feedback_1020.md 7) ---------- */
+/* HTML 단추는 두 번 눌러 확대 막기, 게임 화면(캔버스)은 브라우저 동작 없음 */
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#game canvas {
+  touch-action: none;
+}
+
+/* 누르는 영역을 보이는 그림보다 넉넉히(투명한 가장자리) */
+#btn-attack::after,
+#hud button::after {
+  content: '';
+  position: absolute;
+}
+
+#btn-attack::after {
+  inset: -14px;
+  border-radius: 50%;
+}
+
+#hud button {
+  position: relative;
+  min-height: 40px;
+}
+
+#hud button::after {
+  inset: -8px -3px;
+}
+
+/* 눌린 모양 */
+.skill-btn.pressed,
+#hud button.pressed {
+  transform: scale(0.9);
+}
+
+/* 공격·무예는 손가락이 조금 움직여도 눌림이 끊기지 않게(스크롤로 넘어가지 않음) */
+#btn-attack,
+.skill-btn {
+  touch-action: none;
+}
+
+/* 무예 칸은 칸 자체를 58px로(누르는 영역 최소 56) */
 

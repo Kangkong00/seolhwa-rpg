@@ -113,7 +113,7 @@ async function boot() {
       // 한 번에 묶어 그리는 그림 수(0 = Phaser 기본). 기울인 그림이 잘려 보이는 기기에서는 1로
       ...(game.maxTextures > 0 ? { maxTextures: game.maxTextures } : {}),
     },
-    input: { activePointers: 3 },
+    input: { activePointers: 4 }, // 조이스틱 + 공격 + 무예 + 하나 더(docs/spec/feedback_1020.md 7)
     banner: false,
   });
 
