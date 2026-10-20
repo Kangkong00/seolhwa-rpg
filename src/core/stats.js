@@ -16,29 +16,62 @@ export function swingSpeedLabel(w) {
   return '보통';
 }
 
+// 배운 패시브 무예(docs/spec/feedback_1020.md 8)의 효과를 모두 더함. skills: data/skills.json skills, learned: 배운 id
+export const PASSIVE_KEYS = ['maxHpMul', 'bladeAttackMul', 'bladeSwingCut', 'critChance', 'critDamage', 'regenRatio', 'speed', 'damageCut', 'momentumAttackMul', 'cooldownCut', 'bossDamageMul'];
+export function passiveSum(skills, learned) {
+  const p = Object.fromEntries(PASSIVE_KEYS.map((k) => [k, 0]));
+  p.regenAfterMs = 0;
+  p.regenEveryMs = 0;
+  p.momentumMs = 0;
+  for (const sk of skills) {
+    if (sk.type !== 'passive' || !sk.passive || !learned.includes(sk.id)) continue;
+    for (const [k, v] of Object.entries(sk.passive)) {
+      if (k === 'regenAfterMs' || k === 'regenEveryMs' || k === 'momentumMs') p[k] = Math.max(p[k], v);
+      else p[k] = (p[k] || 0) + v;
+    }
+  }
+  return p;
+}
+
 // 낀 장비 전체 능력치. 팔찌(docs/spec/tier3_snake.md 4): maxHp 최대 체력 +, healMul 회복 배율 +, critChance 회심 확률 +,
 // attack 공격력 +, cooldownCut 무예 기다리는 시간 −(최대 0.5)
-export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, levelsCfg) {
+// passive: passiveSum() 결과(없으면 패시브 없음), momentum: 기세가 켜져 있는지.
+// attack은 패시브까지 넣은 값, passiveAttack은 그중 패시브로 오른 만큼("공격력 30 (+2 패시브)")
+export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, levelsCfg, passive = null, momentum = false) {
   const sum = { defense: 0, speed: 0, maxHp: 0, healMul: 0, critChance: 0, attack: 0, cooldownCut: 0 };
   for (const id of Object.values(equipped)) {
     const s = (id && itemDefs[id] && itemDefs[id].stats) || {};
     for (const k of Object.keys(sum)) sum[k] += s[k] || 0;
   }
+  const p = passive || passiveSum([], []);
+  const blade = !!(equipped.weapon && weaponDefs[equipped.weapon]);
+  const attackMul = 1 + (blade ? p.bladeAttackMul : 0) + (momentum ? p.momentumAttackMul : 0);
+  const base = weaponAttack(equipped.weapon, weaponDefs, baseDamage, level, levelsCfg) + sum.attack;
+  const attack = Math.round(base * attackMul);
   return {
-    attack: weaponAttack(equipped.weapon, weaponDefs, baseDamage, level, levelsCfg) + sum.attack,
+    attack,
     attackBonus: sum.attack,
+    attackMul,
+    passiveAttack: attack - base,
     defense: sum.defense,
-    speedMul: 1 + sum.speed,
+    speedMul: 1 + sum.speed + p.speed,
+    passiveSpeed: p.speed,
     maxHp: sum.maxHp,
+    maxHpMul: 1 + p.maxHpMul,
     healMul: 1 + sum.healMul,
-    critChance: sum.critChance,
-    cooldownMul: 1 - Math.min(0.5, sum.cooldownCut),
+    critChance: sum.critChance + p.critChance,
+    critDamageAdd: p.critDamage,
+    cooldownMul: 1 - Math.min(0.5, sum.cooldownCut + p.cooldownCut),
+    swingMul: blade ? 1 - p.bladeSwingCut : 1,
+    damageTakenMul: 1 - p.damageCut,
+    bossDamageMul: 1 + p.bossDamageMul,
   };
 }
 
 // 맞았을 때 받는 데미지: 데미지 − 방어력(최소 1)
-export function damageTaken(damage, defense) {
-  return Math.max(1, damage - defense);
+// mul: 철갑 기운(받는 데미지 −10%)
+export function damageTaken(damage, defense, mul = 1) {
+  return Math.max(1, Math.round((damage - defense) * mul));
 }
 
 // 이 레벨에 낄 수 있는지

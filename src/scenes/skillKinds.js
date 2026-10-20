@@ -59,7 +59,9 @@ export const SKILL_KINDS = {
     }
     breathRings(scene, () => scene.pos, sk);
     scene.playerView.setGlow(sk.glowColor, 0.5, sk.glowMs);
-    scene.healPlayer(Math.max(1, Math.ceil(scene.player.maxHp * sk.healRatio)));
+    scene.healPlayer(Math.max(1, Math.ceil(scene.player.maxHp * sk.healRatio)), false, true);
+    // 이어서 hotMs 동안 hotRatio만큼 조금씩 더(MapScene.updateRecovery)
+    if (sk.hotRatio && sk.hotMs) scene.hot = { left: sk.hotMs, perMs: (scene.player.maxHp * sk.hotRatio) / sk.hotMs, acc: 0 };
     scene.sfx.play('heal');
     return true;
   },

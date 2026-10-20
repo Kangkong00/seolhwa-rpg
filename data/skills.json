@@ -1,5 +1,5 @@
 {
-  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs, 돌 rockCount) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. 모두 임시값",
+  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs, 돌 rockCount) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. heal의 hotRatio·hotMs=바로 healRatio만큼 채운 뒤 hotMs 동안 hotRatio만큼 더(조금씩). type(docs/spec/feedback_1020.md 8): active=무예 칸에 넣어 누름, passive=배우면 늘 켜짐(칸에 안 넣음, 엽전만 냄). passive 효과: maxHpMul 최대 체력 +%, bladeAttackMul·bladeSwingCut 칼을 들면 공격력 +%·휘두르기 빠르게, critChance·critDamage 회심 확률·회심 데미지 +, regenAfterMs·regenRatio·regenEveryMs 싸우지 않은 지 regenAfterMs가 지나면 regenEveryMs마다 최대 체력 regenRatio 회복, speed 걸음 +, damageCut 받는 데미지 −, momentumMs·momentumAttackMul 쓰러뜨리면 그 시간 공격력 +, cooldownCut 액티브 기다림 −(팔찌와 더함, 최대 0.5), bossDamageMul 우두머리에게 데미지 +. 모두 임시값",
   "skills": [
     {
       "id": "power_slash",
@@ -29,7 +29,8 @@
       "waveRadius": 60,
       "waveMs": 250,
       "waveColor": "#ffd75e",
-      "job": "geomgaek"
+      "job": "geomgaek",
+      "type": "active"
     },
     {
       "id": "breath",
@@ -37,7 +38,7 @@
       "name": "숨 고르기",
       "icon": "息",
       "kind": "heal",
-      "desc": "제자리에서 숨을 골라 최대 체력의 30%를 되찾음",
+      "desc": "제자리에서 숨을 골라 최대 체력의 50%를 바로, 3초 동안 10%를 더 되찾음",
       "requires": {
         "level": 3
       },
@@ -47,8 +48,8 @@
           "loot_rice": 5
         }
       },
-      "cooldownMs": 30000,
-      "healRatio": 0.3,
+      "cooldownMs": 12000,
+      "healRatio": 0.5,
       "glowColor": "#bfe8ff",
       "glowMs": 900,
       "rings": 2,
@@ -60,7 +61,10 @@
       "particleCount": 10,
       "particleMs": 1200,
       "particleColor": "#bfe8ff",
-      "job": "geomgaek"
+      "job": "geomgaek",
+      "type": "active",
+      "hotRatio": 0.1,
+      "hotMs": 3000
     },
     {
       "id": "whirl",
@@ -91,7 +95,8 @@
       "ringAlpha": 0.55,
       "dustEveryMs": 110,
       "dustColor": "#c8b48c",
-      "job": "geomgaek"
+      "job": "geomgaek",
+      "type": "active"
     },
     {
       "id": "triple_cut",
@@ -118,7 +123,8 @@
       "lastStarScale": 1.8,
       "trailHoldMs": 500,
       "trailOffsetPx": 5,
-      "image": "assets/items/icons/skill_triple_cut.png"
+      "image": "assets/items/icons/skill_triple_cut.png",
+      "type": "active"
     },
     {
       "id": "dash_cut",
@@ -146,7 +152,8 @@
       "ghostColor": "#ffffff",
       "windColor": "#ffffff",
       "windMs": 420,
-      "image": "assets/items/icons/skill_dash_cut.png"
+      "image": "assets/items/icons/skill_dash_cut.png",
+      "type": "active"
     },
     {
       "id": "roar",
@@ -175,7 +182,8 @@
       "shakeMul": 2.5,
       "markText": "!",
       "markColor": "#ffd34d",
-      "image": "assets/items/icons/skill_roar.png"
+      "image": "assets/items/icons/skill_roar.png",
+      "type": "active"
     },
     {
       "id": "earth_split",
@@ -204,7 +212,8 @@
       "glowColor": "#ffcf7a",
       "rockCount": 14,
       "rockColor": "#8a7458",
-      "image": "assets/items/icons/skill_earth_split.png"
+      "image": "assets/items/icons/skill_earth_split.png",
+      "type": "active"
     },
     {
       "id": "sword_wind",
@@ -229,7 +238,8 @@
       "size": 24,
       "colorFromWeapon": true,
       "color": "#e9f3ff",
-      "image": "assets/items/icons/skill_sword_wind.png"
+      "image": "assets/items/icons/skill_sword_wind.png",
+      "type": "active"
     },
     {
       "id": "counter",
@@ -249,7 +259,8 @@
       "counterMul": 3,
       "knockbackPx": 16,
       "shieldColor": "#ffd75e",
-      "image": "assets/items/icons/skill_counter.png"
+      "image": "assets/items/icons/skill_counter.png",
+      "type": "active"
     },
     {
       "id": "whirlwind",
@@ -281,7 +292,8 @@
       "dustColor": "#c8b48c",
       "leafCount": 12,
       "leafColor": "#7fae4a",
-      "image": "assets/items/icons/skill_whirlwind.png"
+      "image": "assets/items/icons/skill_whirlwind.png",
+      "type": "active"
     },
     {
       "id": "thunder_cut",
@@ -305,7 +317,8 @@
       "boltColor": "#cfe6ff",
       "scorchMs": 1500,
       "flashAlpha": 0.35,
-      "image": "assets/items/icons/skill_thunder_cut.png"
+      "image": "assets/items/icons/skill_thunder_cut.png",
+      "type": "active"
     },
     {
       "id": "tiger_flash",
@@ -333,7 +346,8 @@
       "windColor": "#ffffff",
       "windMs": 700,
       "tiger": true,
-      "image": "assets/items/icons/skill_tiger_flash.png"
+      "image": "assets/items/icons/skill_tiger_flash.png",
+      "type": "active"
     },
     {
       "id": "seven_star_dance",
@@ -358,7 +372,166 @@
       "size": 110,
       "color": "#ffd75e",
       "knockbackPx": 10,
-      "image": "assets/items/icons/skill_seven_star_dance.png"
+      "image": "assets/items/icons/skill_seven_star_dance.png",
+      "type": "active"
+    },
+    {
+      "id": "p_body",
+      "type": "passive",
+      "name": "단련된 몸",
+      "icon": "身",
+      "job": "geomgaek",
+      "desc": "최대 체력 +10%",
+      "requires": {
+        "level": 5
+      },
+      "cost": {
+        "coins": 200
+      },
+      "passive": {
+        "maxHpMul": 0.1
+      }
+    },
+    {
+      "id": "p_blade",
+      "type": "passive",
+      "name": "검술 숙련",
+      "icon": "劍",
+      "job": "geomgaek",
+      "desc": "칼을 들면 공격력 +8%, 휘두르기 10% 빠르게",
+      "requires": {
+        "level": 8
+      },
+      "cost": {
+        "coins": 400
+      },
+      "passive": {
+        "bladeAttackMul": 0.08,
+        "bladeSwingCut": 0.1
+      }
+    },
+    {
+      "id": "p_vital",
+      "type": "passive",
+      "name": "급소 노리기",
+      "icon": "急",
+      "job": "geomgaek",
+      "desc": "회심 확률 +5%p, 회심 데미지 +30%",
+      "requires": {
+        "level": 12
+      },
+      "cost": {
+        "coins": 800
+      },
+      "passive": {
+        "critChance": 0.05,
+        "critDamage": 0.3
+      }
+    },
+    {
+      "id": "p_breath",
+      "type": "passive",
+      "name": "질긴 숨",
+      "icon": "氣",
+      "job": "geomgaek",
+      "desc": "싸우지 않은 지 3초가 지나면 1초마다 최대 체력 3% 회복",
+      "requires": {
+        "level": 15
+      },
+      "cost": {
+        "coins": 1200
+      },
+      "passive": {
+        "regenAfterMs": 3000,
+        "regenRatio": 0.03,
+        "regenEveryMs": 1000
+      }
+    },
+    {
+      "id": "p_feet",
+      "type": "passive",
+      "name": "가벼운 발",
+      "icon": "步",
+      "job": "geomgaek",
+      "desc": "걸음 +8%",
+      "requires": {
+        "level": 18
+      },
+      "cost": {
+        "coins": 1600
+      },
+      "passive": {
+        "speed": 0.08
+      }
+    },
+    {
+      "id": "p_iron",
+      "type": "passive",
+      "name": "철갑 기운",
+      "icon": "鐵",
+      "job": "geomgaek",
+      "desc": "받는 데미지 −10%",
+      "requires": {
+        "level": 22
+      },
+      "cost": {
+        "coins": 2500
+      },
+      "passive": {
+        "damageCut": 0.1
+      }
+    },
+    {
+      "id": "p_momentum",
+      "type": "passive",
+      "name": "기세",
+      "icon": "勢",
+      "job": "geomgaek",
+      "desc": "몬스터를 쓰러뜨리면 4초 동안 공격력 +15%",
+      "requires": {
+        "level": 28
+      },
+      "cost": {
+        "coins": 4000
+      },
+      "passive": {
+        "momentumMs": 4000,
+        "momentumAttackMul": 0.15
+      }
+    },
+    {
+      "id": "p_master",
+      "type": "passive",
+      "name": "무예 달인",
+      "icon": "達",
+      "job": "geomgaek",
+      "desc": "액티브 무예 기다림 −15%",
+      "requires": {
+        "level": 33
+      },
+      "cost": {
+        "coins": 6000
+      },
+      "passive": {
+        "cooldownCut": 0.15
+      }
+    },
+    {
+      "id": "p_tiger",
+      "type": "passive",
+      "name": "산군의 기백",
+      "icon": "虎",
+      "job": "geomgaek",
+      "desc": "우두머리에게 데미지 +20%",
+      "requires": {
+        "level": 38
+      },
+      "cost": {
+        "coins": 10000
+      },
+      "passive": {
+        "bossDamageMul": 0.2
+      }
     }
   ]
 }

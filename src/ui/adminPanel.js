@@ -192,6 +192,7 @@ export class AdminPanel {
     const learnAll = this.btn(left ? `모두 배우기 (${left})` : '모두 배움', () => {
       let n = 0;
       for (const sk of s.skills) if (grantSkill(sk, s.learned)) { n++; s.autoSlotSkill(sk.id); }
+      s.refreshAfterPassive();
       s.refreshSkills();
       s.save();
       this.note(`무예 ${n}개를 배웠습니다`);

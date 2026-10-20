@@ -8,7 +8,7 @@ import { findTarget, hitMonster, hitPlayer, aimAssist, rollCrit } from '../core/
 import { loadOutfitImages, buildOutfitFrames, loadImage, downscale, loadHeadImages, wearHead, removeOutfitFrames } from './characterFrames.js';
 import { createEquipment, equipFromBag, unequip, canUnequip, useFromBag, addItem, countItem, removeItem } from '../core/equipment.js';
 import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } from '../core/progress.js';
-import { totalStats, damageTaken, levelOk } from '../core/stats.js';
+import { totalStats, damageTaken, levelOk, passiveSum } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns, normalizeSlots, autoSlot } from '../core/skills.js';
 import { SKILL_KINDS, chainMods, pullMonsters } from './skillKinds.js';
@@ -132,7 +132,7 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.quests) this.d.quests = save && save.quests && typeof save.quests === 'object' ? { ...save.quests } : {};
     if (!this.d.cooldowns) this.d.cooldowns = new Cooldowns();
     // 무예 칸 4개(무예창에서 고름, 저장됨). 저장이 없으면 배운 순서대로
-    if (!this.d.skillSlots) this.d.skillSlots = normalizeSlots(save && save.skillSlots, this.d.learned);
+    if (!this.d.skillSlots) this.d.skillSlots = normalizeSlots(save && save.skillSlots, this.d.learned.filter((id) => this.isActiveSkill(id)));
     this.progress = this.d.progress;
     this.learned = this.d.learned;
     this.quests = this.d.quests;
@@ -356,7 +356,9 @@ export class MapScene extends Phaser.Scene {
 
   renderBag(message = '') {
     const st = this.stats();
-    const totals = `공격력 ${st.attack} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}`;
+    const pa = st.passiveAttack ? ` (+${st.passiveAttack} 패시브)` : '';
+    const ps = st.passiveSpeed ? ` (+${Math.round(st.passiveSpeed * 100)}% 패시브)` : '';
+    const totals = `공격력 ${st.attack}${pa} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}${ps}`;
     this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals, this.progress.level);
   }
 
@@ -413,13 +415,15 @@ export class MapScene extends Phaser.Scene {
     this.save();
   }
 
-  healPlayer(amount) {
+  // small: 조금씩 차는 회복(숨 고르기 이어 채우기·질긴 숨) — 숫자를 작게 띄움
+  // big: 숨 고르기처럼 크게 띄움
+  healPlayer(amount, small = false, big = false) {
     amount = Math.round(amount * this.stats().healMul); // 옥 팔찌: 회복 +
     const before = this.player.hp;
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     const got = this.player.hp - before;
-    if (got > 0) showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, got, this.cfg.hitFx, this.d.getPixelRatio(), 'heal');
+    if (got > 0) showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, got, this.cfg.hitFx, this.d.getPixelRatio(), small ? 'healSmall' : big ? 'healBig' : 'heal');
     this.refreshStatus();
   }
 
@@ -618,7 +622,10 @@ export class MapScene extends Phaser.Scene {
   // mods: 힘껏 베기 등 무예 배율 { damageMul, knockbackMul, hitStopMul, trailWidthMul, shakeMul } (없으면 보통 휘두르기)
   startSwing(mods = null) {
     // 삼연참처럼 빠르게 휘두르는 무예는 swingMsMul배 시간
-    const w = mods && mods.swingMsMul ? { ...this.weaponDef, swingMs: this.weaponDef.swingMs * mods.swingMsMul } : this.weaponDef;
+    // 검술 숙련: 휘두르기 swingMul배 시간(빠르게)
+    const sm = this.stats().swingMul;
+    const msMul = ((mods && mods.swingMsMul) || 1) * sm;
+    const w = msMul !== 1 ? { ...this.weaponDef, swingMs: this.weaponDef.swingMs * msMul, cooldownMs: this.weaponDef.cooldownMs * sm } : this.weaponDef;
     this.sfx.play('swing');
     this.swing = { weapon: w, t: 0, hitDone: false, trail: null, mods };
     if (mods && mods.chargeMs) this.playerView.setWeaponGlow(mods.chargeColor, 0.9, mods.chargeMs + 260);
@@ -775,7 +782,12 @@ export class MapScene extends Phaser.Scene {
     const im = this.cfg.impact;
     const sfx = this.cfg.swingFx;
     const fx = this.cfg.hitFx;
-    const critCfg = { ...im.crit, chance: im.crit.chance + this.stats().critChance }; // 은 팔찌: 회심 +
+    const st = this.stats();
+    // 은 팔찌·급소 노리기: 회심 확률 +, 급소 노리기: 회심 데미지 +
+    const critCfg = { ...im.crit, chance: im.crit.chance + st.critChance, damageMul: im.crit.damageMul + st.critDamageAdd };
+    // 패시브 공격력 배율(검술 숙련·기세), 산군의 기백: 우두머리에게 +
+    damage *= st.attackMul * (this.monsterDefs[target.type].boss ? st.bossDamageMul : 1);
+    this.calmMs = 0;
     const roll = rollCrit(damage, critCfg, Math.random, !!o.forceCrit);
     const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), o.knockbackPx ?? this.cfg.attack.knockbackPx, o.stunMs ?? this.cfg.attack.stunMs);
     const def = this.monsterDefs[target.type];
@@ -901,8 +913,34 @@ export class MapScene extends Phaser.Scene {
   }
 
   // 낀 장비 전체 능력치 { attack, defense, speedMul } — 옷 6종 모두 무기 자세가 있어 무기 공격력 그대로(2026-10-18)
+  // + 배운 패시브(docs/spec/feedback_1020.md 8), 기세가 켜져 있으면 공격력 +
   stats() {
-    return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels);
+    return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels, this.passive(), this.momentumMs > 0);
+  }
+
+  // 배운 패시브 효과 합(배운 수가 바뀔 때만 다시 셈)
+  passive() {
+    const learned = this.d.learned || [];
+    const c = this.d.passiveCache;
+    if (c && c.n === learned.length) return c.p;
+    const p = passiveSum(this.d.skills.skills, learned);
+    this.d.passiveCache = { n: learned.length, p };
+    return p;
+  }
+
+  // 패시브를 새로 배운 뒤: 최대 체력(단련된 몸)·능력치 다시 맞춤. 늘어난 최대 체력만큼 지금 체력도 늘림
+  refreshAfterPassive() {
+    const old = this.player.maxHp;
+    this.player.maxHp = this.maxHpNow();
+    this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.max(0, this.player.maxHp - old));
+    this.playerView.setHp(this.player.hp / this.player.maxHp);
+    this.refreshStatus();
+    if (this.equipPanel.open) this.renderBag();
+  }
+
+  isActiveSkill(id) {
+    const sk = this.d.skills.skills.find((k) => k.id === id);
+    return !!sk && sk.type !== 'passive';
   }
 
   // 최대 체력 = 레벨 표 + 낀 장비의 maxHp(구슬 팔찌). 장비가 아직 없으면(처음 불러올 때) 레벨 표만
@@ -911,7 +949,8 @@ export class MapScene extends Phaser.Scene {
     const eq = this.d.equip;
     if (!eq) return base;
     const defs = this.itemDefs || Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
-    return base + Object.values(eq.equipped).reduce((a, id) => a + ((id && defs[id] && defs[id].stats && defs[id].stats.maxHp) || 0), 0);
+    const eqHp = Object.values(eq.equipped).reduce((a, id) => a + ((id && defs[id] && defs[id].stats && defs[id].stats.maxHp) || 0), 0);
+    return Math.round((base + eqHp) * (1 + this.passive().maxHpMul)); // 단련된 몸: 최대 체력 +10%
   }
 
   // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
@@ -923,6 +962,12 @@ export class MapScene extends Phaser.Scene {
   // ---------- 쓰러뜨림: 경험치·전리품 ----------
   onMonsterKilled(target) {
     const def = this.monsterDefs[target.type];
+    // 기세: 쓰러뜨리면 momentumMs 동안 공격력 +(겹치지 않고 시간만 새로)
+    const pv = this.passive();
+    if (pv.momentumMs) {
+      if (!(this.momentumMs > 0)) this.toast.show('기세! 공격력 +' + Math.round(pv.momentumAttackMul * 100) + '%', 1200);
+      this.momentumMs = pv.momentumMs;
+    }
     // 우두머리를 쓰러뜨리면 잠긴 출구가 열림(빛나기 시작)
     this.map.portals.forEach((p, i) => {
       if (p.unlockOnKill === target.type && !this.unlocked.has(p.id)) {
@@ -1038,10 +1083,41 @@ export class MapScene extends Phaser.Scene {
     return out;
   }
 
+  // 저절로 차는 체력·버프 시간: 숨 고르기 이어 채우기(hot), 질긴 숨(싸우지 않은 지 regenAfterMs 뒤 regenEveryMs마다), 기세 시간
+  updateRecovery(dt) {
+    if (this.momentumMs > 0) this.momentumMs -= dt;
+    if (this.dead) return;
+    const h = this.hot;
+    if (h) {
+      const step = Math.min(dt, h.left);
+      h.left -= step;
+      h.acc += h.perMs * step;
+      // 1 이상 모이면 정수만큼 채우고 나머지는 남김(끝날 때 남은 것은 올림)
+      const n = h.left <= 0 ? Math.round(h.acc) : Math.floor(h.acc);
+      if (n >= 1) {
+        this.healPlayer(n, true);
+        h.acc -= n;
+      }
+      if (h.left <= 0) this.hot = null;
+    }
+    const pv = this.passive();
+    this.calmMs = (this.calmMs || 0) + dt;
+    if (pv.regenRatio && this.calmMs >= pv.regenAfterMs && this.player.hp < this.player.maxHp) {
+      this.regenAcc = (this.regenAcc || 0) + dt;
+      if (this.regenAcc >= pv.regenEveryMs) {
+        this.regenAcc -= pv.regenEveryMs;
+        this.healPlayer(Math.max(1, Math.round(this.player.maxHp * pv.regenRatio)), true);
+      }
+    } else {
+      this.regenAcc = 0;
+    }
+  }
+
   // ---------- 무예 ----------
   useSkill(id) {
     const sk = this.skills.find((s) => s.id === id);
     if (!sk) return;
+    if (sk.type === 'passive') return; // 패시브는 늘 켜져 있음(칸에 안 넣음)
     if (!this.learned.includes(id)) {
       this.toast.show(`${josa(sk.name, '은', '는')} 우물가 늙은 군관에게 배웁니다 (레벨 ${(sk.requires && sk.requires.level) || 1})`);
       return;
@@ -1079,6 +1155,7 @@ export class MapScene extends Phaser.Scene {
 
   // 무예 칸에 넣음(배울 때 빈칸이 있으면 자동으로)
   autoSlotSkill(id) {
+    if (!this.isActiveSkill(id)) return;
     autoSlot(this.skillSlots, id);
     this.refreshSkills();
   }
@@ -1185,7 +1262,9 @@ export class MapScene extends Phaser.Scene {
     this.cancelRecall('맞아서 귀환이 끊겼습니다');
     const ph = this.cfg.playerHit;
     // 방어력만큼 덜 아픔(최소 1)
-    const result = hitPlayer(this.player, damageTaken(bite.damage, this.stats().defense));
+    this.calmMs = 0;
+    const st = this.stats();
+    const result = hitPlayer(this.player, damageTaken(bite.damage, st.defense, st.damageTakenMul)); // 철갑 기운: −10%
     // 관리자 '안 죽기': 체력이 1 아래로 내려가지 않음
     if (this.d.admin.noDie && this.player.hp < 1) {
       this.player.hp = 1;
@@ -1457,6 +1536,7 @@ export class MapScene extends Phaser.Scene {
     // 쿨다운 중에 톡 친 것은 버리지 않고 쿨다운이 끝나면 나감
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     this.cooldowns.update(dt);
+    this.updateRecovery(dt);
     // 관리자 창·무예창이 열려 있으면 게임 입력을 막음(docs/spec/feedback_1020.md 3)
     const modal = !!((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open));
     const wantAttack = !modal && this.attackCooldown <= 0 && !this.swing && !this.spin && !this.act && this.attackButton.consume();

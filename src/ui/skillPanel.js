@@ -2,6 +2,7 @@
 // 배운 무예를 눌러 고른 뒤 칸을 누르면 그 칸에 넣음(다른 칸에 있으면 맞바꿈). 고른 것 없이 찬 칸을 누르면 뺌.
 // 배우지 않은 무예는 흐리게 + "레벨 N · 늙은 군관". 칸은 저장됨(scene.skillSlots).
 // 위쪽 '무예' 단추로 열고 닫음, PC는 K. getScene() = 지금 MapScene
+// 탭 액티브·패시브(docs/spec/feedback_1020.md 8): 패시브는 배우면 늘 켜짐, 칸에 넣지 않음
 import { placeInSlot, clearSlot } from '../core/skills.js';
 import { charIcon } from './itemIcon.js';
 import { josa } from './josa.js';
@@ -32,6 +33,7 @@ export class SkillPanel {
     this.getScene = getScene;
     this.open = false;
     this.picked = null;
+    this.tab = 'active';
     this.box = el('div', 'ad-box sk-box');
     root.appendChild(this.box);
     root.addEventListener('pointerdown', (e) => {
@@ -91,13 +93,29 @@ export class SkillPanel {
     this.box.replaceChildren();
     const head = el('div', 'ad-head');
     head.appendChild(el('div', 'ad-title', '무예'));
-    head.appendChild(el('div', 'ad-tabs'));
+    const tabs = el('div', 'ad-tabs');
+    for (const [id, label] of [['active', '액티브'], ['passive', '패시브']]) {
+      const t = el('button', id === this.tab ? 'on' : '', label);
+      t.type = 'button';
+      t.addEventListener('click', () => {
+        this.tab = id;
+        this.picked = null;
+        this.message = '';
+        this.render();
+      });
+      tabs.appendChild(t);
+    }
+    head.appendChild(tabs);
     const closeBtn = el('button', '', '닫기');
     closeBtn.type = 'button';
     closeBtn.addEventListener('click', () => this.close());
     head.appendChild(closeBtn);
     this.box.appendChild(head);
 
+    if (this.tab === 'passive') {
+      this.renderPassive(s);
+      return;
+    }
     // 칸 4개
     const slots = el('div', 'sk-slots');
     s.skillSlots.forEach((id, i) => {
@@ -132,7 +150,7 @@ export class SkillPanel {
     // 무예 목록(이 직업 것, 레벨 순)
     const body = el('div', 'ad-body');
     const job = s.skills[0] && s.skills[0].job;
-    const list = s.skills.filter((k) => !job || k.job === job)
+    const list = s.skills.filter((k) => (!job || k.job === job) && k.type !== 'passive')
       .slice()
       .sort((a, b) => ((a.requires && a.requires.level) || 1) - ((b.requires && b.requires.level) || 1));
     for (const sk of list) {
@@ -157,5 +175,28 @@ export class SkillPanel {
     }
     this.box.appendChild(body);
     if (this.message) this.box.appendChild(el('div', 'ad-msg', this.message));
+  }
+
+  // 패시브 목록: 배운 것은 '켜짐', 못 배운 것은 흐리게 + 레벨·값
+  renderPassive(s) {
+    this.box.appendChild(el('div', 'ad-help', '패시브는 배우면 늘 켜져 있습니다. 무예 칸에 넣지 않습니다.'));
+    const body = el('div', 'ad-body');
+    const job = s.skills[0] && s.skills[0].job;
+    const list = s.skills.filter((k) => (!job || k.job === job) && k.type === 'passive')
+      .slice()
+      .sort((a, b) => ((a.requires && a.requires.level) || 1) - ((b.requires && b.requires.level) || 1));
+    for (const sk of list) {
+      const known = s.learned.includes(sk.id);
+      const lv = (sk.requires && sk.requires.level) || 1;
+      const row = el('div', `npc-row sk-row${known ? '' : ' off'}`);
+      row.appendChild(skillIcon(sk));
+      const main = el('div', 'row-main');
+      main.appendChild(el('span', '', sk.name));
+      main.appendChild(el('span', 'row-sub', known ? sk.desc : `${sk.desc} · 레벨 ${lv} · 우물가 늙은 군관에게 배움`));
+      row.appendChild(main);
+      row.appendChild(el('span', 'row-right', known ? '켜짐' : `Lv ${lv}`));
+      body.appendChild(row);
+    }
+    this.box.appendChild(body);
   }
 }

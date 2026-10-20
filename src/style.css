@@ -1355,3 +1355,13 @@ button {
 
 /* 무예 칸은 칸 자체를 58px로(누르는 영역 최소 56) */
 
+
+/* 무예창 패시브 탭(docs/spec/feedback_1020.md 8) */
+.ad-box div.sk-row {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.sk-row.off {
+  opacity: 0.5;
+}

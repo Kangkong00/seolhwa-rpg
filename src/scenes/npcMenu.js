@@ -207,7 +207,7 @@ export class NpcMenu {
         return {
           icon: sk.image ? itemIcon({ icon: sk.image, name: sk.icon, iconText: sk.icon }) : charIcon(sk.icon),
           label: sk.name,
-          sub: known ? `배움 · ${sk.desc}` : c.ok ? `${req} · 배울 수 있음` : `${req} · 모자람: ${c.reasons.join(', ')}`,
+          sub: known ? `배움${sk.type === 'passive' ? ' · 패시브' : ''} · ${sk.desc}` : c.ok ? `${req} · 배울 수 있음` : `${req} · 모자람: ${c.reasons.join(', ')}`,
           right: known ? '배움' : '',
           disabled: known || !c.ok,
           onClick: () => {
@@ -217,7 +217,12 @@ export class NpcMenu {
             this.s.autoSlotSkill(sk.id); // 빈 무예 칸이 있으면 바로 넣음
             this.changed();
             this.s.refreshSkills();
-            this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 무예 칸으로 쓰게(칸은 위쪽 '무예'에서 고름).`);
+            if (sk.type === 'passive') {
+              this.s.refreshAfterPassive();
+              this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 몸에 배어 늘 켜져 있을 걸세.`);
+            } else {
+              this.learn(`${josa(sk.name, '을', '를')} 익혔네! ${sk.desc}. 공격 버튼 옆 무예 칸으로 쓰게(칸은 위쪽 '무예'에서 고름).`);
+            }
           },
         };
       }),
