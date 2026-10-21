@@ -42,6 +42,7 @@ import { AdminPanel } from '../ui/adminPanel.js';
 import { SkillPanel } from '../ui/skillPanel.js';
 import { SkillCommonFx } from './skillCommonFx.js';
 import { floatText } from './progressFx.js';
+import { shadeImage } from './shade.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -812,6 +813,7 @@ export class MapScene extends Phaser.Scene {
     this.calmMs = 0;
     const roll = rollCrit(damage, critCfg, Math.random, !!o.forceCrit);
     const isSkill = o.kind === 'skill';
+    if (isSkill) this.skillFx.markHit(target.id); // 맞은 몬스터는 어둡게 하지 않음
     // 평타는 조금 더 밀려남(impact.knockbackMul)
     const knock = (o.knockbackPx ?? this.cfg.attack.knockbackPx) * (isSkill ? 1 : im.knockbackMul);
     const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), knock, o.stunMs ?? this.cfg.attack.stunMs);
@@ -1063,6 +1065,23 @@ export class MapScene extends Phaser.Scene {
       this.save();
     }
     this.refreshStatus();
+  }
+
+  // 무예 시전 때 나머지를 어둡게(docs/spec/feedback_1021.md 6): 바닥은 검은 막이, 깊이 순으로 서는 것 중
+  // 물건 조각·NPC·이번 무예와 상관없는 몬스터·떨어진 물건은 같은 정도로 물들임. 주인공·무예 연출·맞은 몬스터는 그대로
+  applyShade() {
+    const fx = this.skillFx;
+    const k = fx.shadeK;
+    if (k <= 0 && !this.shadeOn) return;
+    this.shadeOn = k > 0;
+    for (const o of this.mapObjects) shadeImage(o.image, k);
+    for (const v of this.npcViews) {
+      shadeImage(v.sprite, k);
+      shadeImage(v.label, k);
+    }
+    for (const v of this.dropViews.values()) for (const c of (v.box && v.box.list) || []) shadeImage(c, k);
+    for (const [id, v] of this.monsterViews) v.applyShade(fx.isHit(id) ? 0 : k);
+    if (k <= 0) fx.hitIds = null; // 어둠이 다 걷히면 맞은 몬스터 표시도 지움
   }
 
   // 얻은 경험치 글자(docs/spec/feedback_1021.md 3): 데미지 숫자보다 delayMs 늦게 떠올라 holdMs 머묾, 시험 배율이면 옆에 작게 "×3"
@@ -1692,6 +1711,7 @@ export class MapScene extends Phaser.Scene {
       const view = this.monsterViews.get(m.id);
       if (view) view.update(dt, m);
     }
+    this.applyShade();
 
     // 레벨업 체력바 차오름
     if (this.hpFill) {

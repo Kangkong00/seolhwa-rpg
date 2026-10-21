@@ -32,9 +32,10 @@ export class SkillCommonFx {
     this.layer = scene.add.layer().setDepth(1e6 - 3);
     this.bloom = null; // 빛 번짐 필터(처음 켤 때 만듦)
     this.layer.setVisible(false);
-    // 화면 어둡게(화면에 붙음)
+    // 화면 어둡게(화면에 붙음): 바닥 맵 그림(-1) 바로 위, 그림자(-0.9)·서는 것보다 아래(docs/spec/feedback_1021.md 6).
+    // 물건 조각·NPC·상관없는 몬스터·떨어진 물건은 MapScene.applyShade가 같은 정도로 물들임
     const cam = scene.cameras.main;
-    this.dim = scene.add.rectangle(0, 0, cam.width * 3, cam.height * 3, 0x000000, 1).setOrigin(0.5).setScrollFactor(0).setDepth(1e6 - 4).setAlpha(0);
+    this.dim = scene.add.rectangle(0, 0, cam.width * 3, cam.height * 3, 0x000000, 1).setOrigin(0.5).setScrollFactor(0).setDepth(-0.95).setAlpha(0);
     this.dim.setPosition(cam.width / 2, cam.height / 2);
     this.sky = null;
   }
@@ -80,6 +81,7 @@ export class SkillCommonFx {
     const ult = sk.kind === 'ultimate';
     const pos = { x: s.pos.x, y: s.pos.y };
     this.cast = { sk, color, t: 0, holdMs: ult ? sk.durationMs + 400 : c.holdMs, ult };
+    this.hitIds = new Set(); // 이번 무예에 맞은 몬스터(어둡게 하지 않음, 어둠이 걷힐 때까지)
     this.setBloom(this.bloomWanted);
     s.tweens.killTweensOf(this.dim);
     s.tweens.add({ targets: this.dim, alpha: ult ? c.ultimateDim : c.dim, duration: c.dimInMs });
@@ -118,6 +120,20 @@ export class SkillCommonFx {
     const w = cam.width / cam.zoom;
     const h = cam.height / cam.zoom;
     return { x: (cam.width - w) / 2, y: (cam.height - h) / 2, w, h };
+  }
+
+  // 지금 어두운 정도(0~1) = 검은 막의 진하기
+  get shadeK() {
+    return this.dim.alpha;
+  }
+
+  // 무예에 맞은 몬스터 표시(어둡게 하지 않음)
+  markHit(id) {
+    if (this.cast) this.hitIds.add(id);
+  }
+
+  isHit(id) {
+    return !!this.hitIds && this.hitIds.has(id);
   }
 
   get active() {

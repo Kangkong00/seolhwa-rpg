@@ -4,6 +4,7 @@ import { loadImage, downscale } from './characterFrames.js';
 import { createMonsterShadow } from './shadow.js';
 import { HpBar } from '../ui/hpBar.js';
 import { smokeBurst, inkBurst } from './impactFx.js';
+import { shadeImage } from './shade.js';
 import { isEnraged } from '../core/monsters.js';
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -192,6 +193,19 @@ export class MonsterView {
   // 그림만 (dx, dy)만큼 밀렸다가 돌아옴
   nudge(dx, dy, ms) {
     this.push = { dx, dy, ms, t: 0 };
+  }
+
+  // 무예 시전 때 어둡게 물들이기(docs/spec/feedback_1021.md 6): 지금 보여야 할 색(성남·여우불·본디 물들임)에 1−k를 곱함.
+  // 하얗게 번쩍이는 동안·쓰러지는 중에는 건드리지 않음
+  applyShade(k) {
+    if (this.flashing || this.dead) return;
+    if (k <= 0 && !this.shaded) return;
+    this.shaded = k > 0;
+    let base = this.tint !== null ? this.tint : 0xffffff;
+    if (this.fireTint) base = 0x9fd0ff;
+    else if (this.blinkOn && this.def.enrage) base = Phaser.Display.Color.HexStringToColor(this.def.enrage.blinkColor).color;
+    shadeImage(this.sprite, k, base);
+    if (k <= 0) this.sprite.setTintMode(Phaser.TintModes.MULTIPLY);
   }
 
   // 번쩍 끝: 원래 색(물들임이 있으면 그 색)으로
