@@ -486,9 +486,49 @@ html, body {
   text-shadow: 0 0 2px #000;
 }
 
-.st-exp {
-  height: 3px;
+/* 경험치 막대 + 지금 % + 얻을 때 잠깐 "+N"(docs/spec/feedback_1021.md 3) */
+.st-exp-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-top: 3px;
+}
+
+.st-exp-pct {
+  font-size: 8px;
+  line-height: 9px;
+  color: #d9ccff;
+  min-width: 30px;
+  text-align: right;
+}
+
+.st-exp-gain {
+  position: absolute;
+  right: 0;
+  top: -11px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #c9a7ff;
+  text-shadow: 0 0 2px #2a0f4a, 0 0 2px #2a0f4a;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.st-exp-gain.show {
+  animation: exp-gain 1s ease-out;
+}
+
+@keyframes exp-gain {
+  0% { opacity: 0; transform: translateY(3px); }
+  15% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-3px); }
+}
+
+.st-exp {
+  flex: 1;
+  height: 3px;
   background: #1a1410;
   border-radius: 2px;
   overflow: hidden;
@@ -498,7 +538,17 @@ html, body {
   height: 100%;
   width: 0;
   background: #ffd34d;
-  transition: width 0.2s;
+  transition: width 0.4s ease-out;
+}
+
+/* 얻는 순간 0.4초 밝게 */
+.st-exp-fill.gain {
+  animation: exp-bright 0.4s ease-out;
+}
+
+@keyframes exp-bright {
+  0% { background: #fff6c8; box-shadow: 0 0 6px #fff1a8; }
+  100% { background: #ffd34d; box-shadow: none; }
 }
 
 /* ---------- 무예 칸 (공격 단추 왼쪽·위 2줄 × 4칸, src/ui/skillButtons.js, docs/spec/feedback_1021.md 1) ---------- */

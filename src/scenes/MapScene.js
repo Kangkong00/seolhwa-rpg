@@ -41,6 +41,7 @@ import { Hud } from '../ui/hud.js';
 import { AdminPanel } from '../ui/adminPanel.js';
 import { SkillPanel } from '../ui/skillPanel.js';
 import { SkillCommonFx } from './skillCommonFx.js';
+import { floatText } from './progressFx.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -1028,14 +1029,16 @@ export class MapScene extends Phaser.Scene {
       }
     });
     const { exp, entries } = killRewards(def, this.cfg.testBoost);
-    if (exp) this.gainExp(exp);
+    if (exp) this.gainExp(exp, { x: target.x, y: target.y - def.height - 2 });
     for (const d of this.ground.spawn(target.x, target.y, entries, this.map.grid)) {
       const key = `drop:${d.coins ? 'coins' : d.item}`;
       this.dropViews.set(d.id, new DropView(this, d, d.item ? this.itemDefs[d.item] : null, this.d.economy.groundDrops, this.d.getPixelRatio(), this.cfg.shadow, key, this.dropTexRes()));
     }
   }
 
-  gainExp(amount) {
+  // at: "+N 경험" 글자를 띄울 자리(몬스터 머리 위, 없으면 주인공 머리 위)
+  gainExp(amount, at = null) {
+    this.showExpGain(amount, at || { x: this.pos.x, y: this.pos.y - this.cfg.player.height - 10 });
     const eco = this.d.economy;
     const before = this.progress.level;
     const gained = addExp(this.progress, amount, eco.levels);
@@ -1060,6 +1063,22 @@ export class MapScene extends Phaser.Scene {
       this.save();
     }
     this.refreshStatus();
+  }
+
+  // 얻은 경험치 글자(docs/spec/feedback_1021.md 3): 데미지 숫자보다 delayMs 늦게 떠올라 holdMs 머묾, 시험 배율이면 옆에 작게 "×3"
+  showExpGain(amount, at) {
+    const c = this.cfg.expText;
+    const boost = this.cfg.testBoost && this.cfg.testBoost.enabled && this.cfg.testBoost.exp !== 1 ? `×${this.cfg.testBoost.exp}` : '';
+    const pr = this.d.getPixelRatio();
+    this.statusPanel.flashExp(amount);
+    this.time.delayedCall(c.delayMs, () => {
+      const style = { color: c.color, stroke: c.stroke, fontPx: c.fontPx, floatPx: c.floatPx, holdMs: c.holdMs, fadeMs: c.fadeMs };
+      const t = floatText(this, at.x, at.y - c.abovePx, `+${amount} 경험`, style, pr);
+      if (boost) {
+        const b = floatText(this, at.x + t.displayWidth / 2 + 2, at.y - c.abovePx - 2, boost, { ...style, fontPx: c.boostPx }, pr);
+        b.setOrigin(0, 1);
+      }
+    });
   }
 
   // 바닥 물건: 시간 흐름, 가까이 가면 저절로 주움

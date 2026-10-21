@@ -275,7 +275,7 @@ export class NpcMenu {
           const r = turnInQuest(q, quests, equip, itemDefs, this.s.cfg.testBoost);
           if (!r) return this.questTalk(q);
           this.s.sfx.play('learn');
-          if (r.exp) this.s.gainExp(r.exp);
+          if (r.exp) this.s.gainExp(r.exp); // 주인공 머리 위에 "+N 경험"
           this.changed();
           const got = [r.coins ? this.coins(r.coins) : '', r.exp ? `경험치 ${r.exp}` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${itemDefs[id].name} ${n}개`)].filter(Boolean).join(', ');
           this.s.toast.show(`의뢰 「${q.name}」 마침 · ${got}`);

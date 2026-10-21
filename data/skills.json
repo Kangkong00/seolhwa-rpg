@@ -395,6 +395,7 @@
     },
     {
       "id": "p_body",
+      "image": "assets/items/icons/skill_p_body.png",
       "type": "passive",
       "name": "단련된 몸",
       "icon": "身",
@@ -412,6 +413,7 @@
     },
     {
       "id": "p_blade",
+      "image": "assets/items/icons/skill_p_blade.png",
       "type": "passive",
       "name": "검술 숙련",
       "icon": "劍",
@@ -430,6 +432,7 @@
     },
     {
       "id": "p_vital",
+      "image": "assets/items/icons/skill_p_vital.png",
       "type": "passive",
       "name": "급소 노리기",
       "icon": "急",
@@ -448,6 +451,7 @@
     },
     {
       "id": "p_breath",
+      "image": "assets/items/icons/skill_p_breath.png",
       "type": "passive",
       "name": "질긴 숨",
       "icon": "氣",
@@ -467,6 +471,7 @@
     },
     {
       "id": "p_feet",
+      "image": "assets/items/icons/skill_p_feet.png",
       "type": "passive",
       "name": "가벼운 발",
       "icon": "步",
@@ -484,6 +489,7 @@
     },
     {
       "id": "p_iron",
+      "image": "assets/items/icons/skill_p_iron.png",
       "type": "passive",
       "name": "철갑 기운",
       "icon": "鐵",
@@ -501,6 +507,7 @@
     },
     {
       "id": "p_momentum",
+      "image": "assets/items/icons/skill_p_momentum.png",
       "type": "passive",
       "name": "기세",
       "icon": "勢",
@@ -519,6 +526,7 @@
     },
     {
       "id": "p_master",
+      "image": "assets/items/icons/skill_p_master.png",
       "type": "passive",
       "name": "무예 달인",
       "icon": "達",
@@ -536,6 +544,7 @@
     },
     {
       "id": "p_tiger",
+      "image": "assets/items/icons/skill_p_tiger.png",
       "type": "passive",
       "name": "산군의 기백",
       "icon": "虎",

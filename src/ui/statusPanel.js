@@ -6,6 +6,8 @@ export class StatusPanel {
     this.hpFill = el.querySelector('.st-hp-fill');
     this.hpText = el.querySelector('.st-hp-text');
     this.expFill = el.querySelector('.st-exp-fill');
+    this.expPct = el.querySelector('.st-exp-pct');
+    this.expGain = el.querySelector('.st-exp-gain');
     this.boost = el.querySelector('.st-boost');
     this.last = '';
   }
@@ -29,6 +31,19 @@ export class StatusPanel {
     this.coins.textContent = coinsText;
     this.hpFill.style.width = `${Math.max(0, Math.min(1, hp / maxHp)) * 100}%`;
     this.hpText.textContent = `${hp} / ${maxHp}`;
-    this.expFill.style.width = `${need ? Math.min(1, exp / need) * 100 : 100}%`;
+    const pct = need ? Math.min(1, exp / need) * 100 : 100;
+    this.expFill.style.width = `${pct}%`;
+    if (this.expPct) this.expPct.textContent = need ? `${pct.toFixed(1)}%` : '최고';
+  }
+
+  // 경험치를 얻은 순간: 막대가 0.4초 밝게 + 오른쪽에 "+N"이 잠깐
+  flashExp(amount) {
+    for (const [el, cls] of [[this.expFill, 'gain'], [this.expGain, 'show']]) {
+      if (!el) continue;
+      el.classList.remove(cls);
+      void el.offsetWidth;
+      el.classList.add(cls);
+    }
+    if (this.expGain) this.expGain.textContent = `+${amount}`;
   }
 }
