@@ -183,15 +183,18 @@ export class AdminPanel {
     })));
     const flag = (key, label) => this.row(label, this.toggleBtn(s.d.admin[key], () => {
       s.d.admin[key] = !s.d.admin[key];
-      s.hud.setAdminWarn(s.d.admin.noDie || s.d.admin.oneHit);
+      if (key === 'noCooldown' && s.d.admin.noCooldown) s.cooldowns.left = {};
+      s.hud.setAdminWarn(s.d.admin.noDie || s.d.admin.oneHit || s.d.admin.noCooldown);
       this.note(`${label} ${s.d.admin[key] ? '켬' : '끔'} (저장 안 됨, 다시 열면 꺼짐)`);
     }));
     body.appendChild(flag('noDie', '안 죽기'));
     body.appendChild(flag('oneHit', '한 방'));
+    body.appendChild(flag('noCooldown', '무예 기다림 없음'));
     const left = s.skills.filter((sk) => !s.learned.includes(sk.id)).length;
     const learnAll = this.btn(left ? `모두 배우기 (${left})` : '모두 배움', () => {
       let n = 0;
-      for (const sk of s.skills) if (grantSkill(sk, s.learned)) { n++; s.autoSlotSkill(sk.id); }
+      for (const sk of s.skills) if (grantSkill(sk, s.learned)) n++;
+      fill(0); // 배운 액티브 1~8번째로 칸을 채움
       s.refreshAfterPassive();
       s.refreshSkills();
       s.save();
@@ -199,6 +202,19 @@ export class AdminPanel {
     });
     learnAll.disabled = !left;
     body.appendChild(this.row('무예', learnAll));
+    // 액티브가 칸보다 많아 시험하기 쉽게: 배운 액티브를 from번째부터 순서대로 칸에 넣고 남는 칸은 비움
+    const fill = (from) => {
+      const act = s.skills.filter((k) => k.type !== 'passive' && s.learned.includes(k.id)).map((k) => k.id).slice(from, from + s.skillSlots.length);
+      for (let i = 0; i < s.skillSlots.length; i++) s.skillSlots[i] = act[i] || null;
+      s.refreshSkills();
+      s.save();
+      return act.length;
+    };
+    const n = s.skillSlots.length;
+    const total = s.skills.filter((k) => k.type !== 'passive').length;
+    body.appendChild(this.row('무예 칸',
+      this.btn(`칸 채우기 1~${n}`, () => this.note(`배운 액티브 ${fill(0)}개를 칸에 넣었습니다`)),
+      this.btn(`칸 채우기 ${n + 1}~${total}`, () => this.note(`배운 액티브 ${fill(n)}개를 칸에 넣었습니다`))));
   }
 
   // ---------- 물건 ----------
@@ -342,6 +358,13 @@ export class AdminPanel {
       body.appendChild(stepper('coins', '엽전', 1, 1, 10));
       body.appendChild(stepper('dropChance', '전리품 확률', 0.5, 1, 5));
     }
+    body.appendChild(el('div', 'ad-group', '화면'));
+    // 빛 번짐(docs/spec/feedback_1021.md 추가 수정): 이번 실행만. 기본은 fxCommon.bloom, 아이폰·사파리는 자동으로 끔
+    const fx = s.skillFx;
+    body.appendChild(this.row('빛 번짐 (무예)', this.toggleBtn(fx.bloomWanted, () => {
+      s.d.admin.bloom = !fx.bloomWanted;
+      this.note(`빛 번짐 ${s.d.admin.bloom ? '켬 — 화면이 검게 되면 끄세요' : '끔'} (저장 안 됨)`);
+    })));
     body.appendChild(el('div', 'ad-group', '기타'));
     body.appendChild(this.row('의뢰', this.btn('처음부터', () => {
       resetQuests(s.quests);

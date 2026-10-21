@@ -248,7 +248,7 @@ export class MapScene extends Phaser.Scene {
     this.skillButtons = this.d.skillButtons;
     this.npcMenu = new NpcMenu(this);
     this.adminPanel = this.d.adminPanel;
-    this.hud.setAdminWarn(this.d.admin.noDie || this.d.admin.oneHit);
+    this.hud.setAdminWarn(this.d.admin.noDie || this.d.admin.oneHit || this.d.admin.noCooldown);
     if (this.npcPanel.open) this.setNpcOpen(false); // 맵을 옮기면 창은 닫음
     // 효과음 (Phaser 장면에 이미 'sound'가 있어 sfx 이름으로 둠)
     this.sfx = this.d.sfx;
@@ -1202,7 +1202,8 @@ export class MapScene extends Phaser.Scene {
     const run = SKILL_KINDS[sk.kind];
     if (!run || !run(this, this.fxScaled(sk))) return;
     this.skillFx.start(sk, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
-    this.cooldowns.start(id, sk.cooldownMs * this.stats().cooldownMul); // 칠보 팔찌: 기다림 −
+    // 칠보 팔찌·무예 달인: 기다림 −, 관리자 '무예 기다림 없음'이면 기다리지 않음
+    if (!this.d.admin.noCooldown) this.cooldowns.start(id, sk.cooldownMs * this.stats().cooldownMul);
     this.refreshSkills();
   }
 

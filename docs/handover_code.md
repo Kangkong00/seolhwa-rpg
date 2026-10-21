@@ -72,3 +72,4 @@
 - 10-14~15: 새 그림체 값, 굴 들쥐·쥐왕·족제비·새 맵 3·마을 사람 그림·성황당, 10-15 피드백(무예 연출·숫자·귀환·정보창·능력치·새 무기 데이터).
 - 10-20: 피드백 11가지(정밀 격자 4px·몬스터 걷기·관리자 창·무예 공통 연출·숨 고르기·단추·패시브 9·타격·버리기·몬스터 수).
 - 10-21: 무예 칸 8개(`setSlotCount`, `game.json skillSlots`), 공격 단추 78, 마을 가림 v4(파일만), 경험치 글자(`MapScene.showExpGain`, `game.json expText`)·막대 %(`statusPanel.flashExp`), 무기 `job`.
+- 10-21 밤: 아이폰 평타 검은 화면 → 빛 번짐 기본 끔·무예 중에만(`skillCommonFx.setBloom`·`isAppleWebkit`), 관리자 칸 채우기·무예 기다림 없음. 함정: 이 환경엔 Playwright webkit이 없음(아이폰 화면 문제는 강콩 확인).

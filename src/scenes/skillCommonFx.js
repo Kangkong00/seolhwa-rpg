@@ -2,11 +2,21 @@
 // 시전: 화면 어둡게 · 빛 알갱이가 빨려 듦(기 모으기) · 발밑 원 문양 · 무예 이름 큰 글씨 · 화면 무예 색 섬광
 // 실행: 흰 중심 빛 + 무예 색 몸통 + 바깥 잔광 3겹 · 알갱이(무예마다 모양) · 땅 충격파 고리 · 잔상(돌진·연속)
 // 맞힘: 큰 섬광 + X자 베인 자국 + 파편 · 칠성검무: 더 어둡게 + 하늘의 북두칠성 + 마지막 흰 섬광·느린 화면
-// 빛 번짐(bloom)은 이 층(this.layer)에만, fxCommon.bloom으로 끔. 알갱이는 화면에 동시 maxParticles개까지.
+// 빛 번짐(bloom)은 이 층(this.layer)에만, 무예를 쓰는 동안에만 켬. 평타 파편 등 무예 밖에서 그리는 것은 일반 층.
+// 기본은 fxCommon.bloom(false). 아이폰·사파리는 켜 두어도 자동으로 끔(10-21 아이폰에서 평타마다 화면이 검게 된 일).
+// 관리자 창 설정 탭 '빛 번짐'으로 이번 실행만 켜고 끔(scene.d.admin.bloom). 알갱이는 화면에 동시 maxParticles개까지.
 import { hitStar, slashMark } from './impactFx.js';
 import { afterimage } from './skillFx.js';
 
 const hex = (c) => Phaser.Display.Color.HexStringToColor(c).color;
+
+// 아이폰·아이패드(모든 브라우저가 WebKit)와 맥 사파리
+export function isAppleWebkit() {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/.test(ua)) return true;
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true; // 아이패드 데스크톱 모드
+  return /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|Firefox|Android/.test(ua);
+}
 const NAME_FONT = '"Nanum Brush Script", "Gungsuh", "AppleMyungjo", "Apple SD Gothic Neo", serif';
 
 // 무예 kind마다 알갱이 모양: cloud 구름(둥근), flame 불꽃, star 별, petal 꽃잎·잎, spark 불티(마름모)
@@ -20,15 +30,7 @@ export class SkillCommonFx {
     this.cast = null;
     // 무예 연출 층: 주인공·몬스터 위, 숫자(1e6) 아래
     this.layer = scene.add.layer().setDepth(1e6 - 3);
-    this.bloom = null;
-    if (cfg.bloom && Phaser.Actions.AddEffectBloom) {
-      try {
-        const b = cfg.bloomCfg || {};
-        this.bloom = Phaser.Actions.AddEffectBloom(this.layer, { threshold: b.threshold, blurRadius: b.blurRadius, blurSteps: b.blurSteps, blendAmount: b.amount });
-      } catch {
-        this.bloom = null; // 빛 번짐을 못 쓰는 기기: 없이
-      }
-    }
+    this.bloom = null; // 빛 번짐 필터(처음 켤 때 만듦)
     this.layer.setVisible(false);
     // 화면 어둡게(화면에 붙음)
     const cam = scene.cameras.main;
@@ -37,7 +39,32 @@ export class SkillCommonFx {
     this.sky = null;
   }
 
+  // 빛 번짐을 쓸지: 관리자 창에서 고른 값이 있으면 그것, 없으면 fxCommon.bloom이고 아이폰·사파리가 아닐 때만
+  get bloomWanted() {
+    const a = this.scene.d.admin;
+    if (a && typeof a.bloom === 'boolean') return a.bloom;
+    return !!this.cfg.bloom && !isAppleWebkit();
+  }
+
+  // 빛 번짐 필터를 켜고 끔(무예 시작에 켜고, 끝나면 끔)
+  setBloom(on) {
+    if (on && !this.bloom && Phaser.Actions.AddEffectBloom) {
+      try {
+        const b = this.cfg.bloomCfg || {};
+        this.bloom = Phaser.Actions.AddEffectBloom(this.layer, { threshold: b.threshold, blurRadius: b.blurRadius, blurSteps: b.blurSteps, blendAmount: b.amount });
+      } catch {
+        this.bloom = []; // 빛 번짐을 못 쓰는 기기: 없이
+      }
+    }
+    for (const b of this.bloom || []) if (b.parallelFilters) b.parallelFilters.active = on;
+  }
+
+  // 무예를 쓰는 동안만 빛 번짐 층에 넣고, 평타 파편처럼 무예 밖에서 그리는 것은 일반 층에
   add(obj) {
+    if (!this.cast) {
+      obj.setDepth(1e6 - 3);
+      return obj;
+    }
     this.layer.add(obj);
     this.layer.setVisible(true);
     obj.once('destroy', () => {
@@ -53,6 +80,7 @@ export class SkillCommonFx {
     const ult = sk.kind === 'ultimate';
     const pos = { x: s.pos.x, y: s.pos.y };
     this.cast = { sk, color, t: 0, holdMs: ult ? sk.durationMs + 400 : c.holdMs, ult };
+    this.setBloom(this.bloomWanted);
     s.tweens.killTweensOf(this.dim);
     s.tweens.add({ targets: this.dim, alpha: ult ? c.ultimateDim : c.dim, duration: c.dimInMs });
     this.screenFlash(color, c.flashAlpha, c.flashMs);
@@ -71,6 +99,7 @@ export class SkillCommonFx {
     k.t += dt;
     if (k.t < k.holdMs || busy) return;
     this.cast = null;
+    this.setBloom(false);
     const s = this.scene;
     s.tweens.killTweensOf(this.dim);
     s.tweens.add({ targets: this.dim, alpha: 0, duration: this.cfg.dimOutMs });
