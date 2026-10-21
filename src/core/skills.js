@@ -35,7 +35,11 @@ export function grantSkill(skill, learned) {
 }
 
 // ---------- 무예 칸(docs/spec/skills_impact.md 2): 화면 단추 SLOT_COUNT칸, 칸마다 무예 id 또는 null ----------
-export const SLOT_COUNT = 4;
+// 칸 수는 data/game.json skillSlots(docs/spec/feedback_1021.md 1) — 시작할 때 setSlotCount로 넣음
+export let SLOT_COUNT = 8;
+export function setSlotCount(n) {
+  if (Number.isInteger(n) && n > 0) SLOT_COUNT = n;
+}
 
 // 저장된 칸을 정리(배운 무예만, 겹치지 않게). 저장된 칸이 없으면 배운 순서대로 앞에서부터 채움
 export function normalizeSlots(saved, learned, n = SLOT_COUNT) {

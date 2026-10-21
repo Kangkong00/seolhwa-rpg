@@ -1,6 +1,6 @@
-// 공격 버튼 둘레의 무예 칸 4개(PC는 1·2·3·4 키, docs/spec/skills_impact.md 2).
+// 공격 단추 왼쪽·위의 네모 무예 칸 SLOT_COUNT개(2줄 × 4칸, 위 1~4·아래 5~8, PC는 1~8 키, docs/spec/feedback_1021.md 1).
 // 칸에 무엇을 넣을지는 무예창(src/ui/skillPanel.js)에서 고름. 빈칸을 누르면 무예창이 열림.
-// 기다리는 동안은 어둡게 덮고 남은 초를 보여 줌. 칼이 필요한 무예는 맨손이면 흐리게.
+// 기다리는 동안은 어두운 막이 시계 방향으로 걷히고 가운데 남은 초, 다 차면 테두리가 한 번 반짝. 칼이 필요한 무예는 맨손이면 흐리게.
 import { SLOT_COUNT } from '../core/skills.js';
 import { vibrate } from './press.js';
 
@@ -15,6 +15,9 @@ export class SkillButtons {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'skill-btn empty';
+      // 누르는 영역(단추) 안에 보이는 네모(box)
+      const box = document.createElement('span');
+      box.className = 'skill-box';
       const face = document.createElement('span');
       face.className = 'skill-face';
       const cd = document.createElement('div');
@@ -24,7 +27,9 @@ export class SkillButtons {
       const num = document.createElement('span');
       num.className = 'skill-num';
       num.textContent = String(i + 1);
-      b.append(face, cd, t, num);
+      box.append(face, cd, t, num);
+      b.append(box);
+      box.addEventListener('animationend', () => box.classList.remove('ready'));
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -39,7 +44,7 @@ export class SkillButtons {
       b.addEventListener('pointercancel', up);
       b.addEventListener('pointerleave', up);
       container.appendChild(b);
-      this.buttons.push({ b, face, cd, t, id: undefined, last: '' });
+      this.buttons.push({ b, box, face, cd, t, id: undefined, last: '', cooling: false });
     }
     window.addEventListener('keydown', (e) => {
       if (e.repeat || e.target instanceof HTMLInputElement) return;
@@ -86,14 +91,23 @@ export class SkillButtons {
       const sec = left > 0 ? Math.ceil(left / 1000) : 0;
       const ratio = left > 0 ? Math.min(1, left / s.cooldownMs) : 0;
       const noBlade = !!(s && s.needsBlade && !hasBlade);
-      const key = `${sec}|${Math.round(ratio * 40)}|${noBlade}`;
+      const key = `${sec}|${Math.round(ratio * 120)}|${noBlade}`;
       if (key === u.last) return;
       u.last = key;
       u.b.classList.toggle('empty', !s);
       u.b.classList.toggle('locked', noBlade);
       u.b.classList.toggle('cooling', left > 0);
-      u.cd.style.height = `${ratio * 100}%`;
+      // 남은 만큼 어두운 막: 위(12시)에서 시계 방향으로 걷힌 곳은 투명
+      const done = (1 - ratio) * 360;
+      u.cd.style.background = left > 0 ? `conic-gradient(transparent 0deg ${done}deg, rgba(0, 0, 0, 0.62) ${done}deg 360deg)` : 'none';
       u.t.textContent = sec ? String(sec) : '';
+      // 다 차면 테두리 한 번 반짝
+      if (u.cooling && left <= 0 && s) {
+        u.box.classList.remove('ready');
+        void u.box.offsetWidth;
+        u.box.classList.add('ready');
+      }
+      u.cooling = left > 0;
     });
   }
 }

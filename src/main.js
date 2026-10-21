@@ -4,6 +4,7 @@ import { loadSave } from './save/localSave.js';
 import { Joystick } from './ui/joystick.js';
 import { MoveInput } from './ui/input.js';
 import { SoundPlayer } from './audio/sound.js';
+import { setSlotCount } from './core/skills.js';
 
 async function fetchJson(url) {
   const res = await fetch(url, { cache: 'no-cache' });
@@ -48,6 +49,7 @@ async function boot() {
     fetchJson('data/npcs.json'),
     fetchJson('data/quests.json'),
   ]);
+  setSlotCount(game.skillSlots); // 무예 칸 수
   // 머리 장비 위치(옷·자세별, 모자 종류와 무관)
   const headAnchors = await fetchJson(items.headAnchors);
   // 레벨업 붓글씨 글꼴을 미리 받아 둠(못 받으면 기본 글꼴로 그려짐)
