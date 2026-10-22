@@ -1,5 +1,6 @@
 // 왼쪽 위: 레벨, 체력 막대(숫자), 가는 경험치 막대, 엽전(coins.png 아이콘 + 글자), 시험 배율이 켜져 있으면 "시험 ×3".
 import { formatNum } from './format.js';
+import { itemIcon } from './itemIcon.js';
 export class StatusPanel {
   constructor(el) {
     this.level = el.querySelector('.st-level');
@@ -10,6 +11,7 @@ export class StatusPanel {
     this.expPct = el.querySelector('.st-exp-pct');
     this.expGain = el.querySelector('.st-exp-gain');
     this.boost = el.querySelector('.st-boost');
+    this.buff = el.querySelector('.st-buff');
     this.last = '';
   }
 
@@ -21,6 +23,18 @@ export class StatusPanel {
     this.lastBoost = key;
     this.boost.hidden = !on;
     if (on) this.boost.textContent = `시험 ×${boost.exp}`;
+  }
+
+  // 술 버프(docs/spec/items_fix_1022.md): 체력바 옆에 작은 아이콘 + 남은 초. def가 없으면 숨김
+  setBuff(def, sec) {
+    if (!this.buff) return;
+    this.buff.hidden = !def;
+    if (!def) return;
+    if (this.buffId !== def.id) {
+      this.buffId = def.id;
+      this.buff.replaceChildren(itemIcon(def), document.createElement('span'));
+    }
+    this.buff.lastChild.textContent = `${sec}`;
   }
 
   // need = 다음 레벨까지 필요한 경험치(최고 레벨이면 null)

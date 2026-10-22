@@ -60,7 +60,8 @@ export class EquipmentPanel {
   }
 
   // state: { equipped, bag: [{ id, n }], coins }, coinsText: 엽전 표시
-  render(state, message = '', coinsText = '', totalsText = '', level = Infinity) {
+  // cooling: { 물건 id: 남은 초 } — 기다림 묶음이 기다리는 중인 물건은 어둡게 + 가운데 남은 초
+  render(state, message = '', coinsText = '', totalsText = '', level = Infinity, cooling = {}) {
     this.totals.textContent = totalsText;
     this.bagTitle.textContent = coinsText ? `가방 · ${coinsText}` : '가방';
     this.slotRow.replaceChildren(
@@ -86,7 +87,17 @@ export class EquipmentPanel {
       p.textContent = '가방이 비어 있습니다';
       this.bagGrid.replaceChildren(p);
     } else {
-      this.bagGrid.replaceChildren(...state.bag.map((e, i) => this.cell(this.itemDefs[e.id], this.itemDefs[e.id].name, { index: String(i) }, e.n)));
+      this.bagGrid.replaceChildren(...state.bag.map((e, i) => {
+        const b = this.cell(this.itemDefs[e.id], this.itemDefs[e.id].name, { index: String(i) }, e.n);
+        if (cooling[e.id]) {
+          b.classList.add('cooling');
+          const t = document.createElement('span');
+          t.className = 'cool-sec';
+          t.textContent = String(cooling[e.id]);
+          b.appendChild(t);
+        }
+        return b;
+      }));
     }
     this.info.textContent = message || '물건을 누르면 정보창(끼기·벗기·쓰기)이 열립니다';
   }

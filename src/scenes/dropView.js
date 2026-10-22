@@ -85,19 +85,13 @@ export class DropView {
       }
     }
     this.icon = icon;
-    // 아이콘 아래 이름(엽전은 `3푼`)
-    this.label = scene.add
-      .text(0, s / 2 + 1, d.coins ? `${d.coins}푼` : def ? def.name : '', {
-        fontFamily: FONT,
-        fontSize: `${cfg.labelFontPx}px`,
-        fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: '#2a1c10',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5, 0)
-      .setResolution(pixelRatio * 2);
-    this.box.add([icon, this.label]);
+    // 아이콘 아래 이름(엽전은 `3푼`): 보일 때 처음 만듦(setLabelVisible) — 여러 마리를 한꺼번에 쓰러뜨려
+    // 겹친 물건은 이름을 하나만 보이므로, 안 보일 이름 글자까지 한꺼번에 만들지 않게(docs/spec/feedback_1022.md 10 감시)
+    this.labelText = d.coins ? `${d.coins}푼` : def ? def.name : '';
+    this.labelY = s / 2 + 1;
+    this.pixelRatio = pixelRatio;
+    this.label = null;
+    this.box.add(icon);
     // 드문 것: 금색 테두리 + 은은한 반짝임
     if (this.rare) {
       this.spark = scene.add.image(s * 0.32, -s * 0.32, ensureSparkleTexture(scene)).setDisplaySize(9, 9).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
@@ -129,7 +123,21 @@ export class DropView {
   }
 
   setLabelVisible(v) {
-    this.label.setVisible(v);
+    if (v && !this.label && this.box.active && !this.picked) {
+      this.label = this.scene.add
+        .text(0, this.labelY, this.labelText, {
+          fontFamily: FONT,
+          fontSize: `${this.cfg.labelFontPx}px`,
+          fontStyle: 'bold',
+          color: '#ffffff',
+          stroke: '#2a1c10',
+          strokeThickness: 3,
+        })
+        .setOrigin(0.5, 0)
+        .setResolution(this.pixelRatio * 2);
+      this.box.add(this.label);
+    }
+    if (this.label) this.label.setVisible(v);
   }
 
   update() {
@@ -145,7 +153,8 @@ export class DropView {
   pickup(tx, ty) {
     this.scene.tweens.killTweensOf(this.box);
     if (this.shadow) this.shadow.destroy();
-    this.label.setVisible(false);
+    this.picked = true;
+    if (this.label) this.label.setVisible(false);
     this.scene.tweens.add({
       targets: this.box,
       x: tx,

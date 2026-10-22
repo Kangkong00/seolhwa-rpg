@@ -7,7 +7,7 @@ import { questStage, acceptQuest, turnInQuest } from '../core/quests.js';
 import { countItem } from '../core/equipment.js';
 import { itemIcon, charIcon } from '../ui/itemIcon.js';
 import { josa } from '../ui/josa.js';
-import { openItemInfo } from './itemInfoView.js';
+import { openItemInfo, useText } from './itemInfoView.js';
 
 const MENU_LABEL = { buy: '사기', sell: '팔기', learn: '무예 배우기', talk: '대화' };
 
@@ -57,7 +57,8 @@ export class NpcMenu {
   // ---------- 사기 ----------
   buy(message = '') {
     const { itemDefs, equip } = this.s;
-    const goods = (this.npc.shop && this.npc.shop.sells) || [];
+    // 숨은 물건(secret)은 가게 목록에 두지 않음(docs/spec/secrets.md)
+    const goods = ((this.npc.shop && this.npc.shop.sells) || []).filter((g) => itemDefs[g.id] && !itemDefs[g.id].secret);
     this.panel.render({
       title: `${this.npc.name} · 사기`,
       text: message || `가진 엽전: ${this.coins(equip.coins)}`,
@@ -83,10 +84,7 @@ export class NpcMenu {
   }
 
   useText(def) {
-    if (!def.use) return '';
-    if (def.use.healFull) return '체력 전부 회복';
-    if (def.use.heal) return `체력 ${def.use.heal} 회복`;
-    return '';
+    return useText(def);
   }
 
   // 값 글자: "2냥 + 쥐가죽 5"

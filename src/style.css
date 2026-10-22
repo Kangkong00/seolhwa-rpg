@@ -1642,3 +1642,63 @@ button {
   height: 26px;
   font-size: 14px;
 }
+
+/* 체력바 옆 술 아이콘·남은 초, 가방에서 기다리는 물건(docs/spec/items_fix_1022.md) */
+.st-hp-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.st-hp-row .st-hp {
+  flex: 1;
+}
+
+.st-buff {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #ffd98a;
+}
+
+.st-buff[hidden] {
+  display: none;
+}
+
+.st-buff img,
+.st-buff .icon-text {
+  width: 16px;
+  height: 16px;
+}
+
+.st-buff .icon-text {
+  overflow: hidden;
+  font-size: 7px !important;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 3px;
+  background: rgba(120, 80, 30, 0.8);
+}
+
+.equip-cell.cooling img,
+.equip-cell.cooling .icon-text {
+  filter: brightness(0.35);
+}
+
+.equip-cell .cool-sec {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30%;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
+  pointer-events: none;
+}
+
+.equip-cell.cooling {
+  position: relative;
+}

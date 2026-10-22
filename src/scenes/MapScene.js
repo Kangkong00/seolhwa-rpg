@@ -49,6 +49,7 @@ import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from 
 import { formatNum } from '../ui/format.js';
 import { artCrescent, artTriple, artStarBurst, ArtWhirl } from './skillArt.js';
 import { DevWatch } from './devWatch.js';
+import { createUseState, tickUse, canUse, applyUse, drinkMul, groupLeft, onDeath } from '../core/consumables.js';
 
 // 그림을 색으로 물들임(곱하기 — 회색이면 색이 빠지고 어두워짐), 투명한 곳은 그대로
 function tintImage(img, color) {
@@ -140,6 +141,7 @@ export class MapScene extends Phaser.Scene {
     this.act = null; // 오래 걸리는 무예(받아치기 자세 등)
     this.shotG = null; // 여우불 그림판(예전 맵 것은 장면이 끝날 때 지워짐 — 새로 만듦)
     this.shadeOn = false; // 무예 시전 어둡게 물들임
+    this.expBatch = null; // 한꺼번에 얻은 경험치 합치기
     this.assistSlide = null; // 맞히기 도움으로 다가가는 중 { dir, left, speed }
     this.hpFill = null; // 레벨업 체력바 차오름
     this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
@@ -150,6 +152,10 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.progress) this.d.progress = createProgress(save && save.progress);
     if (!this.d.learned) this.d.learned = Array.isArray(save && save.skills) ? save.skills.filter((id) => this.d.skills.skills.some((s) => s.id === id)) : [];
     if (!this.d.quests) this.d.quests = save && save.quests && typeof save.quests === 'object' ? { ...save.quests } : {};
+    // 쓰는 물건: 기다림 묶음·술(맵을 옮겨도 이어짐 — this.d, 저장은 안 함), 산삼 먹은 횟수·찾은 비밀(저장)
+    if (!this.d.useState) this.d.useState = createUseState();
+    if (this.d.sansamEaten === undefined) this.d.sansamEaten = Math.max(0, Math.floor((save && save.sansamEaten) || 0));
+    if (!this.d.secretsFound) this.d.secretsFound = Array.isArray(save && save.secretsFound) ? [...save.secretsFound] : [];
     if (!this.d.cooldowns) this.d.cooldowns = new Cooldowns();
     // 무예 칸 4개(무예창에서 고름, 저장됨). 저장이 없으면 배운 순서대로
     if (!this.d.skillSlots) this.d.skillSlots = normalizeSlots(save && save.skillSlots, this.d.learned.filter((id) => this.isActiveSkill(id)));
@@ -379,10 +385,11 @@ export class MapScene extends Phaser.Scene {
 
   renderBag(message = '') {
     const st = this.stats();
-    const pa = st.passiveAttack ? ` (+${st.passiveAttack} 패시브)` : '';
+    const pa = (st.passiveAttack ? ` (+${st.passiveAttack} 패시브)` : '') + (st.extraAttack ? ` (+${st.extraAttack} 술)` : '');
     const ps = st.passiveSpeed ? ` (+${Math.round(st.passiveSpeed * 100)}% 패시브)` : '';
     const totals = `공격력 ${formatNum(st.attack)}${pa} · 방어력 ${formatNum(st.defense)} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}${ps}`;
-    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals, this.progress.level);
+    this.bagMessage = message;
+    this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals, this.progress.level, this.bagCooling());
   }
 
   // 조이스틱·공격·무예 버튼 보이기(창이 열려 있으면 숨김)
@@ -419,23 +426,74 @@ export class MapScene extends Phaser.Scene {
     if (def && def.use) this.eatItem(bagIndex, def);
   }
 
-  // 먹을 것(주먹밥·탕약): 체력 회복 / 귀환 부적: 1초 동안 빛난 뒤 마을 성황당 앞으로(startRecall)
+  // 먹을 것·술(docs/spec/items_fix_1022.md): 레벨·기다림 묶음·체력 가득은 규칙(core/consumables canUse)이 막음.
+  // 회복(고정·최대 체력 %·전부)은 healPlayer(팔찌 회복 배율 곱함), 술은 한 번에 하나(새 술로 바뀜), 산삼은 최대 체력 영구 +.
+  // 귀환 부적: 1초 동안 빛난 뒤 마을 성황당 앞으로(startRecall)
   eatItem(bagIndex, def) {
     if (def.use.returnTo) {
       this.setBagOpen(false);
       this.startRecall();
       return;
     }
-    if (this.player.hp >= this.player.maxHp) {
-      this.renderBag('체력이 가득합니다');
+    const us = this.d.useState;
+    const c = canUse(us, def, { level: this.progress.level, hp: this.player.hp, maxHp: this.player.maxHp, sansamEaten: this.d.sansamEaten });
+    if (!c.ok) {
+      this.renderBag(`${def.name}: ${c.reason}`);
       return;
     }
-    const use = useFromBag(this.equip, this.itemDefs, bagIndex);
+    useFromBag(this.equip, this.itemDefs, bagIndex);
+    const r = applyUse(us, def, { maxHp: this.player.maxHp, sansamEaten: this.d.sansamEaten });
+    const msg = [];
+    if (r.maxHpAdd) {
+      this.d.sansamEaten += 1;
+      if (def.secret && !this.d.secretsFound.includes(def.secretKey || def.id)) this.d.secretsFound.push(def.secretKey || def.id);
+      this.player.maxHp = this.maxHpNow();
+      msg.push(`최대 체력 +${r.maxHpAdd}`);
+    }
     const before = this.player.hp;
-    this.healPlayer(use.healFull ? this.player.maxHp : use.heal);
-    this.sfx.play('heal');
-    this.renderBag(`${josa(def.name, '을', '를')} 먹었습니다 (체력 +${this.player.hp - before})`);
+    if (r.heal) {
+      this.healPlayer(r.heal === Infinity ? this.player.maxHp : r.heal);
+      this.sfx.play('heal');
+    }
+    if (this.player.hp > before) msg.push(`체력 +${formatNum(this.player.hp - before)}`);
+    if (r.buff) {
+      msg.push(`공격력 +${Math.round(r.buff.attackMul * 100)}% ${Math.round(r.buff.left / 1000)}초`);
+      this.sfx.play('learn');
+      this.refreshStatus();
+    }
+    this.renderBag(`${josa(def.name, '을', '를')} ${def.use.buff ? '마셨습니다' : '먹었습니다'}${msg.length ? ` (${msg.join(', ')})` : ''}`);
     this.save();
+  }
+
+  // 체력바 옆 술 아이콘·남은 초, 가방이 열려 있으면 기다리는 물건의 남은 초(바뀔 때만 다시 그림)
+  updateUseView() {
+    const us = this.d.useState;
+    const dk = us.drink;
+    const key = dk ? `${dk.id}|${Math.ceil(dk.left / 1000)}` : '';
+    if (key !== this.drinkKey) {
+      this.drinkKey = key;
+      this.statusPanel.setBuff(dk ? this.itemDefs[dk.id] : null, dk ? Math.ceil(dk.left / 1000) : 0);
+      if (!dk || !this.drinkShown) this.refreshStatus(); // 술이 끝나면 공격력 표시도 바뀜
+      this.drinkShown = !!dk;
+    }
+    if (this.equipPanel.open) {
+      const ck = Object.entries(us.groups).map(([g, v]) => `${g}${Math.ceil(v / 1000)}`).join('|');
+      if (ck !== this.coolKey) {
+        this.coolKey = ck;
+        this.renderBag(this.bagMessage || '');
+      }
+    }
+  }
+
+  // 가방의 물건마다 남은 기다림 초(묶음이 기다리는 중인 것만)
+  bagCooling() {
+    const out = {};
+    for (const e of this.equip.bag) {
+      const u = this.itemDefs[e.id] && this.itemDefs[e.id].use;
+      const left = u ? groupLeft(this.d.useState, u.cooldownGroup) : 0;
+      if (left > 0) out[e.id] = Math.ceil(left / 1000);
+    }
+    return out;
   }
 
   // small: 조금씩 차는 회복(숨 고르기 이어 채우기·질긴 숨) — 숫자를 바로 띄우지 않고 모아 healGatherMs마다 한 번(flushHeal)
@@ -605,6 +663,8 @@ export class MapScene extends Phaser.Scene {
       skills: [...this.learned],
       skillSlots: [...this.skillSlots],
       quests: { ...this.quests },
+      sansamEaten: this.d.sansamEaten,
+      secretsFound: [...this.d.secretsFound],
     });
   }
 
@@ -1012,7 +1072,7 @@ export class MapScene extends Phaser.Scene {
   // 낀 장비 전체 능력치 { attack, defense, speedMul } — 옷 6종 모두 무기 자세가 있어 무기 공격력 그대로(2026-10-18)
   // + 배운 패시브(docs/spec/feedback_1020.md 8), 기세가 켜져 있으면 공격력 +
   stats() {
-    return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels, this.passive(), this.momentumMs > 0);
+    return totalStats(this.equip.equipped, this.itemDefs, this.weaponDefs, this.cfg.attack.damage, this.progress.level, this.d.economy.levels, this.passive(), this.momentumMs > 0, drinkMul(this.d.useState));
   }
 
   // 배운 패시브 효과 합(배운 수가 바뀔 때만 다시 셈)
@@ -1052,7 +1112,13 @@ export class MapScene extends Phaser.Scene {
     if (!eq) return base;
     const defs = this.itemDefs || Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
     const eqHp = Object.values(eq.equipped).reduce((a, id) => a + ((id && defs[id] && defs[id].stats && defs[id].stats.maxHp) || 0), 0);
-    return Math.round((base + eqHp) * (1 + this.passive().maxHpMul)); // 단련된 몸: 최대 체력 +10%
+    return Math.round((base + eqHp + this.permanentHp(defs)) * (1 + this.passive().maxHpMul)); // 단련된 몸: 최대 체력 +10%
+  }
+
+  // 영구 최대 체력(산삼: 먹은 횟수 × maxHpAdd, docs/spec/items_fix_1022.md)
+  permanentHp(defs = this.itemDefs) {
+    const sansam = defs && Object.values(defs).find((d) => d.use && d.use.maxHpAdd);
+    return (this.d.sansamEaten || 0) * ((sansam && sansam.use.maxHpAdd) || 0);
   }
 
   // 레벨 데미지 보너스(레벨마다 +damagePerLevel, 정수 부분만)
@@ -1140,9 +1206,16 @@ export class MapScene extends Phaser.Scene {
     const boost = this.cfg.testBoost && this.cfg.testBoost.enabled && this.cfg.testBoost.exp !== 1 ? `×${this.cfg.testBoost.exp}` : '';
     const pr = this.d.getPixelRatio();
     this.statusPanel.flashExp(amount);
+    // 기다리는 delayMs 안에 또 얻으면(여러 마리를 한꺼번에 쓰러뜨림) 합쳐서 한 번만 — 처음 자리에 합계
+    if (this.expBatch) {
+      this.expBatch.amount += amount;
+      return;
+    }
+    const batch = (this.expBatch = { amount });
     this.time.delayedCall(c.delayMs, () => {
+      this.expBatch = null;
       const style = { color: c.color, stroke: c.stroke, fontPx: c.fontPx, floatPx: c.floatPx, holdMs: c.holdMs, fadeMs: c.fadeMs };
-      const t = floatText(this, at.x, at.y - c.abovePx, `+${formatNum(amount)} 경험`, style, pr);
+      const t = floatText(this, at.x, at.y - c.abovePx, `+${formatNum(batch.amount)} 경험`, style, pr);
       if (boost) {
         const b = floatText(this, at.x + t.displayWidth / 2 + 2, at.y - c.abovePx - 2, boost, { ...style, fontPx: c.boostPx }, pr);
         b.setOrigin(0, 1);
@@ -1455,6 +1528,7 @@ export class MapScene extends Phaser.Scene {
   // 쓰러짐: 화면이 어두워진 뒤 마을 시작 위치에서 체력 가득 차서 다시 시작 (임시)
   die() {
     this.dead = true;
+    onDeath(this.d.useState); // 쓰러지면 술은 깸(기다림 묶음은 그대로)
     this.transitioning = true;
     const cam = this.cameras.main;
     cam.fadeOut(this.cfg.playerHit.deathFadeMs, 40, 0, 0);
@@ -1708,6 +1782,8 @@ export class MapScene extends Phaser.Scene {
     this.cooldowns.update(dt);
     this.updateRecovery(dt);
     this.devWatch.update(dt);
+    tickUse(this.d.useState, dt);
+    this.updateUseView();
     this.skillFx.update(dt, !!(this.act || this.spin || (this.swing && this.swing.mods)));
     // 관리자 창·무예창이 열려 있으면 게임 입력을 막음(docs/spec/feedback_1020.md 3)
     const modal = !!((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open));

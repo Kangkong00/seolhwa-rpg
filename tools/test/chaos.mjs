@@ -1,5 +1,5 @@
 // 무작위 자동 시험(docs/spec/feedback_1022.md 10): 레벨 40 + 무예 모두 배우고, 정해진 시간 동안
-// 무작위로 걷기·평타·무예 13개·물건 쓰기·맵 옮기기·맞기(가끔 쓰러짐)를 섞어 돌림.
+// 무작위로 걷기·평타·무예 13개·물건 쓰기(약·술·산삼)·맵 옮기기·맞기(가끔 쓰러짐)를 섞어 돌림.
 // 1초마다 ① 화면 글자 수 ② 체력·공격력·기다림·몬스터 값이 NaN·음수·무한대인지 ③ 콘솔 오류·경고를 기록해 표로.
 // 쓰는 법: python3 -m http.server 8123 & 을 켠 뒤 node tools/test/chaos.mjs [초=120] [씨앗=1]
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
@@ -48,7 +48,9 @@ const act = (name, arg) => page.evaluate(([name, arg]) => {
     case 'attack': s.attackButton.pressedOnce = true; return 'attack';
     case 'skill': { const id = active[Math.floor(arg * active.length)]; s.cooldowns.left[id] = 0; s.useSkill(id); return `skill:${id}`; }
     case 'item': {
-      const id = arg < 0.5 ? 'food_riceball' : 'med_tangyak';
+      // 약·술·산삼(docs/spec/items_fix_1022.md): 기다림 묶음에 걸리면 안 쓰이는 것도 그대로 섞음
+      const pool = ['food_riceball', 'med_tangyak', 'med_insam', 'med_nogyong', 'drink_takju', 'drink_yakju', 'drink_songsun', 'med_sansam'];
+      const id = pool[Math.floor(arg * pool.length)];
       if (!s.itemDefs[id]) return 'noitem';
       if (!s.equip.bag.some((e) => e.id === id)) s.equip.bag.push({ id, n: 3 });
       s.player.hp = Math.max(1, Math.floor(s.player.hp * 0.5));

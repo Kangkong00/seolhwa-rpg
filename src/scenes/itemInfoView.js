@@ -6,9 +6,22 @@ import { formatNum } from '../ui/format.js';
 
 const SLOT_KIND = { weapon: '무기', outfit: '옷', head: '머리', arms: '팔', feet: '발', wrist: '팔찌' };
 
+// 쓰는 물건 효과 한 줄(가게·정보창 공용). 숨은 물건(산삼)은 설명만 — 효과는 적지 않음
+export function useText(def) {
+  const u = def && def.use;
+  if (!u || def.secret) return '';
+  const cd = u.cooldownMs ? ` · 기다림 ${u.cooldownMs / 1000}초` : '';
+  if (u.buff) return `공격력 +${Math.round(u.buff.attackMul * 100)}% ${Math.round(u.buff.ms / 1000)}초 (술은 한 번에 하나)`;
+  if (u.healRatio) return `최대 체력의 ${Math.round(u.healRatio * 100)}% 회복${cd}`;
+  if (u.healFull) return `체력 전부 회복${cd}`;
+  if (u.heal) return `체력 ${u.heal} 회복${cd}`;
+  return '';
+}
+
 export function kindLabel(def) {
   if (def.slot) return SLOT_KIND[def.slot] || '장비';
   if (def.use && def.use.returnTo) return '쓰는 것';
+  if (def.use && def.use.buff) return '술';
   if (def.use) return '먹을거리';
   return '전리품';
 }
@@ -62,7 +75,9 @@ export function itemStats(s, def) {
 export function itemDesc(s, def) {
   const lines = [];
   if (def.desc) lines.push(def.desc);
-  if (!def.slot && !def.use) {
+  const ut = useText(def);
+  if (ut) lines.push(ut);
+  if (!def.slot && !def.use && !def.secret) { // 숨은 물건(secret)은 도움말을 붙이지 않음(docs/spec/secrets.md)
     if (def.anyShop) lines.push('어느 가게에서나 팔 수 있다.');
     else {
       const who = s.d.npcs.npcs.filter((n) => n.shop && (n.shop.buys || []).includes(def.id)).map((n) => n.name);
@@ -98,7 +113,7 @@ export function openItemInfo(s, id, context) {
   const actions = [];
   if (context.type === 'bag') {
     if (def.slot) actions.push({ label: '끼기', primary: true, disabled: !!warn, onClick: () => { s.itemInfo.hide(); s.equipFromBagIndex(context.index); } });
-    else if (def.use) actions.push({ label: '쓰기', primary: true, onClick: () => { s.itemInfo.hide(); s.useBagItem(context.index); } });
+    else if (def.use) actions.push({ label: def.use.buff ? '마시기' : '쓰기', primary: true, disabled: !!warn, onClick: () => { s.itemInfo.hide(); s.useBagItem(context.index); } });
     actions.push({ label: '버리기', onClick: () => openDrop(s, id, 1) });
   } else if (context.type === 'slot') {
     if (def.slot !== 'outfit') actions.push({ label: '벗기', primary: true, onClick: () => { s.itemInfo.hide(); s.takeOff(context.slot); } });

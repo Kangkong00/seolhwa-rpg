@@ -37,7 +37,8 @@ export function passiveSum(skills, learned) {
 // attack 공격력 +, cooldownCut 무예 기다리는 시간 −(최대 0.5)
 // passive: passiveSum() 결과(없으면 패시브 없음), momentum: 기세가 켜져 있는지.
 // attack은 패시브까지 넣은 값, passiveAttack은 그중 패시브로 오른 만큼("공격력 30 (+2 패시브)")
-export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, levelsCfg, passive = null, momentum = false) {
+// extraMul: 술(공격력 ×, docs/spec/items_fix_1022.md) 등 그 밖의 공격력 배율
+export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, levelsCfg, passive = null, momentum = false, extraMul = 1) {
   const sum = { defense: 0, speed: 0, maxHp: 0, healMul: 0, critChance: 0, attack: 0, cooldownCut: 0 };
   for (const id of Object.values(equipped)) {
     const s = (id && itemDefs[id] && itemDefs[id].stats) || {};
@@ -45,14 +46,15 @@ export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, le
   }
   const p = passive || passiveSum([], []);
   const blade = !!(equipped.weapon && weaponDefs[equipped.weapon]);
-  const attackMul = 1 + (blade ? p.bladeAttackMul : 0) + (momentum ? p.momentumAttackMul : 0);
+  const attackMul = (1 + (blade ? p.bladeAttackMul : 0) + (momentum ? p.momentumAttackMul : 0)) * extraMul;
   const base = weaponAttack(equipped.weapon, weaponDefs, baseDamage, level, levelsCfg) + sum.attack;
   const attack = Math.round(base * attackMul);
   return {
     attack,
     attackBonus: sum.attack,
     attackMul,
-    passiveAttack: attack - base,
+    passiveAttack: Math.round(base * (attackMul / extraMul)) - base,
+    extraAttack: attack - Math.round(base * (attackMul / extraMul)), // 술로 오른 만큼
     defense: sum.defense,
     speedMul: 1 + sum.speed + p.speed,
     passiveSpeed: p.speed,
