@@ -6,6 +6,7 @@ import { formatNum } from '../ui/format.js';
 const recent = []; // { x, y, at, n }
 
 // opt: { scale: 글자 크기 배율, stroke: 테두리 색 } — 무예로 맞힌 숫자는 1.3배 + 무예 색 테두리(docs/spec/feedback_1020.md 5)
+//      follow: () => {x, y} — 그 자리(주인공 머리 위)에 붙어 따라 움직임(회복 숫자, docs/spec/feedback_1022.md 10)
 export function showDamage(scene, x, y, amount, fx, pixelRatio, kind = 'hit', opt = null) {
   const base = (fx.numbers && fx.numbers[kind]) || { fontPx: 22, color: '#ffffff' };
   const style = opt && opt.scale ? { ...base, fontPx: Math.round(base.fontPx * opt.scale) } : base;
@@ -28,12 +29,19 @@ export function showDamage(scene, x, y, amount, fx, pixelRatio, kind = 'hit', op
     .setResolution(pixelRatio * 2)
     .setDepth(1e6)
     .setScale(fx.popScale);
-  const texts = [make(kind === 'heal' ? `+${formatNum(amount)}` : formatNum(amount), style.fontPx, y)]; // 1,000이 넘으면 쉼표
+  const texts = [make(kind.startsWith('heal') ? `+${formatNum(amount)}` : formatNum(amount), style.fontPx, y)]; // 1,000이 넘으면 쉼표
   if (style.label) texts.push(make(style.label, style.labelPx || 14, y - style.fontPx * 0.95));
+  const follow = opt && opt.follow;
   for (const t of texts) {
     const y0 = t.y;
     scene.tweens.add({ targets: t, scale: 1, duration: fx.popMs, ease: 'Quad.easeOut' });
-    scene.tweens.add({ targets: t, y: y0 - fx.floatPx, duration: fx.damageHoldMs + fx.damageFadeMs, ease: 'Cubic.easeOut' });
+    if (follow) {
+      // 붙은 자리에서의 거리(ox, oy)만 떠오르고, 자리는 매 프레임 따라감
+      const p0 = follow();
+      const o = { ox: t.x - p0.x, oy: y0 - p0.y };
+      const place = () => { const p = follow(); if (t.active) t.setPosition(p.x + o.ox, p.y + o.oy); };
+      scene.tweens.add({ targets: o, oy: o.oy - fx.floatPx, duration: fx.damageHoldMs + fx.damageFadeMs, ease: 'Cubic.easeOut', onUpdate: place });
+    } else scene.tweens.add({ targets: t, y: y0 - fx.floatPx, duration: fx.damageHoldMs + fx.damageFadeMs, ease: 'Cubic.easeOut' });
     scene.tweens.add({ targets: t, alpha: 0, delay: fx.damageHoldMs, duration: fx.damageFadeMs, onComplete: () => t.destroy() });
   }
 }

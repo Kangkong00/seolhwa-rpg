@@ -74,3 +74,4 @@
 - 10-21: 무예 칸 8개(`setSlotCount`, `game.json skillSlots`), 공격 단추 78, 마을 가림 v4(파일만), 경험치 글자(`MapScene.showExpGain`, `game.json expText`)·막대 %(`statusPanel.flashExp`), 무기 `job`.
 - 10-21 밤: 아이폰 평타 검은 화면 → 빛 번짐 기본 끔·무예 중에만(`skillCommonFx.setBloom`·`isAppleWebkit`), 관리자 칸 채우기·무예 기다림 없음. 함정: 이 환경엔 Playwright webkit이 없음(아이폰 화면 문제는 강콩 확인).
 - 10-22: 무예 배율·트리(`skillPanel`, `canLearn` tree), 맵 검사 `tools/test/mapcheck.mjs`(--fix), 벽 위 몬스터 `tools/test/monsterwalls.mjs`·막힘 상자(`monsters.json bodyBox`·`sideWidth` ← `tools/data/monster_side_width.py`), 무예 데미지 `tools/test/skilldmg.mjs`, 효과 그림 `fxSprite`, 숫자 ×10·`defenseK`·`formatNum`. 맵·몬스터 그림을 바꾸면 mapcheck·monster_side_width·monsterwalls를 다시 돌림.
+- 10-22 밤: 회복 숫자 모아 띄우기(`flushHeal`·`showHeal` follow), 개발용 감시 `devWatch.js`, 무작위 시험 `tools/test/chaos.mjs`. 함정: `scene.restart`는 같은 장면 객체 — 맵을 옮길 때 남으면 안 되는 필드는 `create`에서 비울 것(기세·hot·rootMs·shotG 등).

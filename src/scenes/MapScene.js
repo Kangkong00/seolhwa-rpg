@@ -48,6 +48,7 @@ import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 import { formatNum } from '../ui/format.js';
 import { artCrescent, artTriple, artStarBurst, ArtWhirl } from './skillArt.js';
+import { DevWatch } from './devWatch.js';
 
 // 그림을 색으로 물들임(곱하기 — 회색이면 색이 빠지고 어두워짐), 투명한 곳은 그대로
 function tintImage(img, color) {
@@ -128,6 +129,17 @@ export class MapScene extends Phaser.Scene {
     this.swing = null; // 무기 휘두르는 중: { weapon, t, hitDone, trail }
     this.hitStopMs = 0; // 맞는 순간 아주 짧게 멈춤
     this.knock = { dir: null, left: 0 }; // 물려서 밀려나는 중
+    // 맵을 옮기거나 쓰러져 다시 시작하면 버프·이어 채우기·멈칫은 끝남(scene.restart는 같은 장면 객체라 직접 비움, docs/spec/feedback_1022.md 10)
+    this.momentumMs = 0; // 기세
+    this.hot = null; // 숨 고르기 이어 채우기
+    this.healGather = 0; // 모아 둔 작은 회복 숫자
+    this.healGatherT = 0;
+    this.calmMs = 0; // 질긴 숨: 싸우지 않은 시간
+    this.regenAcc = 0;
+    this.rootMs = 0; // 포효에 몸이 굳음
+    this.act = null; // 오래 걸리는 무예(받아치기 자세 등)
+    this.shotG = null; // 여우불 그림판(예전 맵 것은 장면이 끝날 때 지워짐 — 새로 만듦)
+    this.shadeOn = false; // 무예 시전 어둡게 물들임
     this.assistSlide = null; // 맞히기 도움으로 다가가는 중 { dir, left, speed }
     this.hpFill = null; // 레벨업 체력바 차오름
     this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
@@ -280,6 +292,7 @@ export class MapScene extends Phaser.Scene {
     this.dropViews = new Map();
     // 무예 공통 연출 층(어둡게·이름·3겹 빛·알갱이·빛 번짐, docs/spec/feedback_1020.md 5)
     this.skillFx = new SkillCommonFx(this, this.d.skills.fxCommon);
+    this.devWatch = new DevWatch(this); // 개발용 감시(글자 수·이상한 값 → 콘솔 경고)
     this.prepareIconTextures();
     // 마을 사람(NPC): 이 맵에 선 사람만
     this.npcViews = [];
@@ -425,16 +438,36 @@ export class MapScene extends Phaser.Scene {
     this.save();
   }
 
-  // small: 조금씩 차는 회복(숨 고르기 이어 채우기·질긴 숨) — 숫자를 작게 띄움
-  // big: 숨 고르기처럼 크게 띄움
+  // small: 조금씩 차는 회복(숨 고르기 이어 채우기·질긴 숨) — 숫자를 바로 띄우지 않고 모아 healGatherMs마다 한 번(flushHeal)
+  // big: 숨 고르기처럼 크게 띄움. 회복 숫자는 모두 주인공 머리 위에 붙어 따라감(docs/spec/feedback_1022.md 10)
   healPlayer(amount, small = false, big = false) {
+    if (!(amount > 0) || !(this.player.hp > 0)) return; // 0·음수·NaN 회복, 쓰러진 뒤 회복은 없음
     amount = Math.round(amount * this.stats().healMul); // 옥 팔찌: 회복 +
     const before = this.player.hp;
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     const got = this.player.hp - before;
-    if (got > 0) showDamage(this, this.pos.x, this.pos.y - this.cfg.player.height - 6, got, this.cfg.hitFx, this.d.getPixelRatio(), small ? 'healSmall' : big ? 'healBig' : 'heal');
+    if (got > 0) {
+      if (small) this.healGather = (this.healGather || 0) + got;
+      else this.showHeal(got, big ? 'healBig' : 'heal');
+    }
     this.refreshStatus();
+  }
+
+  // 회복 숫자: 주인공 머리 위에 붙어 따라 움직임
+  showHeal(n, kind = 'heal') {
+    const head = () => ({ x: this.pos.x, y: this.pos.y - this.cfg.player.height - 6 });
+    const p = head();
+    showDamage(this, p.x, p.y, n, this.cfg.hitFx, this.d.getPixelRatio(), kind, { follow: head });
+  }
+
+  // 모아 둔 작은 회복을 healGatherMs마다 한 번만 띄움
+  flushHeal(dt) {
+    this.healGatherT = (this.healGatherT || 0) + dt;
+    if (this.healGatherT < this.cfg.hitFx.healGatherMs) return;
+    this.healGatherT = 0;
+    if (this.healGather > 0) this.showHeal(this.healGather, 'healSmall');
+    this.healGather = 0;
   }
 
   // ---------- 엽전·레벨·무예 표시 ----------
@@ -1204,6 +1237,7 @@ export class MapScene extends Phaser.Scene {
       }
       if (h.left <= 0) this.hot = null;
     }
+    this.flushHeal(dt);
     const pv = this.passive();
     this.calmMs = (this.calmMs || 0) + dt;
     if (pv.regenRatio && this.calmMs >= pv.regenAfterMs && this.player.hp < this.player.maxHp) {
@@ -1673,6 +1707,7 @@ export class MapScene extends Phaser.Scene {
     // 휘두르는 중에 누른 것도 버리지 않고 끝난 뒤 나감
     this.cooldowns.update(dt);
     this.updateRecovery(dt);
+    this.devWatch.update(dt);
     this.skillFx.update(dt, !!(this.act || this.spin || (this.swing && this.swing.mods)));
     // 관리자 창·무예창이 열려 있으면 게임 입력을 막음(docs/spec/feedback_1020.md 3)
     const modal = !!((this.d.adminPanel && this.d.adminPanel.open) || (this.d.skillPanel && this.d.skillPanel.open));

@@ -106,8 +106,10 @@
       "player": { "fontPx": 20, "color": "#ff5a4a" },
       "heal": { "fontPx": 22, "color": "#7dff7a" },
       "healBig": { "fontPx": 32, "color": "#7dff7a" },
-      "healSmall": { "fontPx": 15, "color": "#7dff7a" }
+      "healSmall": { "fontPx": 17, "color": "#7dff7a" }
     },
+    "healGatherMs": 500,
+    "_healGatherMs": "숨 고르기 이어 채우기·질긴 숨처럼 조금씩 차는 회복은 숫자를 바로 띄우지 않고 이 시간마다 모아 한 번(docs/spec/feedback_1022.md 10). 회복 숫자는 주인공 머리 위에 붙어 따라감",
     "damageStroke": "#3a1a10",
     "strokePx": 3,
     "popScale": 1.4,
