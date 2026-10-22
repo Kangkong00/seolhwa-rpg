@@ -74,16 +74,29 @@ for (const id of ids) {
   const f = flood(map, map.spawn.x, map.spawn.y);
   const notes = [];
   if (f.start < 0) notes.push('시작 자리에 설 수 없음');
-  // 입구(이 맵의 portals 사각형 안 어디든) · 도착(다른 맵에서 이 맵으로 오는 arrive)
+  // 입구(docs/spec/feedback_1023.md 3): 입구 사각형 "안"(게임 portalAt과 같이 경계 포함)에 시작과 이어진 발 자리가 있는지 — 둘레는 세지 않음
+  const inside = (p, x, y) => x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h;
+  const spots = {};
   for (const p of map.portals) {
-    let hit = false;
-    for (let y = p.y; y <= p.y + p.h && !hit; y += STEP) for (let x = p.x; x <= p.x + p.w && !hit; x += STEP) if (f.at(x, y) === f.start && f.start >= 0) hit = true;
-    if (!hit) notes.push(`입구 ${p.label || p.id} 안 이어짐`);
+    let n = 0;
+    for (let y = Math.ceil(p.y); y <= p.y + p.h; y += STEP) for (let x = Math.ceil(p.x); x <= p.x + p.w; x += STEP) {
+      const i = Math.floor(x / STEP);
+      const jj = Math.floor(y / STEP);
+      if (i < 0 || jj < 0 || i >= f.W || jj >= f.H) continue;
+      const k = jj * f.W + i;
+      if (f.ok[k] && f.comp[k] === f.start && f.start >= 0) n++;
+    }
+    spots[p.label || p.id] = n;
+    if (!n) notes.push(`입구 ${p.label || p.id} 안에 설 자리 없음`);
   }
+  // 도착(다른 맵에서 이 맵으로 오는 arrive): 시작과 이어졌는지(게임은 가장 가까운 설 자리로 옮기므로 둘레 8px 허용),
+  // 그리고 이 맵의 다른 입구 사각형 안이 아닌지(도착하자마자 다른 입구 위)
   for (const [oid, o] of Object.entries(json)) {
     for (const p of o.portals || []) {
       if (p.to !== id || !p.arrive) continue;
       if (f.at(p.arrive.x, p.arrive.y) !== f.start) notes.push(`도착(${oid}에서 ${p.arrive.x},${p.arrive.y}) 안 이어짐`);
+      const on = map.portals.find((q) => inside(q, p.arrive.x, p.arrive.y));
+      if (on) notes.push(`도착(${oid}에서 ${p.arrive.x},${p.arrive.y})이 입구 ${on.label || on.id} 안`);
     }
   }
   // 몬스터 구역: 시작과 이어진 발 자리 비율(합 표로 빠르게)
@@ -145,9 +158,9 @@ for (const id of ids) {
   }
   const reach = f.start >= 0 ? f.sizes[f.start] * STEP * STEP : 0;
   if (notes.length) problems++;
-  rows.push(`| ${id} | ${map.portals.length} | ${map.spawnZones.length} | ${reach.toLocaleString('en-US')} | ${notes.length ? notes.join('; ') : '좋음'} |`);
+  rows.push(`| ${id} | ${Object.entries(spots).map(([k, v]) => `${k} ${v.toLocaleString('en-US')}`).join(', ') || '-'} | ${map.spawnZones.length} | ${reach.toLocaleString('en-US')} | ${notes.length ? notes.join('; ') : '좋음'} |`);
 }
-console.log('| 맵 | 입구 | 몬스터 구역 | 시작에서 갈 수 있는 넓이(px²) | 결과 |');
+console.log('| 맵 | 입구(안에 설 자리 수) | 몬스터 구역 | 시작에서 갈 수 있는 넓이(px²) | 결과 |');
 console.log('|---|---|---|---|---|');
 console.log(rows.join('\n'));
 console.log(problems ? `문제 있는 맵 ${problems}개` : '모든 맵 좋음');
