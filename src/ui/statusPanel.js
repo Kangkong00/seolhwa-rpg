@@ -1,4 +1,5 @@
 // 왼쪽 위: 레벨, 체력 막대(숫자), 가는 경험치 막대, 엽전(coins.png 아이콘 + 글자), 시험 배율이 켜져 있으면 "시험 ×3".
+import { formatNum } from './format.js';
 export class StatusPanel {
   constructor(el) {
     this.level = el.querySelector('.st-level');
@@ -30,7 +31,7 @@ export class StatusPanel {
     this.level.textContent = `Lv ${level}`;
     this.coins.textContent = coinsText;
     this.hpFill.style.width = `${Math.max(0, Math.min(1, hp / maxHp)) * 100}%`;
-    this.hpText.textContent = `${hp} / ${maxHp}`;
+    this.hpText.textContent = `${formatNum(hp)} / ${formatNum(maxHp)}`;
     const pct = need ? Math.min(1, exp / need) * 100 : 100;
     this.expFill.style.width = `${pct}%`;
     if (this.expPct) this.expPct.textContent = need ? `${pct.toFixed(1)}%` : '최고';

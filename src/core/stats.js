@@ -68,10 +68,10 @@ export function totalStats(equipped, itemDefs, weaponDefs, baseDamage, level, le
   };
 }
 
-// 맞았을 때 받는 데미지: 데미지 − 방어력(최소 1)
-// mul: 철갑 기운(받는 데미지 −10%)
-export function damageTaken(damage, defense, mul = 1) {
-  return Math.max(1, Math.round((damage - defense) * mul));
+// 맞았을 때 받는 데미지(docs/spec/feedback_1022.md 8): 데미지 × K / (K + 방어력), 최소 1. K = data/game.json defenseK
+// (예전 '데미지 − 방어력'은 장비만 껴도 몬스터가 1밖에 못 줘서 바꿈). mul: 철갑 기운(받는 데미지 −10%)
+export function damageTaken(damage, defense, mul = 1, k = 200) {
+  return Math.max(1, Math.round(((damage * k) / (k + Math.max(0, defense))) * mul));
 }
 
 // 이 레벨에 낄 수 있는지

@@ -2,6 +2,8 @@
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
   "skillSlots": 8,
+  "defenseK": 200,
+  "_defenseK": "받는 데미지 = 데미지 × defenseK / (defenseK + 방어력), 최소 1(docs/spec/feedback_1022.md 8). 방어 140이면 59%, 250이면 44%",
   "skillTreeRequires": true,
   "_skillTreeRequires": "무예 트리(docs/spec/feedback_1022.md 5): 켜면 앞 무예(skills.json requiresSkill)를 배워야 다음을 배움. 이미 배운 무예는 빼지 않음. 강콩 판단 대기 — 끄면 레벨·값만",
   "fxImages": {
@@ -11,7 +13,7 @@
   },
   "expText": {
     "_설명": "얻은 경험치 글자(docs/spec/feedback_1021.md 3). 몬스터가 쓰러지면 그 자리 위(abovePx 더 위)에 '+N 경험'이 데미지 숫자보다 delayMs 늦게, floatPx 떠오르며 holdMs 머문 뒤 fadeMs 동안 흐려짐. fontPx=글자 크기(데미지 숫자 22의 0.9배), boostPx=시험 배율 '×3' 크기. 의뢰 보상은 주인공 머리 위",
-    "color": "#c9a7ff", "stroke": "#3a1760", "fontPx": 20, "boostPx": 11,
+    "color": "#c9a7ff", "stroke": "#3a1760", "fontPx": 18, "boostPx": 11,
     "delayMs": 150, "holdMs": 1200, "fadeMs": 400, "floatPx": 22, "abovePx": 18
   },
   "_skillSlots": "무예 칸 수(공격 단추 왼쪽·위 2줄, docs/spec/feedback_1021.md 1). 저장된 칸이 더 적으면 앞에서부터 옮기고 나머지는 빈칸",
@@ -23,7 +25,7 @@
     "_설명": "speed=초당 이동 픽셀, height=캐릭터 키, walkFrameMs=걷기 한 프레임 시간, stepLift=걷기 자세에서 몸을 띄우는 높이, footBox=충돌에 쓰는 발밑 상자, cornerSlide=모서리에 걸렸을 때 옆으로 비켜 주는 최대 거리",
     "speed": 125,
     "height": 62,
-    "maxHp": 10,
+    "maxHp": 100,
     "_maxHp": "주인공 체력(임시값). 0이 되면 마을 시작 위치에서 다시 시작",
     "walkFrameMs": 115,
     "stepLift": 2,
@@ -44,7 +46,7 @@
   },
   "attack": {
     "_설명": "주먹 지르기(모두 임시값). damage=한 대 데미지, cooldownMs=공격 간격(버튼을 누르고 있으면 이 간격으로 계속), punchMs=주먹 자세 유지 시간, stepPx=주먹 지를 때 앞으로 내딛는 거리, reach=앞으로 닿는 거리, width=맞힐 수 있는 폭(무기는 data/weapons.json의 reach·width), knockbackPx=맞은 몬스터가 밀려나는 거리, stunMs=맞은 몬스터가 멈칫하는 시간. 맞히기 도움(공격·무예 공통): assistRadius=이 거리 안에 몬스터가 있으면 그쪽(반격 중인 몬스터 먼저, 4방향 중 가까운 축)으로 몸을 돌림, assistStepPx=몸을 돌려도 닿지 않으면 이만큼까지 다가가 침(벽 통과 안 함), assistSlideMs=다가가는 시간(무기 휘두를 때)",
-    "damage": 1,
+    "damage": 10,
     "cooldownMs": 400,
     "punchMs": 150,
     "stepPx": 3,
@@ -92,10 +94,10 @@
     "_설명": "맞았을 때 연출. flashMs=하얗게 번쩍이는 시간, deathMs=쓰러져 사라지는 시간. 숫자(docs/spec/feedback_1015.md 2): numbers.<종류>=글자 크기·색(hit 몬스터가 맞음, skill 무예로 맞음, crit 회심(label 작은 글씨), player 주인공이 맞음, heal 회복), damageStroke·strokePx=테두리, popScale·popMs=처음에 이만큼 커졌다가 줄어듦, floatPx=떠오르는 높이, damageHoldMs·damageFadeMs=그대로 보이는 시간·흐려지는 시간, spreadPx·spreadMs=이 시간 안에 여러 개가 뜨면 좌우로 흩뜨림",
     "flashMs": 60,
     "numbers": {
-      "hit": { "fontPx": 22, "color": "#ffffff" },
-      "skill": { "fontPx": 26, "color": "#ffd34d" },
-      "crit": { "fontPx": 35, "color": "#ffc83a", "label": "회심!", "labelPx": 14 },
-      "player": { "fontPx": 22, "color": "#ff5a4a" },
+      "hit": { "fontPx": 20, "color": "#ffffff" },
+      "skill": { "fontPx": 24, "color": "#ffd34d" },
+      "crit": { "fontPx": 32, "color": "#ffc83a", "label": "회심!", "labelPx": 14 },
+      "player": { "fontPx": 20, "color": "#ff5a4a" },
       "heal": { "fontPx": 22, "color": "#7dff7a" },
       "healBig": { "fontPx": 32, "color": "#7dff7a" },
       "healSmall": { "fontPx": 15, "color": "#7dff7a" }

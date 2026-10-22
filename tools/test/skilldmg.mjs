@@ -24,7 +24,7 @@ const ids = await page.evaluate((mon) => {
   s.cfg.impact.crit.chance = 0;
   s.d.admin.noDie = true;
   window.__type = mon || s.map.spawnZones[0].monster;
-  for (const sk of s.skills) if (!s.learned.includes(sk.id)) s.learned.push(sk.id);
+  for (const sk of s.skills) if (sk.type !== 'passive' && !s.learned.includes(sk.id)) s.learned.push(sk.id); // 패시브(회심·공격력 +)는 빼고
   const wrap = s.impactHit.bind(s);
   window.__log = [];
   s.impactHit = (t, d, dmg, o) => { const r = wrap(t, d, dmg, o); window.__log.push(r.damage); return r; };

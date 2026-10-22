@@ -2,6 +2,7 @@
 // 능력치는 지금 낀 것과 비교해 ▲(초록)/▼(빨강). 전리품 설명은 가게(buys)·무예 재료(cost)·의뢰(need)에서 자동으로 만듦.
 import { weaponAttack, swingSpeedLabel, levelOk } from '../core/stats.js';
 import { josa } from '../ui/josa.js';
+import { formatNum } from '../ui/format.js';
 
 const SLOT_KIND = { weapon: '무기', outfit: '옷', head: '머리', arms: '팔', feet: '발', wrist: '팔찌' };
 
@@ -17,7 +18,7 @@ export function itemStats(s, def) {
   const lv = s.progress.level;
   const eq = s.equip.equipped;
   const out = [];
-  const cmpLine = (label, value, cur, fmt = (v) => String(v)) => {
+  const cmpLine = (label, value, cur, fmt = (v) => formatNum(v)) => {
     const diff = value - cur;
     out.push({ text: `${label} ${fmt(value)}`, cmp: Math.sign(diff), diff: fmt(Math.abs(diff)) });
   };
@@ -25,7 +26,7 @@ export function itemStats(s, def) {
     const w = s.weaponDefs[def.id];
     const atk = weaponAttack(def.id, s.weaponDefs, s.cfg.attack.damage, lv, s.d.economy.levels);
     const cur = weaponAttack(eq.weapon, s.weaponDefs, s.cfg.attack.damage, lv, s.d.economy.levels);
-    if (eq.weapon === def.id) out.push({ text: `공격력 ${atk}` });
+    if (eq.weapon === def.id) out.push({ text: `공격력 ${formatNum(atk)}` });
     else cmpLine('공격력', atk, cur);
     out.push({ text: `휘두르기 ${swingSpeedLabel(w)}` });
   } else if (def.slot === 'feet') {
@@ -47,7 +48,7 @@ export function itemStats(s, def) {
     const v = (def.stats && def.stats.defense) || 0;
     const curDef = eq[def.slot] && s.itemDefs[eq[def.slot]];
     const cur = (curDef && curDef.stats && curDef.stats.defense) || 0;
-    if (eq[def.slot] === def.id) out.push({ text: `방어력 ${v}` });
+    if (eq[def.slot] === def.id) out.push({ text: `방어력 ${formatNum(v)}` });
     else cmpLine('방어력', v, cur);
   } else if (def.use) {
     if (def.use.healFull) out.push({ text: '체력 전부 회복' });

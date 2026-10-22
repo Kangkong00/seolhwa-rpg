@@ -46,6 +46,7 @@ import { shadeImage } from './shade.js';
 import { preloadFx } from './fxSprite.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
+import { formatNum } from '../ui/format.js';
 
 // 그림을 색으로 물들임(곱하기 — 회색이면 색이 빠지고 어두워짐), 투명한 곳은 그대로
 function tintImage(img, color) {
@@ -366,7 +367,7 @@ export class MapScene extends Phaser.Scene {
     const st = this.stats();
     const pa = st.passiveAttack ? ` (+${st.passiveAttack} 패시브)` : '';
     const ps = st.passiveSpeed ? ` (+${Math.round(st.passiveSpeed * 100)}% 패시브)` : '';
-    const totals = `공격력 ${st.attack}${pa} · 방어력 ${st.defense} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}${ps}`;
+    const totals = `공격력 ${formatNum(st.attack)}${pa} · 방어력 ${formatNum(st.defense)} · 걸음 ${st.speedMul > 1 ? `+${Math.round((st.speedMul - 1) * 100)}%` : '보통'}${ps}`;
     this.equipPanel.render(this.equip, message, this.coinsText(this.equip.coins), totals, this.progress.level);
   }
 
@@ -1100,7 +1101,7 @@ export class MapScene extends Phaser.Scene {
     this.statusPanel.flashExp(amount);
     this.time.delayedCall(c.delayMs, () => {
       const style = { color: c.color, stroke: c.stroke, fontPx: c.fontPx, floatPx: c.floatPx, holdMs: c.holdMs, fadeMs: c.fadeMs };
-      const t = floatText(this, at.x, at.y - c.abovePx, `+${amount} 경험`, style, pr);
+      const t = floatText(this, at.x, at.y - c.abovePx, `+${formatNum(amount)} 경험`, style, pr);
       if (boost) {
         const b = floatText(this, at.x + t.displayWidth / 2 + 2, at.y - c.abovePx - 2, boost, { ...style, fontPx: c.boostPx }, pr);
         b.setOrigin(0, 1);
@@ -1372,7 +1373,7 @@ export class MapScene extends Phaser.Scene {
     // 방어력만큼 덜 아픔(최소 1)
     this.calmMs = 0;
     const st = this.stats();
-    const result = hitPlayer(this.player, damageTaken(bite.damage, st.defense, st.damageTakenMul)); // 철갑 기운: −10%
+    const result = hitPlayer(this.player, damageTaken(bite.damage, st.defense, st.damageTakenMul, this.cfg.defenseK)); // 철갑 기운: −10%
     // 관리자 '안 죽기': 체력이 1 아래로 내려가지 않음
     if (this.d.admin.noDie && this.player.hp < 1) {
       this.player.hp = 1;
