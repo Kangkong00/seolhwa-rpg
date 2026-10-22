@@ -9,6 +9,9 @@ import {
   GuardShield, lightning, StarMap, bigBurst,
 } from './skillFx.js';
 import { hitStar, slashMark } from './impactFx.js';
+import { artCrescent, artEarthCrack, artWindCrescent, artLightning, artShockRing, artDashStreak, artTiger, artStarBurst, ArtShield, artHeal } from './skillArt.js';
+
+const A = (scene) => scene.d.game.fxImages.art; // 그림 크기(data/game.json fxImages.art)
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const REVERSE = { up: 'down', down: 'up', left: 'right', right: 'left' };
@@ -58,6 +61,7 @@ export const SKILL_KINDS = {
       return false;
     }
     breathRings(scene, () => scene.pos, sk);
+    artHeal(scene, () => scene.pos, A(scene).heal); // 그림: 치유 기운
     scene.playerView.setGlow(sk.glowColor, 0.5, sk.glowMs);
     scene.healPlayer(Math.max(1, Math.ceil(scene.player.maxHp * sk.healRatio)), false, true);
     // 이어서 hotMs 동안 hotRatio만큼 조금씩 더(MapScene.updateRecovery)
@@ -114,6 +118,7 @@ export const SKILL_KINDS = {
     let burst = false;
     const color = skillColor(scene, sk) || sk.windColor;
     scene.sfx.play('swing');
+    if (sk.tiger) artTiger(scene, start.x, start.y, facing, A(scene).tiger, sk.distance); // 그림: 흰 호랑이
     const hitAlong = () => {
       for (const m of scene.spawner.monsters) {
         if (m.hp <= 0 || hitIds.has(m.id)) continue;
@@ -143,6 +148,7 @@ export const SKILL_KINDS = {
           if (!res.moved || moved >= sk.distance - 0.01) {
             stopped = true;
             windStreak(scene, start.x, start.y, scene.pos.x, scene.pos.y, color, sk.windMs, { width: sk.tiger ? 14 : 9, tiger: !!sk.tiger });
+            artDashStreak(scene, start, scene.pos, sk.tiger ? A(scene).tigerThick : A(scene).dashThick, sk.tiger ? 450 : 300); // 그림: 빛줄기
             scene.multiHitFeedback(hits, 1, 1.5);
           }
         }
@@ -164,6 +170,7 @@ export const SKILL_KINDS = {
   shout(scene, sk) {
     const [dx] = DIR[scene.facing];
     shoutRings(scene, scene.pos.x + dx * 6, scene.pos.y - 40, sk);
+    artShockRing(scene, scene.pos.x, scene.pos.y, sk.radius * A(scene).shockMul); // 그림: 충격파 고리
     scene.sfx.play('shout');
     scene.cameras.main.shake(scene.cfg.swingFx.shakeMs * 2, scene.cfg.swingFx.shakeIntensity * sk.shakeMul);
     const pr = scene.d.getPixelRatio();
@@ -191,6 +198,7 @@ export const SKILL_KINDS = {
         const hitIds = new Set();
         scene.cameras.main.shake(scene.cfg.swingFx.shakeMs * 1.5, scene.cfg.swingFx.shakeIntensity * 2);
         scene.sfx.play('punchHit');
+        artEarthCrack(scene, start.x, start.y, facing, sk.length * A(scene).earthLength); // 그림: 땅 갈라짐
         groundCrack(scene, start.x, start.y, dx, dy, sk, (dist) => {
           const hits = [];
           for (const m of scene.spawner.monsters) {
@@ -216,6 +224,9 @@ export const SKILL_KINDS = {
         const [dx, dy] = DIR[facing];
         const p0 = { x: scene.pos.x + dx * 12, y: scene.pos.y + dy * 4 };
         const shot = new CrescentShot(scene, dx, dy, sk.size, skillColor(scene, sk));
+        const art = artWindCrescent(scene, p0.x, p0.y - 16, facing, sk.size * A(scene).windSize); // 그림: 반달 검기
+        const artScale = art ? art.scaleX : 1;
+        const artEnd = () => { if (art) art.destroy(); };
         const base = scene.skillBase() * sk.damageMul;
         const hitIds = new Set();
         const o = { d: 0 };
@@ -229,9 +240,12 @@ export const SKILL_KINDS = {
             if (scene.map.grid.isPointBlocked(x, y)) {
               tw.stop();
               shot.destroy();
+              artEnd();
               return;
             }
-            shot.draw(x, y, o.d > sk.distance * 0.8 ? (sk.distance - o.d) / (sk.distance * 0.2) : 1);
+            const fade = o.d > sk.distance * 0.8 ? (sk.distance - o.d) / (sk.distance * 0.2) : 1;
+            shot.draw(x, y, fade);
+            if (art) art.setPosition(x, y - 16).setScale(artScale * (1 + (0.3 * o.d) / sk.distance)).setAlpha(0.95 * fade);
             const hits = [];
             for (const m of scene.monstersInCircle(x, y, sk.radius)) {
               if (hitIds.has(m.id)) continue;
@@ -240,7 +254,7 @@ export const SKILL_KINDS = {
             }
             scene.multiHitFeedback(hits, 0.6, 1);
           },
-          onComplete: () => shot.destroy(),
+          onComplete: () => { shot.destroy(); artEnd(); },
         });
       },
     });
@@ -250,6 +264,7 @@ export const SKILL_KINDS = {
   // 자세: 받아치기 — guardMs 동안 막는 자세. 그 사이 물리면 MapScene.onBitten이 counter()를 부름
   stance(scene, sk) {
     const shield = new GuardShield(scene, sk.shieldColor);
+    const art = new ArtShield(scene, A(scene).shield); // 그림: 금빛 막
     scene.sfx.play('swing');
     scene.setAct({
       dur: sk.guardMs,
@@ -259,6 +274,7 @@ export const SKILL_KINDS = {
         // 물렸을 때: 데미지 0, 문 몬스터에게 바로 반격(반드시 회심)
         counter: (monster) => {
           shield.destroy();
+          art.flash();
           scene.act = null;
           if (!monster || !scene.spawner.monsters.includes(monster)) return;
           const dir = scene.dirTo(monster);
@@ -271,9 +287,10 @@ export const SKILL_KINDS = {
       },
       update: (dt, t) => {
         shield.draw(scene.pos.x, scene.pos.y, scene.facing, t);
+        art.update(scene.pos, scene.facing);
         return null;
       },
-      onEnd: () => shield.destroy(),
+      onEnd: () => { shield.destroy(); art.destroy(); },
     });
     return true;
   },
@@ -291,6 +308,7 @@ export const SKILL_KINDS = {
           if (done.has(i) || t < i * sk.gapMs) return;
           done.add(i);
           lightning(scene, m.x, m.y, sk);
+          artLightning(scene, m.x, m.y, A(scene).lightning); // 그림: 번개(아래 끝 = 몬스터 발)
           scene.sfx.play('thunder');
           scene.cameras.main.flash(70, 200, 220, 255);
           if (scene.spawner.monsters.includes(m) && m.hp > 0) {
@@ -335,6 +353,8 @@ export const SKILL_KINDS = {
           scene.sfx.play('swing');
           slashMark(scene, p.x, p.y - 14, scene.facing, 46, 4, color, 260);
           hitStar(scene, p.x, p.y - 14, 34, sk.color, 180);
+          artCrescent(scene, p.x, p.y - 14, scene.facing, A(scene).starCrescent, { flip: i % 2 === 1 }); // 그림: 별마다 초승달·별빛
+          artStarBurst(scene, p.x, p.y - 14, A(scene).starBurst, 0.5, 1.2, 320);
           const hits = scene.monstersInCircle(p.x, p.y, sk.starRadius)
             .map((m) => scene.impactHit(m, scene.dirTo(m, p), base * sk.damageMul, { kind: 'skill', knockbackPx: sk.knockbackPx, color, quiet: true }));
           scene.multiHitFeedback(hits, 0.6, 1.2);
@@ -343,6 +363,7 @@ export const SKILL_KINDS = {
           done.add('final');
           bigBurst(scene, c.x, c.y, sk.finalRadius * 1.2, sk.color, 520);
           scene.skillFx.ultimateFinal(); // 화면 흰 섬광 + 느린 화면
+          artStarBurst(scene, c.x, c.y - 14, A(scene).finalBurst, 0.5, 2.2, 500); // 그림: 큰 별빛 폭발
           scene.sfx.play('thunder');
           scene.cameras.main.flash(120, 255, 230, 160);
           const hits = scene.monstersInCircle(c.x, c.y, sk.finalRadius)

@@ -47,6 +47,7 @@ import { preloadFx } from './fxSprite.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 import { formatNum } from '../ui/format.js';
+import { artCrescent, artTriple, artStarBurst, ArtWhirl } from './skillArt.js';
 
 // 그림을 색으로 물들임(곱하기 — 회색이면 색이 빠지고 어두워짐), 투명한 곳은 그대로
 function tintImage(img, color) {
@@ -711,6 +712,7 @@ export class MapScene extends Phaser.Scene {
       if (s.mods && s.mods.onStrike) s.mods.onStrike();
       else this.strikeHit(w, s.mods);
       if (s.mods && s.mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, s.mods);
+      this.swingArt(s.mods);
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
     if (!s.trail) s.trail = this.makeTrail(w, s.mods);
@@ -842,6 +844,12 @@ export class MapScene extends Phaser.Scene {
     if (isSkill) this.skillFx.hit(hx, hy, dir, skillColor);
     // 회심: 화면 가장자리가 하얗게
     if (roll.crit) this.skillFx.edgeFlash(im.crit.edgeAlpha, im.crit.edgeMs);
+    // 평타 회심: 작은 초승달·별빛 그림
+    if (roll.crit && !isSkill) {
+      const A = this.d.game.fxImages.art;
+      artCrescent(this, hx, hy, dir, A.critCrescent);
+      artStarBurst(this, hx, hy, A.critBurst, 0.4, 1, 220);
+    }
     const view = this.monsterViews.get(target.id);
     if (view && !result.killed) view.squash(im.squashMs, im.squashX, im.squashY);
     // 무기 고유 타격 연출(weapon_list.md: 구렁이 비늘검 독안개)
@@ -1271,6 +1279,22 @@ export class MapScene extends Phaser.Scene {
 
   // 휘돌려 베기: 아래 → 왼쪽 → 위 → 오른쪽으로 몸을 돌리며 원형 궤적, 중간에 둘레 몬스터를 모두 때림
   // 휘돌려 베기(지속형): spinMs 동안 계속 돌며(한 바퀴 turnMs) tickMs마다 둘레 몬스터를 모두 벰. 도는 동안 천천히 움직일 수 있음
+  // 무예 휘두르기의 그림(docs/spec/feedback_1022.md 9): 힘껏 베기 초승달, 삼연참 1·2번째 작은 초승달(번갈아 뒤집기)·마지막 세 줄
+  swingArt(mods) {
+    if (!mods) return;
+    const A = this.d.game.fxImages.art;
+    const [dx, dy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.facing];
+    const x = this.pos.x + dx * 22;
+    const y = this.pos.y - 22 + dy * 12;
+    const ch = mods.chain;
+    if (ch) {
+      if (ch.index === ch.sk.hits - 1) artTriple(this, x, y, this.facing, A.chainLast);
+      else artCrescent(this, x, y, this.facing, A.chainSmall, { flip: ch.index % 2 === 1 });
+    } else if (mods.waveRadius) {
+      artCrescent(this, x, y, this.facing, A.powerSlash);
+    }
+  }
+
   startSpin(sk) {
     const order = ['down', 'left', 'up', 'right'];
     this.sfx.play('swing');
@@ -1283,6 +1307,7 @@ export class MapScene extends Phaser.Scene {
       ring: new WindRing(this, sk),
       // 회오리 베기: 안쪽에 반대로 도는 고리 하나 더 + 나뭇잎 회오리
       ring2: sk.rings2 ? new WindRing(this, { ...sk, radius: sk.radius * 0.62, turnMs: -sk.turnMs * 0.8 }) : null,
+      art: new ArtWhirl(this, sk.radius * this.d.game.fxImages.art.whirlMul / 2.1), // 그림: 발밑 회오리(좌우 번갈아 뒤집기)
     };
     if (sk.leafCount) leafSwirl(this, () => this.pos, sk, sk.spinMs);
     this.attackCooldown = Math.max(this.attackCooldown, sk.spinMs);
@@ -1295,6 +1320,7 @@ export class MapScene extends Phaser.Scene {
     this.facing = s.order[Math.floor(s.t / (sk.turnMs / 4)) % 4];
     s.ring.update(this.pos, s.t, dt);
     if (s.ring2) s.ring2.update(this.pos, s.t, dt);
+    s.art.update(this.pos, dt, sk.turnMs);
     while (s.t >= s.nextTick && s.nextTick <= sk.spinMs) {
       s.nextTick += sk.tickMs;
       this.sfx.play('swing');
@@ -1303,6 +1329,7 @@ export class MapScene extends Phaser.Scene {
     if (s.t >= sk.spinMs) {
       s.ring.fadeOut();
       if (s.ring2) s.ring2.fadeOut();
+      s.art.fadeOut();
       this.facing = s.startFacing;
       this.spin = null;
       return null;

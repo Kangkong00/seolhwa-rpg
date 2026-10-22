@@ -9,6 +9,12 @@
   "fxImages": {
     "_설명": "효과 그림(docs/spec/feedback_1022.md 4, src/scenes/fxSprite.js): path + id + .png, 검은 바탕을 더하기 섞기로 그림. 그림이 없으면 지금 도형 연출로 대신. 무예마다 붙이는 법은 기획 쪽이 그림과 함께 넘김",
     "path": "assets/fx/",
+    "art": {
+      "_설명": "무예마다 붙이는 그림 크기(그림의 긴 쪽 px, docs/spec/feedback_1022.md 9 '반영됨'). 시간·움직임은 src/scenes/skillArt.js",
+      "powerSlash": 70, "chainSmall": 50, "chainLast": 72, "earthLength": 1, "windSize": 2.4, "whirlMul": 2.1,
+      "lightning": 150, "shockMul": 1.25, "dashThick": 26, "tigerThick": 34, "tiger": 96,
+      "starCrescent": 44, "starBurst": 46, "finalBurst": 80, "shield": 54, "heal": 96, "critCrescent": 40, "critBurst": 36
+    },
     "ids": ["fx_slash_crescent", "fx_slash_triple", "fx_earth_crack", "fx_wind_crescent", "fx_whirl_ring", "fx_lightning", "fx_shock_ring", "fx_dash_streak", "fx_tiger_spirit", "fx_star_burst", "fx_gold_shield", "fx_heal_swirl"]
   },
   "expText": {

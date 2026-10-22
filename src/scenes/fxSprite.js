@@ -19,37 +19,51 @@ export function hasFx(scene, id) {
   return scene.textures.exists(key(id));
 }
 
-// 효과 그림 하나: (x, y)에 그려 ms 동안 to까지 변하며 흐려지고 사라짐.
-// o: { scale(처음 크기 배율), rot(도, 처음 기울기), stretch(가로로 늘리기), alpha, ms, depth, tint(색 물들임),
-//      originX·originY, to: { scale, rot, stretch, alpha, x, y } (끝 값, 없으면 그대로·alpha 0), ease }
+// 효과 그림 하나: (x, y)에 그려 ms 동안 to까지 변하고 사라짐.
+// o: { size(그림의 긴 쪽을 이 px로 — scale 대신), scale(처음 크기 배율), sx·sy(가로·세로 따로 곱함), rot(도, 처음 기울기),
+//      stretch(가로로 늘리기), alpha, ms, depth, tint, flipX, flipY, originX·originY,
+//      to: { scale, rot, stretch, sx, sy, alpha, x, y } (끝 값, 없으면 그대로·alpha 0), ease,
+//      holdMs·fadeMs(있으면 to까지 간 뒤 holdMs 머물다 fadeMs 동안 흐려짐 — 이때 to.alpha 기본 = 처음 alpha),
+//      keep(true면 사라지지 않음 — 부른 쪽이 destroy) }
 export function fxSprite(scene, id, x, y, o = {}) {
   if (!hasFx(scene, id)) return null;
-  const scale = o.scale ?? 1;
+  const tex = scene.textures.get(key(id)).getSourceImage();
+  const unit = o.size ? o.size / Math.max(tex.width, tex.height) : 1;
+  const scale = (o.scale ?? 1) * unit;
   const stretch = o.stretch ?? 1;
+  const sx = o.sx ?? 1;
+  const sy = o.sy ?? 1;
+  const alpha = o.alpha ?? 1;
   const img = scene.add.image(x, y, key(id))
     .setOrigin(o.originX ?? 0.5, o.originY ?? 0.5)
     .setBlendMode(Phaser.BlendModes.ADD)
-    .setScale(scale * stretch, scale)
+    .setScale(scale * stretch * sx, scale * sy)
     .setAngle(o.rot ?? 0)
-    .setAlpha(o.alpha ?? 1)
+    .setAlpha(alpha)
+    .setFlip(!!o.flipX, !!o.flipY)
     .setDepth(o.depth ?? 1e6 - 3);
   if (o.tint !== undefined) img.setTint(typeof o.tint === 'string' ? Phaser.Display.Color.HexStringToColor(o.tint).color : o.tint);
   // 무예를 쓰는 동안이면 무예 연출 층(빛 번짐)에
   if (scene.skillFx) scene.skillFx.add(img);
+  if (o.keep && !o.to) return img;
   const to = o.to || {};
-  const ts = to.scale ?? scale;
-  const tst = to.stretch ?? stretch;
+  const ts = (to.scale ?? (o.scale ?? 1)) * unit;
+  const two = o.holdMs !== undefined || o.fadeMs !== undefined;
   scene.tweens.add({
     targets: img,
-    scaleX: ts * tst,
-    scaleY: ts,
+    scaleX: ts * (to.stretch ?? stretch) * (to.sx ?? sx),
+    scaleY: ts * (to.sy ?? sy),
     angle: to.rot ?? (o.rot ?? 0),
-    alpha: to.alpha ?? 0,
+    alpha: to.alpha ?? (two ? alpha : 0),
     x: to.x ?? x,
     y: to.y ?? y,
     duration: o.ms ?? 400,
     ease: o.ease || 'Cubic.easeOut',
-    onComplete: () => img.destroy(),
+    onComplete: () => {
+      if (o.keep) return;
+      if (!two) return img.destroy();
+      scene.tweens.add({ targets: img, alpha: 0, delay: o.holdMs || 0, duration: o.fadeMs || 200, onComplete: () => img.destroy() });
+    },
   });
   return img;
 }
