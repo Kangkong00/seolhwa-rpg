@@ -43,6 +43,7 @@ import { SkillPanel } from '../ui/skillPanel.js';
 import { SkillCommonFx } from './skillCommonFx.js';
 import { floatText } from './progressFx.js';
 import { shadeImage } from './shade.js';
+import { preloadFx } from './fxSprite.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
 import { loadSave, writeSave, loadGridEdit, writeGridEdit, clearGridEdit } from '../save/localSave.js';
 
@@ -85,6 +86,8 @@ export class MapScene extends Phaser.Scene {
     if (!this.textures.exists(this.mapKey)) this.load.image(this.mapKey, this.d.mapJson.image);
     // 물건 조각(앞뒤 가림)
     preloadMapObjects(this, this.d.mapId, this.d.mapJson.objectsData);
+    // 효과 그림(assets/fx, 없으면 도형 연출로 대신)
+    preloadFx(this, this.d.game.fxImages);
   }
 
   create() {

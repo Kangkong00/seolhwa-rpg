@@ -2,6 +2,11 @@
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
   "skillSlots": 8,
+  "fxImages": {
+    "_설명": "효과 그림(docs/spec/feedback_1022.md 4, src/scenes/fxSprite.js): path + id + .png, 검은 바탕을 더하기 섞기로 그림. 그림이 없으면 지금 도형 연출로 대신. 무예마다 붙이는 법은 기획 쪽이 그림과 함께 넘김",
+    "path": "assets/fx/",
+    "ids": ["fx_slash_crescent", "fx_slash_triple", "fx_earth_crack", "fx_wind_crescent", "fx_whirl_ring", "fx_lightning", "fx_shock_ring", "fx_dash_streak", "fx_tiger_spirit", "fx_star_burst", "fx_gold_shield", "fx_heal_swirl"]
+  },
   "expText": {
     "_설명": "얻은 경험치 글자(docs/spec/feedback_1021.md 3). 몬스터가 쓰러지면 그 자리 위(abovePx 더 위)에 '+N 경험'이 데미지 숫자보다 delayMs 늦게, floatPx 떠오르며 holdMs 머문 뒤 fadeMs 동안 흐려짐. fontPx=글자 크기(데미지 숫자 22의 0.9배), boostPx=시험 배율 '×3' 크기. 의뢰 보상은 주인공 머리 위",
     "color": "#c9a7ff", "stroke": "#3a1760", "fontPx": 20, "boostPx": 11,
