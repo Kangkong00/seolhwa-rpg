@@ -36,10 +36,12 @@ function nearPortal(portals, minDist, x, y) {
   });
 }
 
-// 몸 반경(docs/spec/feedback_1020.md 2): 키의 약 20%, 최소 4px → 발밑 충돌 상자(가로 2r × 세로 r)
-export function bodyBox(def) {
-  const r = Math.max(4, def.height * 0.2);
-  return { w: r * 2, h: Math.max(4, r) };
+// 몬스터 막힘 상자(docs/spec/feedback_1022.md 3): 가로 = 옆모습 그림 폭(def.sideWidth) × sideRatio(최소 minW), 세로 h.
+// sideWidth가 없으면 키의 1.5배를 옆모습 폭으로 봄. cfg = data/monsters.json bodyBox
+export const BODY_BOX = { sideRatio: 0.5, minW: 10, h: 8 };
+export function bodyBox(def, cfg = BODY_BOX) {
+  const side = def.sideWidth || def.height * 1.5;
+  return { w: Math.max(cfg.minW, side * cfg.sideRatio), h: cfg.h };
 }
 
 // 주인공이 갈 수 있는 곳과 이어진 칸인지(reach = grid.connectedFrom 결과, 없으면 따지지 않음)
@@ -531,14 +533,14 @@ let nextShotId = 1;
 // 구역별 마릿수 관리: 처음엔 가득 채우고, 줄어들면 respawnMs 뒤에 한 마리씩 다시 생김.
 // 부른 것(summoned)·분신(clone)은 구역 마릿수에 세지 않음
 export class MonsterSpawner {
-  constructor(map, defs, rng = Math.random) {
+  constructor(map, defs, rng = Math.random, bodyCfg = BODY_BOX) {
     this.map = map;
     this.defs = defs;
     this.rng = rng;
-    // 몸 반경으로 막힘 검사(데이터의 footBox 대신, 한 번만)
+    // 막힘 상자(옆모습 폭 기준)로 모든 움직임을 검사(데이터의 footBox 대신, 한 번만)
     for (const d of Object.values(defs)) {
       if (d._bodyBox) continue;
-      d.footBox = bodyBox(d);
+      d.footBox = bodyBox(d, bodyCfg);
       d._bodyBox = true;
     }
     // 주인공이 갈 수 있는 곳(시작 자리와 이어진 칸): 몬스터는 여기에서만 생기고 순간이동함

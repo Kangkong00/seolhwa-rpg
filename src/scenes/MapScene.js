@@ -263,7 +263,7 @@ export class MapScene extends Phaser.Scene {
 
     // 몬스터
     this.monsterDefs = Object.fromEntries(this.d.monsters.monsters.map((m) => [m.id, m]));
-    this.spawner = new MonsterSpawner(this.map, this.monsterDefs);
+    this.spawner = new MonsterSpawner(this.map, this.monsterDefs, Math.random, this.d.monsters.bodyBox);
     this.monsterViews = new Map();
     const monsterReady = this.prepareMonsterTextures().then(() => {
       for (const m of this.spawner.monsters) this.addMonsterView(m);
