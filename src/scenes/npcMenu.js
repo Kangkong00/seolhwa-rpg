@@ -202,7 +202,7 @@ export class NpcMenu {
       text: message || '무예는 엽전과, 몸으로 구해 온 것을 내고 배우는 걸세.',
       list: skills.map((sk) => {
         const known = learned.includes(sk.id);
-        const c = canLearn(sk, progress, equip, learned, itemDefs);
+        const c = canLearn(sk, progress, equip, learned, itemDefs, this.s.treeOpts());
         const req = `레벨 ${(sk.requires && sk.requires.level) || 1} · ${this.costText(sk)}`;
         return {
           icon: sk.image ? itemIcon({ icon: sk.image, name: sk.icon, iconText: sk.icon }) : charIcon(sk.icon),
@@ -211,7 +211,7 @@ export class NpcMenu {
           right: known ? '배움' : '',
           disabled: known || !c.ok,
           onClick: () => {
-            const r = learnSkill(sk, progress, equip, learned, itemDefs);
+            const r = learnSkill(sk, progress, equip, learned, itemDefs, this.s.treeOpts());
             if (!r.ok) return this.learn(r.reasons.join(', '));
             this.s.sfx.play('learn');
             this.s.autoSlotSkill(sk.id); // 빈 무예 칸이 있으면 바로 넣음

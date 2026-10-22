@@ -2,6 +2,8 @@
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
   "skillSlots": 8,
+  "skillTreeRequires": true,
+  "_skillTreeRequires": "무예 트리(docs/spec/feedback_1022.md 5): 켜면 앞 무예(skills.json requiresSkill)를 배워야 다음을 배움. 이미 배운 무예는 빼지 않음. 강콩 판단 대기 — 끄면 레벨·값만",
   "fxImages": {
     "_설명": "효과 그림(docs/spec/feedback_1022.md 4, src/scenes/fxSprite.js): path + id + .png, 검은 바탕을 더하기 섞기로 그림. 그림이 없으면 지금 도형 연출로 대신. 무예마다 붙이는 법은 기획 쪽이 그림과 함께 넘김",
     "path": "assets/fx/",

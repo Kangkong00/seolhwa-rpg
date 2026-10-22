@@ -1,24 +1,32 @@
 // 무예 배우기와 기다리는 시간(화면과 무관). 무예 정의 = data/skills.json
 import { countItem, removeItem } from './equipment.js';
 
-// 배울 수 있는지. 반환: { ok, reasons: [모자란 것 설명] }
-export function canLearn(skill, progress, inv, learned, itemDefs) {
+// 배울 수 있는지. 반환: { ok, reasons: [모자란 것 설명], needSkills: [앞 무예 id] }
+// opts.tree: 무예 트리 규칙(requiresSkill — 앞 무예를 모두 배워야 함, data/game.json skillTreeRequires), opts.names: id → 이름
+export function canLearn(skill, progress, inv, learned, itemDefs, opts = {}) {
   const reasons = [];
-  if (learned.includes(skill.id)) return { ok: false, reasons: ['이미 배운 무예'] };
+  if (learned.includes(skill.id)) return { ok: false, reasons: ['이미 배운 무예'], needSkills: [] };
   const req = skill.requires || {};
   if (req.level && progress.level < req.level) reasons.push(`레벨 ${req.level} 필요`);
+  const needSkills = opts.tree ? missingSkills(skill, learned) : [];
+  if (needSkills.length) reasons.push(`앞 무예 필요(${needSkills.map((id) => (opts.names && opts.names[id]) || id).join('·')})`);
   const cost = skill.cost || {};
   if (cost.coins && inv.coins < cost.coins) reasons.push('엽전 모자람');
   for (const [id, n] of Object.entries(cost.items || {})) {
     const have = countItem(inv, id);
     if (have < n) reasons.push(`${itemDefs[id] ? itemDefs[id].name : id} ${have}/${n}`);
   }
-  return { ok: reasons.length === 0, reasons };
+  return { ok: reasons.length === 0, reasons, needSkills };
+}
+
+// 아직 안 배운 앞 무예(requiresSkill)
+export function missingSkills(skill, learned) {
+  return (skill.requiresSkill || []).filter((id) => !learned.includes(id));
 }
 
 // 배우기: 엽전과 재료를 내고 배운 목록에 넣음
-export function learnSkill(skill, progress, inv, learned, itemDefs) {
-  const c = canLearn(skill, progress, inv, learned, itemDefs);
+export function learnSkill(skill, progress, inv, learned, itemDefs, opts = {}) {
+  const c = canLearn(skill, progress, inv, learned, itemDefs, opts);
   if (!c.ok) return c;
   const cost = skill.cost || {};
   inv.coins -= cost.coins || 0;

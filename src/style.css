@@ -1420,3 +1420,223 @@ button {
 .sk-row.off {
   opacity: 0.5;
 }
+
+/* ---------- 무예창 = 트리 (src/ui/skillPanel.js, docs/spec/feedback_1022.md 5) ---------- */
+.ad-box.sk-tree-box {
+  width: min(820px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 12px));
+  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px);
+}
+
+.sk-head-help {
+  flex: 1;
+  font-size: 11px;
+  opacity: 0.6;
+  padding-left: 8px;
+}
+
+.sk-main {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+
+.sk-tree {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 6px;
+}
+
+.sk-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.sk-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sk-col-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: #ffd98a;
+  margin-bottom: 3px;
+}
+
+.sk-link {
+  width: 2px;
+  height: 8px;
+  background: rgba(243, 234, 214, 0.25);
+}
+
+.sk-link.on {
+  background: #ffd98a;
+}
+
+.ad-box button.sk-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 74px;
+  min-height: 0;
+  padding: 3px 2px 2px;
+  border-radius: 8px;
+}
+
+.sk-node img,
+.sk-node .icon-text {
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+}
+
+.sk-node-name {
+  font-size: 10px;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.sk-node-why {
+  font-size: 9px;
+  line-height: 10px;
+  color: #ffb38a;
+}
+
+.sk-node-slot {
+  position: absolute;
+  right: 3px;
+  top: 2px;
+  font-size: 9px;
+  padding: 0 3px;
+  border-radius: 6px;
+  background: #ffd98a;
+  color: #2a1c10;
+}
+
+/* 칸 상태: 배움 = 밝게, 지금 배울 수 있음 = 테두리 반짝, 못 배움 = 흐림 */
+.ad-box button.sk-node.learned {
+  border-color: rgba(255, 217, 138, 0.8);
+}
+
+.ad-box button.sk-node.learned.passive {
+  border-color: rgba(200, 225, 230, 0.85);
+}
+
+.ad-box button.sk-node.can {
+  animation: sk-can 1.2s ease-in-out infinite;
+}
+
+@keyframes sk-can {
+  0%, 100% { border-color: rgba(255, 217, 138, 0.3); box-shadow: none; }
+  50% { border-color: #fff1b8; box-shadow: 0 0 8px rgba(255, 220, 130, 0.8); }
+}
+
+.ad-box button.sk-node.locked,
+.ad-box button.sk-node.can-cost {
+  opacity: 0.45;
+}
+
+.ad-box button.sk-node.sel {
+  background: rgba(150, 110, 40, 0.55);
+}
+
+/* 끝(칠성검무): 검술·풍술 줄 끝에서 이어지는 선 */
+.sk-join {
+  box-sizing: border-box;
+  width: 25%;
+  height: 10px;
+  margin: 4px 0 0 12.5%;
+  border: 2px solid rgba(243, 234, 214, 0.25);
+  border-top: 0;
+}
+
+.sk-join.on {
+  border-color: #ffd98a;
+}
+
+.sk-final {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: calc(25% - 37px);
+  margin-top: 2px;
+}
+
+.sk-info {
+  flex: 0 0 230px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  border-left: 1px solid rgba(243, 234, 214, 0.15);
+  padding-left: 8px;
+  font-size: 12px;
+}
+
+.sk-info-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sk-info-top img,
+.sk-info-top .icon-text {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+.sk-info-name {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.sk-info-sub,
+.sk-info-help {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.sk-info-line {
+  margin-top: 2px;
+}
+
+.sk-info-desc {
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+.sk-info-why {
+  margin-top: 4px;
+  color: #ffb38a;
+}
+
+.sk-info-acts {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+
+.sk-info .sk-slots {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.sk-info .ad-box button.sk-slot,
+.sk-info button.sk-slot {
+  min-height: 40px;
+  padding: 2px;
+}
+
+.sk-info .sk-slot img,
+.sk-info .sk-slot .icon-text {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+}

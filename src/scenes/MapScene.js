@@ -993,6 +993,11 @@ export class MapScene extends Phaser.Scene {
     if (this.equipPanel.open) this.renderBag();
   }
 
+  // 무예 트리 규칙(앞 무예를 배워야 다음, data/game.json skillTreeRequires)
+  treeOpts() {
+    return { tree: this.cfg.skillTreeRequires !== false, names: Object.fromEntries(this.skills.map((k) => [k.id, k.name])) };
+  }
+
   isActiveSkill(id) {
     const sk = this.d.skills.skills.find((k) => k.id === id);
     return !!sk && sk.type !== 'passive';

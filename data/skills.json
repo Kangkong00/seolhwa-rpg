@@ -1,5 +1,5 @@
 {
-  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastDamageMul·lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs, 돌 rockCount) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. heal의 hotRatio·hotMs=바로 healRatio만큼 채운 뒤 hotMs 동안 hotRatio만큼 더(조금씩). type(docs/spec/feedback_1020.md 8): active=무예 칸에 넣어 누름, passive=배우면 늘 켜짐(칸에 안 넣음, 엽전만 냄). passive 효과: maxHpMul 최대 체력 +%, bladeAttackMul·bladeSwingCut 칼을 들면 공격력 +%·휘두르기 빠르게, critChance·critDamage 회심 확률·회심 데미지 +, regenAfterMs·regenRatio·regenEveryMs 싸우지 않은 지 regenAfterMs가 지나면 regenEveryMs마다 최대 체력 regenRatio 회복, speed 걸음 +, damageCut 받는 데미지 −, momentumMs·momentumAttackMul 쓰러뜨리면 그 시간 공격력 +, cooldownCut 액티브 기다림 −(팔찌와 더함, 최대 0.5), bossDamageMul 우두머리에게 데미지 +. 모두 임시값",
+  "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastDamageMul·lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs, 돌 rockCount) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. heal의 hotRatio·hotMs=바로 healRatio만큼 채운 뒤 hotMs 동안 hotRatio만큼 더(조금씩). type(docs/spec/feedback_1020.md 8): active=무예 칸에 넣어 누름, passive=배우면 늘 켜짐(칸에 안 넣음, 엽전만 냄). passive 효과: maxHpMul 최대 체력 +%, bladeAttackMul·bladeSwingCut 칼을 들면 공격력 +%·휘두르기 빠르게, critChance·critDamage 회심 확률·회심 데미지 +, regenAfterMs·regenRatio·regenEveryMs 싸우지 않은 지 regenAfterMs가 지나면 regenEveryMs마다 최대 체력 regenRatio 회복, speed 걸음 +, damageCut 받는 데미지 −, momentumMs·momentumAttackMul 쓰러뜨리면 그 시간 공격력 +, cooldownCut 액티브 기다림 −(팔찌와 더함, 최대 0.5), bossDamageMul 우두머리에게 데미지 +. 모두 임시값 트리(docs/spec/feedback_1022.md 5): branch=가지(branches: sword 검술·wind 풍술·qi 기공·mind 심법(패시브)·final 끝), requiresSkill=먼저 배워야 하는 무예 목록(모두 배워야 함, data/game.json skillTreeRequires가 켜져 있을 때만. 이미 배운 무예는 그대로 둠).",
   "fxCommon": {
     "_설명": "무예 공통 연출 층(docs/spec/feedback_1020.md 5, 모든 액티브 무예, 모두 임시값). 시전: dim=화면 어둡게(0~1, ultimateDim=칠성검무), dimInMs·dimOutMs=어두워지는·밝아지는 시간, holdMs=짧은 무예도 적어도 이만큼 어둡게, chargeCount·chargeRadius·chargeMs=빨려 드는 빛 알갱이, sigilRadius·sigilMs=발밑 원 문양, namePx·nameStrokePx·nameY(화면 높이 비율)·nameMs=무예 이름 큰 글씨, flashAlpha·flashMs=시작·끝 화면 무예 색 섬광. 실행: sizeMul=크기 배율(sizeKeys 값과 3겹 빛 크기에 곱함, 맞는 범위는 그대로), particleMul=알갱이 배율(countKeys 값과 burstCount에 곱함), glowMs=3겹 빛(흰 중심·무예 색 몸통·바깥 잔광)이 남는 시간, particleMs=알갱이 퍼지는 시간, shockRings·shockGapMs·shockMs=땅 충격파 고리, ghosts·ghostGapMs·ghostMs=잔상(돌진·연속 베기). bloom=빛 번짐(이 층에만, 무예를 쓰는 동안만. 기본 false — 10-21 아이폰에서 화면이 검게 됨. true여도 아이폰·사파리는 자동으로 끔, 관리자 창 설정 탭에서 이번 실행만 켜고 끔), bloomCfg=threshold·blurRadius·blurSteps·amount. 맞힘: hitStarSize=큰 섬광, hitSlashLen=X자 베인 자국, hitShards=파편, numberScale=데미지 숫자 배율(테두리는 무예 색), tickGapMs·tickMax=여러 마리를 맞히면 '타다닥' 간격·최대 수. shakeMul·hitStopMul=무예 흔들림·멈춤 배율. 칠성검무 끝: finalFlashAlpha·finalFlashMs 흰 섬광, finalSlowMs 동안 시간 finalSlowScale배. maxParticles=화면에 동시 알갱이 상한",
     "dim": 0.25,
@@ -62,6 +62,28 @@
     "finalSlowScale": 0.3,
     "maxParticles": 300
   },
+  "branches": [
+    {
+      "id": "sword",
+      "name": "검술"
+    },
+    {
+      "id": "wind",
+      "name": "풍술"
+    },
+    {
+      "id": "qi",
+      "name": "기공"
+    },
+    {
+      "id": "mind",
+      "name": "심법"
+    },
+    {
+      "id": "final",
+      "name": "끝"
+    }
+  ],
   "skills": [
     {
       "id": "power_slash",
@@ -69,7 +91,7 @@
       "name": "힘껏 베기",
       "icon": "斬",
       "kind": "powerSlash",
-      "desc": "앞으로 한 번 크게 벰. 데미지 2배, 밀어내기 2배",
+      "desc": "앞으로 한 번 크게 벰. 데미지 3배, 밀어내기 2배",
       "requires": {
         "level": 2
       },
@@ -92,7 +114,8 @@
       "waveMs": 250,
       "waveColor": "#ffd75e",
       "job": "geomgaek",
-      "type": "active"
+      "type": "active",
+      "branch": "sword"
     },
     {
       "id": "breath",
@@ -126,7 +149,8 @@
       "job": "geomgaek",
       "type": "active",
       "hotRatio": 0.1,
-      "hotMs": 3000
+      "hotMs": 3000,
+      "branch": "qi"
     },
     {
       "id": "whirl",
@@ -134,7 +158,7 @@
       "name": "휘돌려 베기",
       "icon": "旋",
       "kind": "spin",
-      "desc": "2초 동안 몸을 계속 돌리며 0.4초마다 주변 몬스터를 모두 벰. 도는 동안 천천히 움직일 수 있음",
+      "desc": "2초 동안 몸을 계속 돌리며 0.4초마다 주변 몬스터를 모두 벰(각 1.2배). 도는 동안 천천히 움직일 수 있음",
       "requires": {
         "level": 5
       },
@@ -158,7 +182,8 @@
       "dustEveryMs": 110,
       "dustColor": "#c8b48c",
       "job": "geomgaek",
-      "type": "active"
+      "type": "active",
+      "branch": "wind"
     },
     {
       "id": "triple_cut",
@@ -166,7 +191,7 @@
       "icon": "參",
       "kind": "chain",
       "job": "geomgaek",
-      "desc": "앞으로 3번 빠르게 벰(각 0.8배), 마지막 한 번은 밀어내기 2배",
+      "desc": "앞으로 3번 빠르게 벰(각 1.3배), 마지막 한 번은 2배·밀어내기 2배",
       "requires": {
         "level": 8
       },
@@ -187,7 +212,11 @@
       "trailOffsetPx": 5,
       "image": "assets/items/icons/skill_triple_cut.png",
       "type": "active",
-      "lastDamageMul": 2.0
+      "lastDamageMul": 2.0,
+      "branch": "sword",
+      "requiresSkill": [
+        "power_slash"
+      ]
     },
     {
       "id": "dash_cut",
@@ -195,7 +224,7 @@
       "icon": "疾",
       "kind": "dash",
       "job": "geomgaek",
-      "desc": "바라보는 쪽으로 80px 순식간에 미끄러지며 지나가는 길의 몬스터를 모두 벰(1.5배), 벽에서 멈춤",
+      "desc": "바라보는 쪽으로 80px 순식간에 미끄러지며 지나가는 길의 몬스터를 모두 벰(2.5배), 벽에서 멈춤",
       "requires": {
         "level": 10
       },
@@ -216,7 +245,11 @@
       "windColor": "#ffffff",
       "windMs": 420,
       "image": "assets/items/icons/skill_dash_cut.png",
-      "type": "active"
+      "type": "active",
+      "branch": "wind",
+      "requiresSkill": [
+        "whirl"
+      ]
     },
     {
       "id": "roar",
@@ -224,7 +257,7 @@
       "icon": "喝",
       "kind": "shout",
       "job": "geomgaek",
-      "desc": "반경 70 몬스터를 1.2초 멈칫하게 함, 데미지 0.5배",
+      "desc": "반경 70 몬스터를 1.2초 멈칫하게 함, 데미지 1.5배",
       "requires": {
         "level": 12
       },
@@ -246,7 +279,11 @@
       "markText": "!",
       "markColor": "#ffd34d",
       "image": "assets/items/icons/skill_roar.png",
-      "type": "active"
+      "type": "active",
+      "branch": "qi",
+      "requiresSkill": [
+        "breath"
+      ]
     },
     {
       "id": "earth_split",
@@ -255,7 +292,7 @@
       "kind": "line",
       "job": "geomgaek",
       "needsBlade": true,
-      "desc": "칼을 땅에 내리찍어 앞으로 120px 직선 위 몬스터를 모두 벰(2배)",
+      "desc": "칼을 땅에 내리찍어 앞으로 120px 직선 위 몬스터를 모두 벰(3.5배)",
       "requires": {
         "level": 15
       },
@@ -276,7 +313,11 @@
       "rockCount": 14,
       "rockColor": "#8a7458",
       "image": "assets/items/icons/skill_earth_split.png",
-      "type": "active"
+      "type": "active",
+      "branch": "sword",
+      "requiresSkill": [
+        "triple_cut"
+      ]
     },
     {
       "id": "sword_wind",
@@ -285,7 +326,7 @@
       "kind": "projectile",
       "job": "geomgaek",
       "needsBlade": true,
-      "desc": "반달 모양 검기가 앞으로 160px 날아가며 닿는 몬스터를 모두 벰(1.3배, 꿰뚫음)",
+      "desc": "반달 모양 검기가 앞으로 160px 날아가며 닿는 몬스터를 모두 벰(2.5배, 꿰뚫음)",
       "requires": {
         "level": 18
       },
@@ -302,7 +343,11 @@
       "colorFromWeapon": true,
       "color": "#e9f3ff",
       "image": "assets/items/icons/skill_sword_wind.png",
-      "type": "active"
+      "type": "active",
+      "branch": "wind",
+      "requiresSkill": [
+        "dash_cut"
+      ]
     },
     {
       "id": "counter",
@@ -310,7 +355,7 @@
       "icon": "返",
       "kind": "stance",
       "job": "geomgaek",
-      "desc": "0.8초 동안 막는 자세. 그 사이 물리면 데미지 0 + 바로 반격(3배, 반드시 회심)",
+      "desc": "0.8초 동안 막는 자세. 그 사이 물리면 데미지 0 + 바로 반격(4배, 반드시 회심)",
       "requires": {
         "level": 21
       },
@@ -323,7 +368,11 @@
       "knockbackPx": 16,
       "shieldColor": "#ffd75e",
       "image": "assets/items/icons/skill_counter.png",
-      "type": "active"
+      "type": "active",
+      "branch": "qi",
+      "requiresSkill": [
+        "roar"
+      ]
     },
     {
       "id": "whirlwind",
@@ -331,7 +380,7 @@
       "icon": "渦",
       "kind": "spin",
       "job": "geomgaek",
-      "desc": "휘돌려 베기 강화판: 3초 동안 반경 64를 돌며 베고, 몬스터를 가운데로 조금씩 끌어당김",
+      "desc": "휘돌려 베기 강화판: 3초 동안 반경 64를 0.4초마다 베고(각 1.5배), 몬스터를 가운데로 조금씩 끌어당김",
       "requires": {
         "level": 24
       },
@@ -356,7 +405,11 @@
       "leafCount": 12,
       "leafColor": "#7fae4a",
       "image": "assets/items/icons/skill_whirlwind.png",
-      "type": "active"
+      "type": "active",
+      "branch": "wind",
+      "requiresSkill": [
+        "sword_wind"
+      ]
     },
     {
       "id": "thunder_cut",
@@ -364,7 +417,7 @@
       "icon": "雷",
       "kind": "multi",
       "job": "geomgaek",
-      "desc": "반경 140 안 몬스터 최대 5마리에 하늘에서 번개(각 2.5배)",
+      "desc": "반경 140 안 몬스터 최대 5마리에 하늘에서 번개(각 4배)",
       "requires": {
         "level": 28
       },
@@ -381,7 +434,11 @@
       "scorchMs": 1500,
       "flashAlpha": 0.35,
       "image": "assets/items/icons/skill_thunder_cut.png",
-      "type": "active"
+      "type": "active",
+      "branch": "wind",
+      "requiresSkill": [
+        "whirlwind"
+      ]
     },
     {
       "id": "tiger_flash",
@@ -390,7 +447,7 @@
       "kind": "dash",
       "job": "geomgaek",
       "needsBlade": true,
-      "desc": "앞쪽 160px를 한 줄기 빛처럼 지나가며 벰(4배), 지나간 뒤 0.3초 늦게 한꺼번에 터짐",
+      "desc": "앞쪽 160px를 한 줄기 빛처럼 지나가며 벰(7배), 지나간 뒤 0.3초 늦게 한꺼번에 터짐",
       "requires": {
         "level": 33
       },
@@ -410,7 +467,11 @@
       "windMs": 700,
       "tiger": true,
       "image": "assets/items/icons/skill_tiger_flash.png",
-      "type": "active"
+      "type": "active",
+      "branch": "sword",
+      "requiresSkill": [
+        "earth_split"
+      ]
     },
     {
       "id": "seven_star_dance",
@@ -419,7 +480,7 @@
       "kind": "ultimate",
       "job": "geomgaek",
       "needsBlade": true,
-      "desc": "3초 동안 북두칠성 자리 7곳을 차례로 베며 각 자리 반경 40 안 몬스터를 모두 벰(각 2배), 마지막에 가운데 큰 폭발(5배)",
+      "desc": "3초 동안 북두칠성 자리 7곳을 차례로 베며 각 자리 반경 40 안 몬스터를 모두 벰(각 3.5배), 마지막에 가운데 큰 폭발(10배)",
       "requires": {
         "level": 40
       },
@@ -436,7 +497,12 @@
       "color": "#ffd75e",
       "knockbackPx": 10,
       "image": "assets/items/icons/skill_seven_star_dance.png",
-      "type": "active"
+      "type": "active",
+      "branch": "final",
+      "requiresSkill": [
+        "tiger_flash",
+        "thunder_cut"
+      ]
     },
     {
       "id": "p_body",
@@ -454,7 +520,8 @@
       },
       "passive": {
         "maxHpMul": 0.1
-      }
+      },
+      "branch": "mind"
     },
     {
       "id": "p_blade",
@@ -473,7 +540,11 @@
       "passive": {
         "bladeAttackMul": 0.08,
         "bladeSwingCut": 0.1
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_body"
+      ]
     },
     {
       "id": "p_vital",
@@ -492,7 +563,11 @@
       "passive": {
         "critChance": 0.05,
         "critDamage": 0.3
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_blade"
+      ]
     },
     {
       "id": "p_breath",
@@ -512,7 +587,11 @@
         "regenAfterMs": 3000,
         "regenRatio": 0.03,
         "regenEveryMs": 1000
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_vital"
+      ]
     },
     {
       "id": "p_feet",
@@ -530,7 +609,11 @@
       },
       "passive": {
         "speed": 0.08
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_breath"
+      ]
     },
     {
       "id": "p_iron",
@@ -548,7 +631,11 @@
       },
       "passive": {
         "damageCut": 0.1
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_feet"
+      ]
     },
     {
       "id": "p_momentum",
@@ -567,7 +654,11 @@
       "passive": {
         "momentumMs": 4000,
         "momentumAttackMul": 0.15
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_iron"
+      ]
     },
     {
       "id": "p_master",
@@ -585,7 +676,11 @@
       },
       "passive": {
         "cooldownCut": 0.15
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_momentum"
+      ]
     },
     {
       "id": "p_tiger",
@@ -603,7 +698,11 @@
       },
       "passive": {
         "bossDamageMul": 0.2
-      }
+      },
+      "branch": "mind",
+      "requiresSkill": [
+        "p_master"
+      ]
     }
   ]
 }
