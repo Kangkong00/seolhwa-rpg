@@ -84,3 +84,109 @@
 - 너구리굴 보물 방·여우굴 석관 방에 들어가지는지, 벽 위를 걷는 몬스터가 없는지.
 - 공격 단추·무예 칸 자리.
 - 무예 트리의 "앞 무예를 배워야 다음" 규칙을 둘지(정리본 문서 맨 아래 체크).
+
+
+## 반영됨 (2026-10-22, Claude Code)
+
+숫자는 모두 임시값.
+
+### 1. 무예 데미지
+- `data/skills.json` `damageMul`을 위 표대로(받아치기 `counterMul` 4, 칠성검무 `finalDamageMul` 10), 삼연참 마지막은 `lastDamageMul` 2.0(`skillKinds.chainMods`). 무예 설명 글의 배율도 새 값으로.
+- 자동 시험 `node tools/test/skilldmg.mjs [맵] [레벨] [무기] [몬스터]`: 몬스터 하나(움직이지 않게, 체력 아주 큼)에 액티브 무예를 하나씩 쓰고 맞힌 데미지를 모두 더함. 회심 끔·패시브 빼고. 숨 고르기(회복)는 뺌. 0이 들어가거나 한 번 숫자가 평타보다 작은 무예는 없었음.
+- 결과(레벨 27, 운문 장검, 너구리굴, ×10 뒤):
+
+평타 한 대: 232 (맵 dungeon_raccoon_1, 레벨 27, 무기 cloud_long, 몬스터 raccoon)
+| 무예 | 맞힌 횟수 | 한 번 숫자(최소~최대) | 합계 | 평타 대비 |
+|---|---|---|---|---|
+| power_slash | 1 | 696 | 696 | ×3.0 |
+| whirl | 5 | 278 | 1390 | ×6.0 |
+| triple_cut | 3 | 302~464 | 1068 | ×4.6 |
+| dash_cut | 1 | 580 | 580 | ×2.5 |
+| roar | 1 | 348 | 348 | ×1.5 |
+| earth_split | 1 | 812 | 812 | ×3.5 |
+| sword_wind | 1 | 580 | 580 | ×2.5 |
+| counter | 1 | 1670 | 1670 | ×7.2 |
+| whirlwind | 7 | 348 | 2436 | ×10.5 |
+| thunder_cut | 1 | 928 | 928 | ×4.0 |
+| tiger_flash | 1 | 1624 | 1624 | ×7.0 |
+| seven_star_dance | 3 | 812~2320 | 3944 | ×17.0 |
+
+- 참고: 칠성검무는 몬스터 하나가 별 2곳 + 마지막 폭발에 걸린 경우(별 7곳 모두 맞으면 더 큼). 호통은 한 번 1.5배(멈칫이 주된 쓰임이라 합계 2.5배 원칙에는 못 미침 — 표대로 둠).
+
+### 2. 못 가는 곳·맵 검사
+- 너구리굴·여우굴 1층 `blocked`를 `docs/map_drafts/<id>_blocked.txt`로 교체(cellSize 4).
+- 맵 검사 `node tools/test/mapcheck.mjs [맵 id ...] [--fix]`(브라우저 없이): ① 시작·입구(사각형 안 어디든)·도착(다른 맵에서 오는 arrive)이 시작과 이어졌는지 — 주인공 발 상자 14×6을 **1px마다** 봄(4px마다 보면 좁은 길을 놓쳐 마을·뒷산이 끊긴 것으로 잘못 나왔음) ② 몬스터 구역의 50% 넘게가 시작과 이어진 곳인지 ③ 시작과 떨어진 섬(2,500px² 넘는).
+- `--fix`: 50% 이하 구역을 원래 자리에서 가장 가까운, 60% 넘게 갈 수 있고 다른 구역과 30% 넘게 겹치지 않는 자리로 옮김(필요하면 0.8배씩 줄임, 마릿수는 그대로). **이번에 7맵 18구역을 옮김**(산군굴 방 5: 12% → (420,340,300×220) 61%, 곰굴·멧돼지굴·들개 소굴·여우굴·너구리굴·족제비굴 둥지 방 포함 — 처음 검사 결과는 아래 "고치기 전").
+- 고치기 전(50% 이하 구역): 곰굴 1층 방 2·3·4, 멧돼지굴 1층 방 3·4, 들개 소굴 1층 방 3·4·5, 여우굴 1층 방 1·3·4, 너구리굴 1층 방 2·3·4, 산군굴 1층 방 1·4·5, 족제비굴 둥지 방. 연결·섬 문제는 없었음.
+- 고친 뒤 결과:
+
+| 맵 | 입구 | 몬스터 구역 | 시작에서 갈 수 있는 넓이(px²) | 결과 |
+|---|---|---|---|---|
+| back_mountain | 5 | 0 | 154,992 | 좋음 |
+| dungeon_bear_1 | 2 | 4 | 185,468 | 좋음 |
+| dungeon_bear_2 | 1 | 1 | 270,724 | 좋음 |
+| dungeon_boar_1 | 2 | 4 | 260,424 | 좋음 |
+| dungeon_boar_2 | 1 | 1 | 377,612 | 좋음 |
+| dungeon_dog_1 | 2 | 5 | 256,744 | 좋음 |
+| dungeon_dog_2 | 1 | 1 | 263,788 | 좋음 |
+| dungeon_fox_1 | 2 | 4 | 263,624 | 좋음 |
+| dungeon_fox_2 | 1 | 1 | 290,340 | 좋음 |
+| dungeon_raccoon_1 | 2 | 4 | 262,492 | 좋음 |
+| dungeon_raccoon_2 | 1 | 1 | 286,692 | 좋음 |
+| dungeon_rat_1 | 2 | 4 | 251,240 | 좋음 |
+| dungeon_rat_2 | 2 | 5 | 249,292 | 좋음 |
+| dungeon_rat_3 | 2 | 2 | 276,960 | 좋음 |
+| dungeon_snake_1 | 2 | 4 | 345,512 | 좋음 |
+| dungeon_snake_2 | 1 | 1 | 364,944 | 좋음 |
+| dungeon_tiger_1 | 2 | 5 | 216,724 | 좋음 |
+| dungeon_tiger_2 | 1 | 1 | 287,224 | 좋음 |
+| dungeon_weasel_1 | 1 | 4 | 222,324 | 좋음 |
+| village | 6 | 0 | 351,220 | 좋음 |
+
+### 3. 벽 위 몬스터
+- 몬스터 막힘 상자 = 옆모습 그림 폭 × 50%(최소 10px) × 세로 8px(`data/monsters.json` `bodyBox`). 옆모습 폭은 그림에서 잼(`python3 tools/data/monster_side_width.py` → 몬스터마다 `sideWidth`, 그림을 바꾸면 다시 돌림). 예: 들쥐 19.5, 곰 29, 산군 65.5.
+- 이 상자 하나로 생기기·돌아다니기·쫓기·돌진·덮치기·밀려남·끌어당김·물러서기·무리·순간이동·분신 모두 검사(규칙 `core/monsters.js`는 모두 `moveStep`·`canStand`로 움직임).
+- 자동 시험 `node tools/test/monsterwalls.mjs [맵] [--sec 60] [--seed 1]`(브라우저 없이, 규칙 코드만): 몬스터를 모두 띄우고 60초 동안, 가짜 주인공이 2초마다 아무 몬스터 옆으로 가서 둘레 80px를 때림(반은 밀어내기, 반은 끌어당김) → 반격·우두머리 특기(휩쓸기·돌진·부르기·분신·여우불·포효)·순간이동까지 섞임. **0건**(씨앗 1·7·42, 120초로도 0건).
+
+| 맵 | 몬스터 | 막힘 상자 | 지난 움직임 | 막힌 칸에 걸린 순간(60초) | 몬스터·움직임 |
+|---|---|---|---|---|---|
+| dungeon_bear_1 | 17 | bear 29×8 | chase knock move:sweep rest walk | 0 | - |
+| dungeon_bear_2 | 1 | bear_boss 39×8 | chase knock move:sweep rest | 0 | - |
+| dungeon_boar_1 | 17 | boar 27×8 | chase knock move:charge rest walk | 0 | - |
+| dungeon_boar_2 | 1 | boar_boss 44.5×8 | chase knock rest | 0 | - |
+| dungeon_dog_1 | 18 | dog 25.5×8 | chase knock rest walk | 0 | - |
+| dungeon_dog_2 | 5 | dog_boss 43.5×8, dog 25.5×8 | chase knock move:summon rest | 0 | - |
+| dungeon_fox_1 | 17 | fox 30×8 | chase knock move:shoot rest walk | 0 | - |
+| dungeon_fox_2 | 1 | fox_boss 37.5×8 | chase knock move:shoot move:sweep rest | 0 | - |
+| dungeon_raccoon_1 | 17 | raccoon 27.5×8 | blink chase knock rest walk | 0 | - |
+| dungeon_raccoon_2 | 3 | raccoon_boss 37×8 | chase knock move:clones move:sweep rest walk | 0 | - |
+| dungeon_rat_1 | 15 | rat 19.5×8, bigrat 17×8 | chase knock rest walk | 0 | - |
+| dungeon_rat_2 | 20 | rat_deep 21×8, bigrat 17×8 | chase knock rest walk | 0 | - |
+| dungeon_rat_3 | 5 | rat_king 36×8, rat_deep 21×8 | chase knock rest walk | 0 | - |
+| dungeon_snake_1 | 17 | snake 14.5×8 | chase knock rest walk | 0 | - |
+| dungeon_snake_2 | 1 | snake_boss 26×8 | chase knock move:sweep rest walk | 0 | - |
+| dungeon_tiger_1 | 17 | wolf 26×8, bear 29×8, boar 27×8 | chase knock move:charge move:sweep rest walk | 0 | - |
+| dungeon_tiger_2 | 1 | tiger_boss 65.5×8 | chase knock move:roar move:sweep rest walk | 0 | - |
+| dungeon_weasel_1 | 16 | weasel 34.5×8 | chase knock rest walk | 0 | - |
+
+### 4. 효과 그림 도구
+- `src/scenes/fxSprite.js`: `fxSprite(scene, id, x, y, {scale, rot, stretch, alpha, ms, depth, tint, originX, originY, to: {scale, rot, stretch, alpha, x, y}, ease})` — `assets/fx/<id>.png`를 더하기 섞기(ADD)로 그려 검은 바탕은 사라짐. 무예를 쓰는 동안이면 무예 연출 층에 들어감. `fxOr(scene, id, x, y, o, fallback)`: 그림이 없으면 fallback(지금 도형 연출). `hasFx`.
+- 그림 목록 `data/game.json` `fxImages`(12개). 게임에서 한 번만 받음, 없는 그림은 조용히 넘어감. 임시 그림으로 그려지는 것 확인함. **아직 어느 무예에도 붙이지 않음**(그림과 붙이는 법이 오면 붙임).
+
+### 5. 무예창 = 트리
+- `data/skills.json`: `branches`(sword 검술·wind 풍술·qi 기공·mind 심법·final 끝), 무예마다 `branch`·`requiresSkill`(목록, 칠성검무 = 백호일섬 + 뇌전참). `data/game.json` `skillTreeRequires` true(기본 켬). 규칙 `core/skills.js` `canLearn(…, { tree })`·`missingSkills` — 늙은 군관 배우기에도 적용, 이미 배운 무예는 그대로.
+- 화면(`src/ui/skillPanel.js`): 세로 줄 4개 + 맨 아래 칠성검무(검술·풍술 끝에서 이어지는 선), 앞 무예를 배웠으면 선이 금빛. 칸 상태: 배움(금빛 테두리, 심법은 은빛) / 지금 배울 수 있음(테두리 반짝) / 못 배움(흐림 + "레벨 N"·"앞 무예 필요"·"값 모자람"). 칸에 들어 있으면 오른쪽 위에 칸 번호. 트리는 세로로 넘김.
+- 오른쪽 정보창(230px): 이름·가지·레벨·값·기다림(팔찌·패시브 반영)·**데미지(지금 내 공격력 × 배율, 회심 빼고 — 예: "약 302 × 2번 + 464")**·범위·앞 무예(✓)·설명·[무예 칸에 넣기]/[빼기] → 칸 8개 중 누름. 액티브·패시브 탭은 이 한 화면으로 합침.
+- **제가 정한 것**: 배우기는 여기서 하지 않음(늙은 군관에게서, 지금처럼). "값 모자람"은 레벨·앞 무예는 되는데 엽전·재료가 모자란 경우(흐림).
+
+### 6·7. 단추 자리
+- 공격 단추 지름 68(누르는 영역 84), 오른쪽·아래 끝에서 safe-area 안쪽 12px.
+- 무예 칸 8개는 공격 단추 위 2줄 × 4칸, 보이는 네모의 오른쪽 끝 = 공격 단추 오른쪽 끝.
+- **제가 정한 것**: 아래 줄과 공격 단추 사이 보이는 틈은 8px가 아니라 **11px** — 8px로 하면 무예 칸 누르는 영역(54)과 공격 단추 누르는 영역(지름 84)이 3px 겹쳐서. 걸으면서 공격·무예 번갈아 20번 → 10·10 모두 들어감.
+
+### 8. 숫자 ×10
+- 10배: `player.maxHp` 100, `hpPerLevel` 40, `damagePerLevel` 2, `attack.damage` 10, 무기 `damage` 20종, 몬스터 `hp`·`biteDamage`·`charge.damage`·특기 `moves[].damage` 전부(53곳), 장비 `defense`·팔찌 `maxHp`·`attack`, 주먹밥 등 `use.heal`(24곳). 배율·경험치·엽전·값은 그대로.
+- 받는 데미지 = 데미지 × 200 / (200 + 방어력), 최소 1(`core/stats.js` `damageTaken`, `data/game.json` `defenseK` 200). 철갑 기운(−10%)은 그 뒤에 곱함.
+- 1,000 넘는 숫자 쉼표(`src/ui/format.js` `formatNum`): 데미지·회복 숫자, 체력 글자, 가방 능력치 줄, 정보창 공격력·방어력, "+N 경험". 숫자 글자 조금 작게(평타 22 → 20, 무예 26 → 24, 회심 35 → 32, 주인공 맞음 22 → 20, 경험 20 → 18).
+- 문서 표 4개(`tiers.md`·`weapon_list.md`·`tier3_snake.md`·`tier4_9.md`) 맨 위에 "×10" 한 줄.
+- 시험(너구리굴, 레벨 27, 운문 장검·두정갑·흑립·사슴가죽 토시·목화·구슬 팔찌, 회심 끔): 공격력 232, 방어력 140, 최대 체력 1,240. 평타 한 대 232 → 너구리(체력 520) **3대**. 너구리에게 물리면(70) **41** 깎임(목표 30~40보다 1 많음 — 방어 140일 때 59%). 레벨 보너스(+52)가 커서 평타가 200보다 조금 큼.
