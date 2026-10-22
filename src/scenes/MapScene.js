@@ -1,7 +1,7 @@
 // 맵 화면(마을·던전 공통): 통그림 맵 + 보이지 않는 격자 + 주인공 + 몬스터 + 카메라 따라가기.
 // 맵 사이 이동은 맵 JSON의 portals: 발이 사각형에 들어가면 화면이 어두워졌다가 다음 맵에서 밝아짐.
 import { Grid } from '../core/grid.js';
-import { parseMap, serializeMap } from '../core/mapData.js';
+import { parseMap, serializeMap, gridHash } from '../core/mapData.js';
 import { dirFromVector, moveStep, nearestStandable } from '../core/movement.js';
 import { MonsterSpawner } from '../core/monsters.js';
 import { findTarget, hitMonster, hitPlayer, aimAssist, rollCrit } from '../core/combat.js';
@@ -268,6 +268,10 @@ export class MapScene extends Phaser.Scene {
     this.itemInfo.hide();
     this.statusPanel = this.d.status;
     this.toast = this.d.toast;
+    if (this.gridEditDropped) {
+      this.gridEditDropped = false;
+      this.toast.show('이 기기의 옛 격자 편집을 지웠습니다(새 맵 격자 사용)', 3500);
+    }
     this.npcPanel = this.d.npcPanel;
     this.skillButtons = this.d.skillButtons;
     this.npcMenu = new NpcMenu(this);
@@ -671,9 +675,18 @@ export class MapScene extends Phaser.Scene {
   // 맵 파일 + 이 기기에 저장된 격자 편집
   loadMap() {
     const map = parseMap(this.d.mapJson);
+    // 이 기기의 격자 편집(G): 지금 저장소 격자를 바탕으로 고친 것만 씀. 옛 모양(줄 배열만)이거나 저장소 격자가
+    // 바뀌었으면 지우고 한 번 알림(docs/spec/feedback_1023.md 1 — 옛 편집이 새 정밀 격자를 덮던 일)
     const edited = loadGridEdit(this.d.mapId);
-    if (Array.isArray(edited) && edited.length === map.grid.rows && edited[0].length === map.grid.cols) {
-      map.grid = Grid.fromRows(edited, map.cellSize);
+    if (edited) {
+      const base = gridHash(this.d.mapJson.blocked);
+      const rows = edited && edited.rows;
+      if (Array.isArray(edited) || edited.base !== base || !Array.isArray(rows) || rows.length !== map.grid.rows || rows[0].length !== map.grid.cols) {
+        clearGridEdit(this.d.mapId);
+        this.gridEditDropped = true;
+      } else {
+        map.grid = Grid.fromRows(rows, map.cellSize);
+      }
     }
     return map;
   }
@@ -1744,7 +1757,7 @@ export class MapScene extends Phaser.Scene {
       if (this.gridOn && pointer.isDown && paintValue !== null) paint(pointer);
     });
     this.input.on('pointerup', () => {
-      if (paintValue !== null) writeGridEdit(this.d.mapId, this.map.grid.toRows());
+      if (paintValue !== null) writeGridEdit(this.d.mapId, this.map.grid.toRows(), gridHash(this.d.mapJson.blocked));
       paintValue = null;
     });
   }

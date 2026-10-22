@@ -41,3 +41,18 @@ export function serializeMap(originalJson, grid) {
   lines.push('}');
   return lines.join('\n') + '\n';
 }
+
+// 저장소 격자(blocked 줄들)의 짧은 해시(FNV-1a 32비트, 16진수 8자리). 이 기기의 격자 편집이 어느 격자를 바탕으로
+// 고친 것인지 짝짓는 데 씀(docs/spec/feedback_1023.md 1) — 저장소 격자가 바뀌면 옛 편집은 쓰지 않음
+export function gridHash(rows) {
+  let h = 0x811c9dc5;
+  for (const line of rows || []) {
+    for (let i = 0; i < line.length; i++) {
+      h ^= line.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    h ^= 10;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}

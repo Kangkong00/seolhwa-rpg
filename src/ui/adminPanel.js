@@ -6,7 +6,7 @@ import { addItem, addCoins, equipFromBag } from '../core/equipment.js';
 import { maxLevel } from '../core/progress.js';
 import { grantSkill } from '../core/skills.js';
 import { resetQuests } from '../core/quests.js';
-import { clearSave } from '../save/localSave.js';
+import { clearSave, listGridEdits, clearAllGridEdits } from '../save/localSave.js';
 import { itemIcon } from './itemIcon.js';
 import { josa } from './josa.js';
 
@@ -375,6 +375,18 @@ export class AdminPanel {
       this.close();
       s.setGridMode(true);
     })));
+    // 이 기기에 남은 격자 편집(docs/spec/feedback_1023.md 2): 저장소 격자 대신 쓰일 수 있어 맵 이름을 보이고 모두 지움
+    const edits = listGridEdits();
+    const names = edits.map((id) => (s.d.game.admin && (s.d.game.admin.maps || []).find((m) => m.id === id) || {}).name || id);
+    const wipe = this.btn('모두 지우기', () => {
+      const n = clearAllGridEdits();
+      s.map.grid = s.loadMap().grid; // 지금 맵도 저장소 격자로
+      if (s.overlay && s.gridOn) s.overlay.draw(s.map.grid, s.map);
+      this.note(`격자 편집 ${n}개를 지웠습니다(저장소 격자 사용)`);
+      this.render();
+    });
+    wipe.disabled = !edits.length;
+    body.appendChild(this.row(`이 기기 격자 편집 (${edits.length ? names.join(', ') : '없음'})`, wipe));
     const labels = ['저장 지우고 새로 시작', '정말 지울까요? 한 번 더', '마지막: 누르면 지웁니다'];
     // 두 번 확인한 뒤(세 번째 누름) 지우고 다시 불러옴. 그동안 자동 저장이 다시 쓰지 않게 noSave
     const clear = this.btn(labels[this.confirmClear], () => {
