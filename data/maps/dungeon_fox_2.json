@@ -6,7 +6,7 @@
   "cellSize": 4,
   "spawn": {"x": 340, "y": 600},
   "portals": [
-    {"id": "to_fox_1", "name": "여우굴", "label": "여우굴", "x": 197, "y": 490, "w": 56, "h": 40, "fx": {"shape": "ellipse", "x": 197, "y": 498, "w": 56, "h": 24}, "to": "dungeon_fox_1", "arrive": {"x": 1040, "y": 272, "facing": "down"}}
+    {"id": "to_fox_1", "name": "여우굴", "label": "여우굴", "x": 197, "y": 490, "w": 56, "h": 40, "fx": {"shape": "ellipse", "x": 197, "y": 498, "w": 56, "h": 24}, "to": "dungeon_fox_1", "arrive": {"x": 1040, "y": 346, "facing": "down"}}
   ],
   "noSpawnNearPortal": 140,
   "spawnZones": [
