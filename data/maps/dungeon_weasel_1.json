@@ -10,7 +10,7 @@
   ],
   "noSpawnNearPortal": 140,
   "spawnZones": [
-    {"name": "둥지 방", "monster": "weasel", "count": 4, "respawnMs": 15000, "x": 110, "y": 250, "w": 320, "h": 90},
+    {"name": "둥지 방", "monster": "weasel", "count": 4, "respawnMs": 15000, "x": 262, "y": 429, "w": 256, "h": 72},
     {"name": "알껍데기 방", "monster": "weasel", "count": 4, "respawnMs": 15000, "x": 1010, "y": 240, "w": 250, "h": 60},
     {"name": "뿌리 방", "monster": "weasel", "count": 4, "respawnMs": 15000, "x": 900, "y": 520, "w": 300, "h": 100},
     {"name": "위쪽 길", "monster": "weasel", "count": 4, "respawnMs": 15000, "x": 500, "y": 280, "w": 400, "h": 120}
