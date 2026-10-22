@@ -32,7 +32,7 @@ function along(a, b, p) {
 export function chainMods(sk, i) {
   const last = i === sk.hits - 1;
   return {
-    damageMul: sk.damageMul,
+    damageMul: last && sk.lastDamageMul ? sk.lastDamageMul : sk.damageMul, // 삼연참 마지막 한 번은 lastDamageMul
     knockbackMul: last ? sk.lastKnockbackMul : 0.5,
     starScale: last ? sk.lastStarScale : 1,
     hitStopMul: last ? 1.5 : 0.6,
