@@ -1,24 +1,29 @@
 // 무작위 자동 시험(docs/spec/feedback_1022.md 10): 레벨 40 + 무예 모두 배우고, 정해진 시간 동안
 // 무작위로 걷기·평타·무예 13개·물건 쓰기(약·술·산삼)·맵 옮기기·맞기(가끔 쓰러짐)를 섞어 돌림.
 // 1초마다 ① 화면 글자 수 ② 체력·공격력·기다림·몬스터 값이 NaN·음수·무한대인지 ③ 콘솔 오류·경고를 기록해 표로.
-// 쓰는 법: python3 -m http.server 8123 & 을 켠 뒤 node tools/test/chaos.mjs [초=120] [씨앗=1]
+// 프레임마다 모든 몬스터 발 상자가 바닥(설 수 있는 자리) 위인지도 셈(docs/spec/feedback_1023.md 4).
+// 쓰는 법: python3 -m http.server 8123 & 을 켠 뒤 node tools/test/chaos.mjs [초=120] [씨앗=1] [맵,맵…]
+//   맵을 주면 그 맵들만 오가고, 쓰러지지 않게(관리자 '안 죽기') 그 맵에 머묾 — 예: node tools/test/chaos.mjs 120 1 dungeon_fox_1
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const SEC = Number(process.argv[2] || 120);
 let seed = Number(process.argv[3] || 1);
 const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-const MAPS = ['dungeon_rat_1', 'dungeon_snake_1', 'dungeon_raccoon_1', 'dungeon_tiger_1', 'village', 'dungeon_fox_2', 'back_mountain'];
+const ONLY = process.argv[4] ? process.argv[4].split(',') : null; // 이 맵들만 오가며(예: dungeon_fox_1,dungeon_fox_2)
+const MAPS = ONLY || ['dungeon_rat_1', 'dungeon_snake_1', 'dungeon_raccoon_1', 'dungeon_tiger_1', 'village', 'dungeon_fox_2', 'back_mountain'];
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
-await ctx.addInitScript(() => {
+const START = ONLY ? ONLY[0] : 'dungeon_rat_1';
+await ctx.addInitScript((START) => {
   if (sessionStorage.getItem('seeded')) return;
   sessionStorage.setItem('seeded', '1');
   localStorage.clear();
-  localStorage.setItem('seolhwa-rpg:save:v1', JSON.stringify({ version: 1, map: 'dungeon_rat_1', x: 0, y: 0, facing: 'down', progress: { level: 40, exp: 0 },
+  localStorage.setItem('seolhwa-rpg:save:v1', JSON.stringify({ version: 1, map: START, x: 0, y: 0, facing: 'down', progress: { level: 40, exp: 0 },
     equipment: { equipped: { weapon: 'seven_star', outfit: 'outfit1_hotot', head: '', arms: '', feet: '' }, bag: [], coins: 0 } }));
-});
+}, START);
 const page = await ctx.newPage();
+if (ONLY) await page.addInitScript(() => { window.__only = true; });
 const errors = [];
 const warns = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -34,9 +39,34 @@ await page.waitForTimeout(1200);
 await page.tap('#btn-admin');
 await page.locator('#admin-panel button', { hasText: '모두 배우기' }).click();
 await page.locator('#admin-panel button', { hasText: '닫기' }).click();
+// 프레임마다 모든 몬스터 발 상자(bodyBox = def.footBox)가 설 수 있는 자리인지(docs/spec/feedback_1023.md 4, 여우불 같은 날아가는 것은 몬스터가 아님)
+await page.evaluate(async () => {
+  const { isStandable } = await import('/src/core/movement.js');
+  window.__offFloor = { frames: 0, bad: 0, list: [] };
+  const fn = () => {
+    const s = seolhwa.game.scene.getScene('map');
+    if (!s || !s.spawner || !s.map || s.transitioning) return;
+    window.__offFloor.frames++;
+    for (const m of s.spawner.monsters) {
+      const def = s.monsterDefs[m.type];
+      if (!isStandable(s.map.grid, m.x, m.y, def.footBox)) {
+        window.__offFloor.bad++;
+        if (window.__offFloor.list.length < 10) window.__offFloor.list.push(`${s.d.mapId} ${m.type} (${Math.round(m.x)},${Math.round(m.y)})`);
+      }
+    }
+  };
+  // 맵을 옮기면(장면 다시 시작) 듣기가 빠질 수 있어 0.1초마다 확인해 한 번만 붙임
+  const hook = () => {
+    const s = seolhwa.game.scene.getScene('map');
+    if (s && s.events && !s.events.listeners('postupdate').includes(fn)) s.events.on('postupdate', fn);
+  };
+  setInterval(hook, 100);
+  hook();
+});
 await page.evaluate(() => {
   const s = seolhwa.game.scene.getScene('map');
   window.__vec = { x: 0, y: 0 };
+  if (window.__only) s.d.admin.noDie = true; // 맵을 정해 돌릴 때는 쓰러져 마을로 가지 않게
   s.d.input.getVector = () => window.__vec;
 });
 const act = (name, arg) => page.evaluate(([name, arg]) => {
@@ -104,6 +134,8 @@ console.log(`| 화면 글자 수(1초마다 잰 것) | 최대 ${maxTexts}개, �
 console.log(`| 1초에 새로 생긴 글자(감시) | 최대 ${watch.maxTextsPerSec ?? '-'}개 |`);
 console.log(`| NaN·음수·무한대 | ${badSamples.length ? `${badSamples.length}번: ${[...new Set(badSamples.flatMap((x) => x.bad))].join(', ')}` : '0번'} |`);
 console.log(`| 감시 경고 | ${warns.length ? [...new Set(warns)].join(' / ') : '0개'} |`);
+const floor = await page.evaluate(() => window.__offFloor).catch(() => ({ frames: 0, bad: 0, list: [] }));
+console.log(`| 몬스터 발이 바닥 밖(프레임마다) | ${floor.bad}건 / ${floor.frames.toLocaleString('en-US')}프레임${floor.list.length ? `: ${floor.list.join(', ')}` : ''} |`);
 console.log(`| 콘솔 오류 | ${errors.length ? [...new Set(errors)].slice(0, 8).join(' / ') : '0개'} |`);
 await browser.close();
-process.exitCode = errors.length || badSamples.length || warns.length ? 1 : 0;
+process.exitCode = errors.length || badSamples.length || warns.length || floor.bad ? 1 : 0;
