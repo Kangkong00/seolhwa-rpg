@@ -144,11 +144,11 @@ html, body {
 /* ---------- 공격 버튼 ---------- */
 #btn-attack {
   position: fixed;
-  right: calc(env(safe-area-inset-right) + 28px);
-  bottom: calc(env(safe-area-inset-bottom) + 28px);
+  right: calc(env(safe-area-inset-right) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
   z-index: 15;
-  width: 78px;
-  height: 78px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   font: inherit;
   font-size: 16px;
@@ -551,13 +551,15 @@ html, body {
   100% { background: #ffd34d; box-shadow: none; }
 }
 
-/* ---------- 무예 칸 (공격 단추 왼쪽·위 2줄 × 4칸, src/ui/skillButtons.js, docs/spec/feedback_1021.md 1) ---------- */
+/* ---------- 무예 칸 (공격 단추 위 2줄 × 4칸, src/ui/skillButtons.js, docs/spec/feedback_1021.md 1) ---------- */
 /* 단추 = 누르는 영역 54×54(투명), 안의 .skill-box = 보이는 네모 48×48(모서리 6px) */
 #skill-buttons {
   position: fixed;
   z-index: 15;
-  right: calc(env(safe-area-inset-right) + 112px);
-  bottom: calc(env(safe-area-inset-bottom) + 22px);
+  /* 공격 단추 위(docs/spec/feedback_1022.md 7): 보이는 네모의 오른쪽 끝 = 공격 단추 오른쪽 끝(단추 안쪽 여백 3px),
+     아래 줄 누르는 영역이 공격 단추 누르는 영역(지름 84) 위에서 시작 → 보이는 틈 11px */
+  right: calc(env(safe-area-inset-right) + 9px);
+  bottom: calc(env(safe-area-inset-bottom) + 88px);
   display: grid;
   grid-template-columns: repeat(4, 54px);
   grid-auto-rows: 54px;
@@ -1382,9 +1384,9 @@ button {
   position: absolute;
 }
 
-/* 공격 단추: 보이는 지름 78, 누르는 영역 지름 90 */
+/* 공격 단추: 보이는 지름 68, 누르는 영역 지름 84(docs/spec/feedback_1022.md 6) */
 #btn-attack::after {
-  inset: -6px;
+  inset: -8px;
   border-radius: 50%;
 }
 
