@@ -134,3 +134,28 @@ export class SpinTrail {
     this.scene.tweens.add({ targets: this.g, alpha: 0, duration: ms, onComplete: () => this.g.destroy() });
   }
 }
+
+// 무예 숙련 등급이 오름(docs/spec/feedback_1024.md 4): 머리 위 짧은 붓글씨 "검풍 숙련 3", 마지막 등급은 금빛. 주인공을 따라 떠오름
+const BRUSH = '"Nanum Brush Script", "Gungsuh", "AppleMyungjo", "Apple SD Gothic Neo", serif';
+export function showMasteryUp(scene, text, max, cfg, pixelRatio) {
+  const t = scene.add
+    .text(scene.pos.x, scene.pos.y - 78, text, {
+      fontFamily: BRUSH, fontSize: max ? '22px' : '18px', fontStyle: 'bold',
+      color: max ? cfg.upMaxColor : cfg.upColor, stroke: cfg.upStroke, strokeThickness: 4,
+      shadow: max ? { offsetX: 0, offsetY: 0, color: cfg.upMaxColor, blur: 10, fill: true, stroke: true } : undefined,
+    })
+    .setOrigin(0.5, 1)
+    .setResolution(pixelRatio * 2)
+    .setDepth(1e6)
+    .setScale(0.6)
+    .setAlpha(0);
+  t.masteryUp = true; // 시험용
+  const o = { k: 0 };
+  scene.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 180, ease: 'Back.easeOut' });
+  scene.tweens.add({
+    targets: o, k: 1, duration: cfg.upMs,
+    onUpdate: () => t.setPosition(scene.pos.x, scene.pos.y - 78 - 14 * o.k),
+    onComplete: () => scene.tweens.add({ targets: t, alpha: 0, duration: 300, onComplete: () => t.destroy() }),
+  });
+  return t;
+}

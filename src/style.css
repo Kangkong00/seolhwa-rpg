@@ -1777,3 +1777,61 @@ button {
 .pad-numpad .skill-btn.empty .skill-box {
   font-size: var(--pad-face, 18px);
 }
+
+/* ---------- 무예 숙련(src/ui/skillPanel.js, docs/spec/feedback_1024.md 4) ---------- */
+.sk-node-grade {
+  position: absolute;
+  left: 3px;
+  top: 2px;
+  font-size: 9px;
+  padding: 0 3px;
+  border-radius: 6px;
+  background: rgba(243, 234, 214, 0.85);
+  color: #2a1c10;
+}
+
+.sk-node-grade.max {
+  background: #ffd84a;
+}
+
+.sk-node-bar,
+.sk-m-bar {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.sk-node-bar {
+  width: 56px;
+}
+
+.sk-node-bar i,
+.sk-m-bar i {
+  display: block;
+  height: 100%;
+  background: #f0c25a;
+}
+
+.sk-info-mastery {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 2px;
+  font-size: 12px;
+}
+
+.sk-info-mastery .sk-m-bar {
+  flex: 1;
+  height: 5px;
+}
+
+.sk-m-grade.max {
+  color: #ffd84a;
+}
+
+.sk-m-num {
+  font-size: 11px;
+  opacity: 0.8;
+}

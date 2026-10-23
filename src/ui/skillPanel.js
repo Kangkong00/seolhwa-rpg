@@ -1,9 +1,11 @@
 // 무예창 = 트리(docs/spec/feedback_1022.md 5). 세로 줄 4개(검술·풍술·기공·심법) + 맨 아래 칠성검무, 무예끼리 선으로 이음.
 // 칸 상태 3가지: 배움(밝게) / 지금 배울 수 있음(테두리 반짝) / 못 배움(흐림 + "레벨 N" 또는 "앞 무예 필요").
 // 칸을 누르면 오른쪽 정보창: 이름·가지·레벨·값·기다림·지금 내 공격력으로 계산한 데미지·범위·설명·[무예 칸에 넣기].
-// 넣기를 누르면 무예 칸 8개가 나오고, 칸을 누르면 그 칸에 넣음(다른 칸에 있으면 맞바꿈). 찬 칸은 [빼기].
+// 배운 액티브 무예는 숙련 등급·다음 등급까지 막대(docs/spec/feedback_1024.md 4).
+// 넣기를 누르면 무예 칸이 나오고, 칸을 누르면 그 칸에 넣음(다른 칸에 있으면 맞바꿈). 찬 칸은 [빼기].
 // 배우기는 우물가 늙은 군관에게서(여기서는 보기만). 위쪽 '무예' 단추로 열고 닫음, PC는 K. getScene() = 지금 MapScene
 import { placeInSlot, clearSlot, canLearn } from '../core/skills.js';
+import { masteryProgress, masteryBonus, applyMastery, hasMastery } from '../core/mastery.js';
 import { charIcon } from './itemIcon.js';
 import { josa } from './josa.js';
 import { formatNum } from './format.js';
@@ -60,10 +62,11 @@ export function skillDamageText(s, sk) {
 }
 
 function rangeText(sk) {
-  if (sk.kind === 'ultimate') return `별 7곳 반경 ${sk.starRadius} · 끝 반경 ${sk.finalRadius}`;
-  if (sk.length) return `앞 ${sk.length} × 폭 ${sk.width}`;
-  if (sk.distance) return `앞 ${sk.distance}${sk.width ? ` × 폭 ${sk.width}` : ''}`;
-  if (sk.radius) return `반경 ${sk.radius}`;
+  const r = Math.round; // 숙련 범위 +10%로 소수가 될 수 있음
+  if (sk.kind === 'ultimate') return `별 7곳 반경 ${r(sk.starRadius)} · 끝 반경 ${r(sk.finalRadius)}`;
+  if (sk.length) return `앞 ${r(sk.length)} × 폭 ${sk.width}`;
+  if (sk.distance) return `앞 ${r(sk.distance)}${sk.width ? ` × 폭 ${sk.width}` : ''}`;
+  if (sk.radius) return `반경 ${r(sk.radius)}`;
   return '';
 }
 
@@ -147,6 +150,16 @@ export class SkillPanel {
     b.appendChild(el('span', 'sk-node-name', sk.name));
     const at = s.skillSlots.indexOf(sk.id);
     if (at >= 0) b.appendChild(el('span', 'sk-node-slot', String(at + 1)));
+    // 무예 숙련 등급과 다음 등급까지 막대(docs/spec/feedback_1024.md 4)
+    const mp = this.mastery(sk);
+    if (mp) {
+      b.appendChild(el('span', `sk-node-grade${mp.max ? ' max' : ''}`, String(mp.grade)));
+      const bar = el('span', 'sk-node-bar');
+      const fill = el('i');
+      fill.style.width = `${mp.max ? 100 : Math.floor((mp.into / mp.need) * 100)}%`;
+      bar.appendChild(fill);
+      b.appendChild(bar);
+    }
     if (why && st !== 'learned') b.appendChild(el('span', 'sk-node-why', why));
     b.addEventListener('click', () => {
       this.sel = sk.id;
@@ -155,6 +168,14 @@ export class SkillPanel {
       this.render();
     });
     return b;
+  }
+
+  // 배운 액티브 무예의 숙련(없으면 null): { grade, into, need, max }
+  mastery(sk) {
+    const s = this.s;
+    const mc = s.d.skills.mastery;
+    if (!mc || !hasMastery(sk) || !s.learned.includes(sk.id)) return null;
+    return masteryProgress(s.d.skillMastery[sk.id] || 0, mc);
   }
 
   render() {
@@ -211,7 +232,7 @@ export class SkillPanel {
     const s = this.s;
     const box = el('div', 'sk-info');
     if (!sk) {
-      box.appendChild(el('div', 'sk-info-help', '무예를 누르면 여기에 자세히 나옵니다. 배운 액티브 무예는 무예 칸(공격 단추 위 8칸)에 넣어 씁니다.'));
+      box.appendChild(el('div', 'sk-info-help', '무예를 누르면 여기에 자세히 나옵니다. 배운 액티브 무예는 무예 칸(오른쪽 아래 숫자 칸)에 넣어 씁니다. 무예로 몬스터를 맞히면 숙련이 오릅니다.'));
       box.appendChild(this.slotRow(null));
       return box;
     }
@@ -224,13 +245,37 @@ export class SkillPanel {
     top.appendChild(t);
     box.appendChild(top);
     const lines = [];
+    // 숙련: 등급·막대·덤, 데미지·범위·기다림은 숙련을 더한 값으로
+    const mp = this.mastery(sk);
+    const mc = s.d.skills.mastery;
+    const msk = mp ? applyMastery(sk, mp.grade, mc) : sk;
+    if (mp) {
+      const mb = masteryBonus(sk, mp.grade, mc);
+      const row = el('div', 'sk-info-mastery');
+      row.appendChild(el('span', `sk-m-grade${mp.max ? ' max' : ''}`, `숙련 ${mp.grade}등급`));
+      const bar = el('span', 'sk-m-bar');
+      const fill = el('i');
+      fill.style.width = `${mp.max ? 100 : Math.floor((mp.into / mp.need) * 100)}%`;
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      row.appendChild(el('span', 'sk-m-num', mp.max ? '끝' : `${mp.into}/${mp.need}`));
+      box.appendChild(row);
+      const pct = (v) => Math.round(v * 100);
+      const parts = [];
+      if (mb.damageMul > 1) parts.push(`데미지 +${pct(mb.damageMul - 1)}%`);
+      if (mb.healMul > 1) parts.push(`회복 +${pct(mb.healMul - 1)}%`);
+      if (mb.counterMul > 1) parts.push(`반격 +${pct(mb.counterMul - 1)}%`);
+      if (mb.cooldownCut > 0) parts.push(`기다림 −${pct(mb.cooldownCut)}%`);
+      if (mb.rangeMul > 1) parts.push(`범위 +${pct(mb.rangeMul - 1)}%`);
+      box.appendChild(el('div', 'sk-info-line sk-m-bonus', parts.length ? `숙련 덤 ${parts.join(' · ')}` : '숙련 덤 없음 — 이 무예로 몬스터를 맞히면 오름'));
+    }
     const cost = sk.cost || {};
     const items = Object.entries(cost.items || {}).map(([id, n]) => `${(s.itemDefs[id] && s.itemDefs[id].name) || id} ${n}`);
     lines.push(`값 ${s.coinsText(cost.coins || 0)}${items.length ? ` + ${items.join(', ')}` : ''}`);
-    if (sk.type !== 'passive') lines.push(`기다림 ${Math.round((sk.cooldownMs * s.stats().cooldownMul) / 100) / 10}초`);
-    const dmg = skillDamageText(s, sk);
+    if (sk.type !== 'passive') lines.push(`기다림 ${Math.round((sk.cooldownMs * s.skillCooldownMul(sk)) / 100) / 10}초`);
+    const dmg = skillDamageText(s, msk);
     if (dmg) lines.push(`데미지 ${dmg}`);
-    const range = rangeText(sk);
+    const range = rangeText(msk);
     if (range) lines.push(`범위 ${range}`);
     const need = (sk.requiresSkill || []).map((id) => {
       const k = s.skills.find((x) => x.id === id);

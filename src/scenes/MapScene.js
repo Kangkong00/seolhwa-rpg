@@ -11,6 +11,7 @@ import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } fr
 import { totalStats, damageTaken, levelOk, passiveSum } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns, normalizeSlots, autoSlot } from '../core/skills.js';
+import { gradeOf, applyMastery, masteryBonus, cooldownMulWith, countsForMastery, addMasteryUse, normalizeMastery, hasMastery } from '../core/mastery.js';
 import { SKILL_KINDS, chainMods, pullMonsters } from './skillKinds.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
@@ -42,7 +43,7 @@ import { Hud } from '../ui/hud.js';
 import { AdminPanel } from '../ui/adminPanel.js';
 import { SkillPanel } from '../ui/skillPanel.js';
 import { SkillCommonFx } from './skillCommonFx.js';
-import { floatText } from './progressFx.js';
+import { floatText, showMasteryUp } from './progressFx.js';
 import { shadeImage } from './shade.js';
 import { preloadFx } from './fxSprite.js';
 import { EditorPanel, downloadText } from '../ui/editorPanel.js';
@@ -147,6 +148,8 @@ export class MapScene extends Phaser.Scene {
     this.hpFill = null; // 레벨업 체력바 차오름
     this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
     this.recall = null; // 귀환 부적 쓰는 중 { left }
+    this.masteryCast = null; // 무예 숙련: 지금 쓰는 무예 { id, counted }(docs/spec/feedback_1024.md 4)
+    this.lastFought = null; // 마지막으로 싸운 몬스터(숨 고르기 숙련을 셀지)
     this.dead = false;
     // 레벨·경험치, 배운 무예, 의뢰: 저장된 것(맵을 옮겨도 이어짐)
     const eco = this.d.economy;
@@ -160,6 +163,9 @@ export class MapScene extends Phaser.Scene {
     if (!this.d.cooldowns) this.d.cooldowns = new Cooldowns();
     // 무예 칸 4개(무예창에서 고름, 저장됨). 저장이 없으면 배운 순서대로
     if (!this.d.skillSlots) this.d.skillSlots = normalizeSlots(save && save.skillSlots, this.d.learned.filter((id) => this.isActiveSkill(id)));
+    // 무예 숙련 횟수, 한 번이라도 배운 무예(다음 단계 합성용 — 지금 배운 무예로 채워 시작, docs/spec/feedback_1024.md 4)
+    if (!this.d.skillMastery) this.d.skillMastery = normalizeMastery(save && save.skillMastery);
+    if (!this.d.everLearned) this.d.everLearned = [...new Set([...(Array.isArray(save && save.skillsEverLearned) ? save.skillsEverLearned : []), ...this.d.learned])];
     this.progress = this.d.progress;
     this.learned = this.d.learned;
     this.quests = this.d.quests;
@@ -671,6 +677,8 @@ export class MapScene extends Phaser.Scene {
       progress: { ...this.progress },
       skills: [...this.learned],
       skillSlots: [...this.skillSlots],
+      skillMastery: { ...this.d.skillMastery },
+      skillsEverLearned: (this.d.everLearned = [...new Set([...this.d.everLearned, ...this.learned])]),
       quests: { ...this.quests },
       sansamEaten: this.d.sansamEaten,
       secretsFound: [...this.d.secretsFound],
@@ -932,6 +940,8 @@ export class MapScene extends Phaser.Scene {
     const roll = rollCrit(damage, critCfg, Math.random, !!o.forceCrit);
     const isSkill = o.kind === 'skill';
     if (isSkill) this.skillFx.markHit(target.id); // 맞은 몬스터는 어둡게 하지 않음
+    this.lastFought = { type: target.type, clone: !!target.clone };
+    if (isSkill) this.noteMastery(target); // 무예 숙련 셈
     // 평타는 조금 더 밀려남(impact.knockbackMul)
     const knock = (o.knockbackPx ?? this.cfg.attack.knockbackPx) * (isSkill ? 1 : im.knockbackMul);
     const result = hitMonster(target, dir, this.adminDamage(target, roll.damage), knock, o.stunMs ?? this.cfg.attack.stunMs);
@@ -1362,11 +1372,52 @@ export class MapScene extends Phaser.Scene {
       return;
     }
     const run = SKILL_KINDS[sk.kind];
-    if (!run || !run(this, this.fxScaled(sk))) return;
+    // 숙련 등급만큼 데미지·범위·회복·반격을 곱한 사본으로(docs/spec/feedback_1024.md 4)
+    const mc = this.d.skills.mastery;
+    const grade = this.masteryGrade(id);
+    this.masteryCast = { id, counted: false };
+    if (!run || !run(this, this.fxScaled(mc ? applyMastery(sk, grade, mc) : sk))) {
+      this.masteryCast = null;
+      return;
+    }
+    // 회복 무예는 맞히는 몬스터가 없어 싸우는 중에 쓰면 셈
+    if (mc && mc.healKinds.includes(sk.kind) && this.lastFought && this.calmMs < mc.healCombatMs) this.noteMastery(this.lastFought);
     this.skillFx.start(sk, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
     // 칠보 팔찌·무예 달인: 기다림 −, 관리자 '무예 기다림 없음'이면 기다리지 않음
-    if (!this.d.admin.noCooldown) this.cooldowns.start(id, sk.cooldownMs * this.stats().cooldownMul);
+    if (!this.d.admin.noCooldown) this.cooldowns.start(id, sk.cooldownMs * this.skillCooldownMul(sk));
     this.refreshSkills();
+  }
+
+  // ---------- 무예 숙련(docs/spec/feedback_1024.md 4, 계산은 src/core/mastery.js) ----------
+  masteryGrade(id) {
+    const mc = this.d.skills.mastery;
+    return mc ? gradeOf(this.d.skillMastery[id] || 0, mc) : 1;
+  }
+
+  // 무예 기다림 배율: 장비·패시브 cooldownCut + 숙련(합쳐 최대 0.5)
+  skillCooldownMul(sk) {
+    const mc = this.d.skills.mastery;
+    const base = this.stats().cooldownMul;
+    if (!mc) return base;
+    return cooldownMulWith(1 - base, masteryBonus(sk, this.masteryGrade(sk.id), mc).cooldownCut, mc);
+  }
+
+  // 지금 쓰는 무예가 몬스터를 맞힘(impactHit) — 한 번 쓸 때 한 번만 셈
+  noteMastery(target) {
+    const mc = this.d.skills.mastery;
+    const c = this.masteryCast;
+    if (!mc || !c || c.counted || !target) return;
+    if (!countsForMastery(this.monsterDefs[target.type], target, this.progress.level, mc)) return;
+    const sk = this.skills.find((s) => s.id === c.id);
+    if (!hasMastery(sk)) return;
+    c.counted = true;
+    const r = addMasteryUse(this.d.skillMastery, c.id, mc);
+    if (r.after > r.before) {
+      showMasteryUp(this, `${sk.name} 숙련 ${r.after}`, r.after >= mc.maxGrade, mc, this.d.getPixelRatio());
+      this.sfx.play('learn');
+      this.refreshSkills();
+      this.save();
+    }
   }
 
   // 무예 연출 크기·알갱이 수를 키운 사본(fxCommon.sizeKeys×sizeMul, countKeys×particleMul). 맞는 범위(radius 등)는 그대로.
@@ -1521,6 +1572,7 @@ export class MapScene extends Phaser.Scene {
       return;
     }
     this.sfx.play('playerHurt');
+    if (bite.monster) this.lastFought = { type: bite.monster.type, clone: !!bite.monster.clone };
     this.cancelRecall('맞아서 귀환이 끊겼습니다');
     const ph = this.cfg.playerHit;
     // 방어력만큼 덜 아픔(최소 1)

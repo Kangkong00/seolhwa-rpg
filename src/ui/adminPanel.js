@@ -3,6 +3,7 @@
 // MMO 때는 서버 명령으로 바꾸면 됨). 안 죽기·한 방은 저장하지 않음(scene.d.admin).
 // getScene() = 지금 MapScene(맵을 옮기면 장면이 바뀌므로 매번 물어봄)
 import { addItem, addCoins, equipFromBag } from '../core/equipment.js';
+import { gradeOf, setMasteryGrade, hasMastery } from '../core/mastery.js';
 import { maxLevel } from '../core/progress.js';
 import { grantSkill } from '../core/skills.js';
 import { resetQuests } from '../core/quests.js';
@@ -215,6 +216,32 @@ export class AdminPanel {
     body.appendChild(this.row('무예 칸',
       this.btn(`칸 채우기 1~${n}`, () => this.note(`배운 액티브 ${fill(0)}개를 칸에 넣었습니다`)),
       this.btn(`칸 채우기 ${n + 1}~${total}`, () => this.note(`배운 액티브 ${fill(n)}개를 칸에 넣었습니다`))));
+    // 무예 숙련 등급 바로 정하기(docs/spec/feedback_1024.md 4): ◀ 무예 하나 / 모두 ▶, 등급 − N +, 1·5·10
+    const mc = s.d.skills.mastery;
+    if (mc) {
+      const acts = s.skills.filter((k) => hasMastery(k));
+      const opts = [null, ...acts]; // null = 모두
+      this.mSel = ((this.mSel ?? 0) + opts.length) % opts.length;
+      const cur = opts[this.mSel];
+      const g = cur ? gradeOf(s.d.skillMastery[cur.id] || 0, mc) : null;
+      body.appendChild(this.row('숙련 무예',
+        this.btn('◀', () => { this.mSel--; this.render(); }),
+        el('span', 'ad-value', cur ? `${cur.name} (${g}등급)` : `모두 (${acts.length}개)`),
+        this.btn('▶', () => { this.mSel++; this.render(); })));
+      const setG = (to) => {
+        const t = Math.max(1, Math.min(mc.maxGrade, to));
+        for (const k of cur ? [cur] : acts) setMasteryGrade(s.d.skillMastery, k.id, t, mc);
+        s.refreshSkills();
+        if (s.d.skillPanel && s.d.skillPanel.open) s.d.skillPanel.render();
+        s.save();
+        this.note(`${cur ? cur.name : '모든 무예'} 숙련 ${t}등급`);
+        this.render();
+      };
+      const base = g ?? 1;
+      body.appendChild(this.row('숙련 등급',
+        this.btn('−', () => setG(base - 1)), this.btn('+', () => setG(base + 1)),
+        this.btn('1', () => setG(1)), this.btn('5', () => setG(5)), this.btn('10', () => setG(mc.maxGrade))));
+    }
   }
 
   // ---------- 물건 ----------
