@@ -87,9 +87,15 @@ async function boot() {
 
   // 화면 선명도: 기기 픽셀 비율만큼 캔버스를 키우되, 성능을 위해 maxPixelRatio로 제한
   const getPixelRatio = () => Math.min(window.devicePixelRatio || 1, game.maxPixelRatio);
+  // 캔버스 크기 = 게임 칸(#game, 화면 전체 inset 0)의 실제 크기(docs/spec/feedback_1024.md 2).
+  // 예전에는 visualViewport 크기를 썼는데, 아이폰 사파리 주소창이 나와 있으면 이 값이 화면보다 작아 아래에 검은 띠가 생겼음.
+  // 소수 크기는 올림(1px 틈 없게). 맵은 노치 옆·홈 막대 아래까지, 단추·체력바만 안전 영역 안(style.css env(safe-area-inset-*)).
+  const gameEl = document.getElementById('game');
   const viewSize = () => {
-    const vv = window.visualViewport;
-    return { w: Math.round(vv ? vv.width : window.innerWidth), h: Math.round(vv ? vv.height : window.innerHeight) };
+    const b = gameEl.getBoundingClientRect();
+    const w = b.width || window.innerWidth;
+    const h = b.height || window.innerHeight;
+    return { w: Math.ceil(w), h: Math.ceil(h) };
   };
 
   const joystick = new Joystick({
@@ -119,16 +125,24 @@ async function boot() {
     banner: false,
   });
 
+  let last = '';
   const resize = () => {
     const r = getPixelRatio();
     const s = viewSize();
+    const key = `${s.w}x${s.h}@${r}`;
+    if (key === last) return;
+    last = key;
     phaserGame.scale.setZoom(1 / r);
     phaserGame.scale.resize(s.w * r, s.h * r);
     joystick.placeHome();
   };
+  last = `${w}x${h}@${dpr}`;
   window.addEventListener('resize', resize);
-  window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+  // 돌린 뒤 아이폰이 크기를 늦게 알려 줄 때가 있어 몇 번 더 잼
+  window.addEventListener('orientationchange', () => [100, 300, 700].forEach((ms) => setTimeout(resize, ms)));
   if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  // 게임 칸 크기가 바뀌면(주소창이 나오고 들어감, 홈 화면 앱 상태 막대) 바로
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(gameEl);
 
   // 개발 중 확인용 (브라우저 콘솔에서 seolhwa.game)
   window.seolhwa = { game: phaserGame };
