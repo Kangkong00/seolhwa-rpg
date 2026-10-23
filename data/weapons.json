@@ -48,10 +48,16 @@
     {"id": "seven_star", "job": "geomgaek", "name": "칠성검", "image": "assets/weapons/seven_star.png", "tipFromGrip": 640, "damage": 600, "swingMs": 189, "cooldownMs": 430, "reach": 68, "width": 44, "knockbackPx": 22, "stunMs": 400, "stepPx": 4, "trailColor": "#ffe680", "fx": {"fxTier": 9, "trailParticles": "sevenStars", "hitFx": "starBurst"}}
   ],
   "swing": {
-    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 theta < poseSwingTheta이면 raise, poseSwingTheta ≤ theta < poseStrikeTheta이면 swing, 그 이상 strike. hitTheta를 지나는 순간 맞힘 판정. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간. lean=몸 전체 움직임(640 기준 단위): 휘두르기 직전 preMs 동안 바라보는 반대쪽으로 backPx 뺌 → 진행 stepFrom~stepTo 동안 바라보는 쪽으로 내딛기(옆면 stepSide, 정면·뒷면 stepFrontBack) → 끝나면(recoverMs 동안) 제자리",
+    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 theta < poseSwingTheta이면 raise, poseSwingTheta ≤ theta < poseStrikeTheta이면 swing, 그 이상 strike. hitTheta를 지나는 순간 맞힘 판정. timing(docs/spec/feedback_1023.md 5): keys(기본) = 몸 자세가 칼 각도를 이끎 — keys마다 휘두르기 시간 t0~t1 동안 그 자세(pose)로, 칼은 theta0→theta1(ease in 천천히 시작 / linear 고르게 / out 빠르게 시작해 멈추듯), 자세가 바뀌는 순간 칼도 다음 구간으로. ease = 예전 방식(thetaFrom→thetaTo를 ease 지수로, 몸은 poseSwingTheta·poseStrikeTheta 문턱) — 비교용, 관리자 창 설정 탭에서 바꿈. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간. lean=몸 전체 움직임(640 기준 단위): 휘두르기 직전 preMs 동안 바라보는 반대쪽으로 backPx 뺌 → 진행 stepFrom~stepTo 동안 바라보는 쪽으로 내딛기(옆면 stepSide, 정면·뒷면 stepFrontBack) → 끝나면(recoverMs 동안) 제자리",
     "thetaFrom": -40,
     "thetaTo": 125,
     "ease": 2,
+    "timing": "keys",
+    "keys": [
+      { "pose": "raise", "t0": 0, "t1": 0.34, "theta0": -40, "theta1": -20, "ease": "in" },
+      { "pose": "swing", "t0": 0.34, "t1": 0.62, "theta0": 10, "theta1": 72, "ease": "linear" },
+      { "pose": "strike", "t0": 0.62, "t1": 1, "theta0": 95, "theta1": 125, "ease": "out" }
+    ],
     "latFrontBack": 0.15,
     "latSide": 0,
     "poseSwingTheta": 5,

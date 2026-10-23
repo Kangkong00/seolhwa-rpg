@@ -365,6 +365,12 @@ export class AdminPanel {
       s.d.admin.bloom = !fx.bloomWanted;
       this.note(`빛 번짐 ${s.d.admin.bloom ? '켬 — 화면이 검게 되면 끄세요' : '끔'} (저장 안 됨)`);
     })));
+    // 휘두르기 방식(docs/spec/feedback_1023.md 5): keys(자세가 칼 각도를 이끎) / ease(예전) — 이번 실행만, 아이폰에서 바로 비교
+    const sw = s.d.weapons.swing;
+    const isKeys = sw.timing !== 'ease';
+    body.appendChild(this.row(`휘두르기 방식 (${isKeys ? '자세별 각도' : '예전 매끄럽게'})`,
+      this.btn('자세별 각도', () => { sw.timing = 'keys'; this.note('휘두르기: 자세별 각도(새 방식)'); this.render(); }, isKeys ? 'on' : ''),
+      this.btn('예전', () => { sw.timing = 'ease'; this.note('휘두르기: 예전 방식(비교용, 저장 안 됨)'); this.render(); }, isKeys ? '' : 'on')));
     body.appendChild(el('div', 'ad-group', '기타'));
     body.appendChild(this.row('의뢰', this.btn('처음부터', () => {
       resetQuests(s.quests);

@@ -10,6 +10,7 @@ import {
 } from './skillFx.js';
 import { hitStar, slashMark } from './impactFx.js';
 import { artCrescent, artEarthCrack, artWindCrescent, artLightning, artShockRing, artDashStreak, artTiger, artStarBurst, ArtShield, artHeal } from './skillArt.js';
+import { swingPose } from './weaponPose.js';
 
 const A = (scene) => scene.d.game.fxImages.art; // 그림 크기(data/game.json fxImages.art)
 
@@ -373,7 +374,8 @@ export const SKILL_KINDS = {
         }
         // 별마다 칼을 치켜들었다 내려침
         const k = (t % step) / step;
-        return scene.canSwing ? { theta: -40 + 165 * Math.min(1, k * 1.6), lean: 0 } : 'punch';
+        // 평타와 같은 휘두르기(swing.timing — keys면 자세가 칼 각도를 이끎, docs/spec/feedback_1023.md 5)
+        return scene.canSwing ? { ...swingPose(scene.d.weapons.swing, Math.min(1, k * 1.6)), lean: 0 } : 'punch';
       },
       onEnd: () => map.destroy(),
     });

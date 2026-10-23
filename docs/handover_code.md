@@ -77,3 +77,4 @@
 - 10-22 밤: 회복 숫자 모아 띄우기(`flushHeal`·`showHeal` follow), 개발용 감시 `devWatch.js`, 무작위 시험 `tools/test/chaos.mjs`. 함정: `scene.restart`는 같은 장면 객체 — 맵을 옮길 때 남으면 안 되는 필드는 `create`에서 비울 것(기세·hot·rootMs·shotG 등).
 - 10-22 밤: 아이템 고치기 — 쓰는 물건 규칙 `src/core/consumables.js`(기다림 묶음·술·산삼), 상태 `this.d.useState`, 저장 `sansamEaten`·`secretsFound`, 시험 `tools/test/items.mjs`·`itemsplay.mjs`. 숨은 것은 `secret: true`(가게·도움말에서 뺌, 관리자에는 보임).
 - 10-23: 격자 편집 `{ base: gridHash(blocked), rows }`(옛 편집은 지우고 알림), 관리자 '이 기기 격자 편집 모두 지우기', mapcheck 입구 안 검사, chaos 몬스터 바닥 검사·맵 정해 돌리기, 무기 쥐는 점 `python3 tools/test/weapongrip.py`. 맵 격자를 바꾸면 mapcheck·monsterwalls, 무기 그림이 오면 weapongrip.
+- 10-23 저녁: 휘두르기 `swing.timing` keys(자세가 칼 각도를 이끎, `weaponPose.swingPose`)·ease(예전), 관리자 설정에서 바꿈, 시험 `tools/test/swingsync.mjs`(옷 6 × 방향 3). 휘두르기 값을 바꾸면 swingsync·skilldmg.

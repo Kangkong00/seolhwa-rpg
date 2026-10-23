@@ -158,3 +158,35 @@
 - 맞힘 판정이 t≈0.78 → 0.56으로 빨라짐(손맛이 더 빠르게 느껴짐). 궤적은 정해 둔 모양이라 그대로.
 - 옷 6벌·세 방향 모두 같은 자세 3장이라 같은 값으로 됨. 무예(삼연참 등)가 같은 휘두르기 함수를 쓰면 함께 바뀜 — 무예 연출이 어색해지지 않는지 확인.
 - 시험: 휘두르기 중 매 프레임 (자세, θ)가 표의 구간 안인지, 맞힘이 한 번만 나는지, 쥐는 점이 지금 자세의 주먹인지.
+
+### 반영됨 (2026-10-23, Claude Code)
+
+- `data/weapons.json` `swing.timing` "keys"(기본) + `swing.keys` 3구간(위 표 그대로: raise 0~0.34 θ −40→−20 ease in / swing 0.34~0.62 θ 10→72 고르게 / strike 0.62~1 θ 95→125 ease out). 예전 방식은 `timing: "ease"`로 그대로 남김(`thetaFrom`·`thetaTo`·`ease`·`poseSwingTheta`·`poseStrikeTheta`).
+- 코드: `weaponPose.swingPose(swing, 진행)` → `{ pose, theta }`(keys면 그 시간 구간의 자세와 그 구간 안의 칼 각도, ease면 예전 각도에 pose 없음). `MapScene.updateSwing`이 `{ theta, lean, pose }`를 넘기고 `PlayerView`는 pose가 있으면 그대로, 없으면 예전처럼 칼 각도 문턱으로 몸 그림을 고름. 휘두르기 직전 뒤로 빼기(`lean.preMs`)·힘껏 베기 모으기(`chargeMs`) 동안은 raise·θ −40. 다 휘두른 뒤(`recoverMs`)는 strike·θ 125.
+- 맞힘은 그대로 `hitTheta` 60을 지나는 순간 한 번 → keys에서는 t≈0.56(swing 자세 중간, 예전 t≈0.78).
+- **관리자 창 설정 탭 "휘두르기 방식"**: 「자세별 각도」/「예전」(이번 실행만, 저장 안 됨) — 아이폰에서 둘을 바로 비교.
+- **무예**: 힘껏 베기·삼연참·지축 가르기·검풍·받아치기 반격은 평타와 같은 `updateSwing`을 써서 함께 바뀜. 칠성검무는 별마다 칼을 내려치는 각도를 따로 계산하고 있어 같은 `swingPose`를 쓰게 바꿈(그래야 팔과 칼이 맞음). 휘돌려 베기·뇌전참 등은 한 자세에 멈춘 각도(105·−35)라 그대로. 무예 데미지 시험(`skilldmg.mjs`) 결과는 바뀌기 전과 같음(맞힌 횟수·숫자), 삼연참 3번 이어짐. 무예 효과 그림(초승달 등)은 맞힘 순간에 나오므로 예전보다 조금 일찍(swing 자세 중간) 나옴 — 어색한지 강콩 아이폰 확인 필요.
+- **시험** `node tools/test/swingsync.mjs`(브라우저): 옷 6벌 × 정면·옆면·뒷면, 시험이 8ms씩 직접 프레임을 돌리며 매 프레임 ① 보이는 몸 그림·θ가 그 시간 구간 안 ② 맞힘(`strikeHit`) 한 번 ③ 칼 쥐는 점 = 보이는 몸 그림의 주먹(`attach[자세].grip`, 0.01px 안). 예전 방식(`ease`)으로 돌리면 18가지 모두 "문제"(예: t128 몸은 raise인데 구간은 swing) — 시험이 걸러냄을 확인.
+
+| 옷 | 방향 | 프레임 | 보인 자세(프레임 수) | 자세·θ 구간 밖 | 맞힘 | 쥐는 점 ≠ 주먹 | 결과 |
+|---|---|---|---|---|---|---|---|
+| outfit1_hotot | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit1_hotot | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit1_hotot | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit2_mumyeong | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit2_mumyeong | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit2_mumyeong | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit3_dopo | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit3_dopo | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit3_dopo | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit4_cheollik | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit4_cheollik | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit4_cheollik | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit5_dujeonggap | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit5_dujeonggap | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit5_dujeonggap | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit6_sinseon | down | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit6_sinseon | right | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+| outfit6_sinseon | up | 43 | raise 15 · swing 7 · strike 21 | 0 | 1 | 0 | 좋음 |
+
+- 첫 화면·무작위 시험(60초): 오류 없음, 몬스터 바닥 밖 0건.

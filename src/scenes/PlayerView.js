@@ -144,7 +144,7 @@ export class PlayerView {
     let frameName = holding ? 'hold' : 'stand';
     let lift = 0;
     if (swing) {
-      frameName = this.swingPose(swing.theta);
+      frameName = swing.pose || this.swingPose(swing.theta); // keys 방식이면 자세를 그대로, 아니면 칼 각도 문턱으로
       this.walkTime = 0;
     } else if (punching) {
       frameName = 'punch';

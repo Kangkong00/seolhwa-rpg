@@ -28,7 +28,7 @@ import { josa } from '../ui/josa.js';
 import { crescentWave, WindRing, leafSwirl, CrescentShot } from './skillFx.js';
 import { levelUpFx } from './levelUpFx.js';
 import { SwingTrail, inkSplash } from './weaponFx.js';
-import { swingTheta } from './weaponPose.js';
+import { swingPose } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
 import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
@@ -787,9 +787,9 @@ export class MapScene extends Phaser.Scene {
   }
 
   // 휘두르는 중 한 프레임. 직전 lean.preMs 동안은 몸만 뒤로 빼고(칼은 치켜든 채),
-  // 그 뒤 칼 방향 theta를 thetaFrom → thetaTo로 돌림(처음엔 느리고 끝으로 빠르게).
-  // 몸 그림은 PlayerView가 theta로 고름(raise → swing → strike).
-  // 반환: 그릴 자세 { theta, lean } 또는 null(끝남)
+  // 그 뒤 swing.timing "keys"면 자세(raise → swing → strike)마다 정한 칼 각도 구간으로, "ease"면 예전처럼
+  // thetaFrom → thetaTo로 매끄럽게 돌리고 몸 그림은 PlayerView가 theta 문턱으로 고름(weaponPose.swingPose).
+  // 반환: 그릴 자세 { theta, lean, pose } 또는 null(끝남)
   updateSwing(dt) {
     const s = this.swing;
     const w = s.weapon;
@@ -809,8 +809,8 @@ export class MapScene extends Phaser.Scene {
       return null;
     }
     const lean = this.swingLean(s.t, w, pre);
-    if (s.t < pre) return { theta: sw.thetaFrom, lean };
-    const theta = swingTheta(sw, (s.t - pre) / w.swingMs);
+    if (s.t < pre) return { theta: sw.thetaFrom, lean, pose: sw.timing === 'ease' ? null : 'raise' };
+    const { theta, pose } = swingPose(sw, (s.t - pre) / w.swingMs);
     // 칼이 앞을 지나는 순간(hitTheta) 맞힘 판정
     if (!s.hitDone && theta >= sw.hitTheta) {
       s.hitDone = true;
@@ -826,7 +826,7 @@ export class MapScene extends Phaser.Scene {
     s.trail.draw(prog);
     this.swingParticles(s, w, prog, dt);
     if (s.t >= pre + w.swingMs) s.trail.fadeOut();
-    return { theta, lean };
+    return { theta, lean, pose };
   }
 
   makeTrail(w, mods = null, edge = false) {

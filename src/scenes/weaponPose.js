@@ -34,8 +34,21 @@ export function projectWeapon(facing, thetaDeg, lat, K) {
   return { angle, length, behind };
 }
 
-// 휘두르기 진행(0~1, 시간) → theta. 처음엔 느리고 끝으로 갈수록 빠르게(ease 지수)
+// 휘두르기 진행(0~1, 시간) → theta. 처음엔 느리고 끝으로 갈수록 빠르게(ease 지수) — 예전 방식("ease")
 export function swingTheta(swing, progress) {
   const p = Math.max(0, Math.min(1, progress));
   return swing.thetaFrom + (swing.thetaTo - swing.thetaFrom) * Math.pow(p, swing.ease);
+}
+
+const EASE = { in: (k) => k * k, linear: (k) => k, out: (k) => 1 - (1 - k) * (1 - k) };
+
+// 휘두르기 진행(0~1) → { pose, theta } (docs/spec/feedback_1023.md 5).
+// timing "keys"(기본): 몸 자세가 칼 각도를 이끎 — 지금 시간이 든 key의 자세로, 칼은 그 key의 theta0→theta1 안에서만.
+// timing "ease": 예전 방식(칼은 ease 지수로 매끄럽게, 몸은 칼 각도 문턱으로) — pose는 null(PlayerView가 문턱으로 고름)
+export function swingPose(swing, progress) {
+  const p = Math.max(0, Math.min(1, progress));
+  if (swing.timing === 'ease' || !Array.isArray(swing.keys) || !swing.keys.length) return { pose: null, theta: swingTheta(swing, p) };
+  const k = swing.keys.find((x) => p < x.t1) || swing.keys[swing.keys.length - 1];
+  const u = Math.max(0, Math.min(1, (p - k.t0) / Math.max(1e-6, k.t1 - k.t0)));
+  return { pose: k.pose, theta: k.theta0 + (k.theta1 - k.theta0) * (EASE[k.ease] || EASE.linear)(u) };
 }
