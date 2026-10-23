@@ -56,7 +56,7 @@
 
 ## 6. 남은 일·알려진 문제
 
-**2026-10-23 정리(컨텍스트 정리 전)** — 한 일: 10-20 피드백 11·10-21 무예 칸 8·빛 번짐 끔·어두워지는 범위·10-22 피드백 1~10(무예 배율·맵 검사·막힘 상자·효과 그림 12·숫자 ×10·방어력 비율식·회복 글자 모으기·chaos 시험)·아이템 고치기·10-23 피드백 1~5(격자 편집 짝짓기·입구 검사·몬스터 바닥 시험·쥐는 점 시험·휘두르기 `swing.keys`) 모두 main에 반영·푸시. 남은 일: ①② `feedback_1023.md` 6 숫자패드·7 방물장수 — 10-23 밤 반영됨 ③ 합성(`fusion_design.md`)·숙련은 강콩 확인 전이라 코드 안 함 ④ 손때 보류 ⑤ 모든 반영은 강콩 아이폰 확인 필요 ⑥ 방물장수 옆모습(Flow 대기)이 오면 걷기 두 장 번갈아.
+**2026-10-23 정리(컨텍스트 정리 전)** — 한 일: 10-20 피드백 11·10-21 무예 칸 8·빛 번짐 끔·어두워지는 범위·10-22 피드백 1~10(무예 배율·맵 검사·막힘 상자·효과 그림 12·숫자 ×10·방어력 비율식·회복 글자 모으기·chaos 시험)·아이템 고치기·10-23 피드백 1~5(격자 편집 짝짓기·입구 검사·몬스터 바닥 시험·쥐는 점 시험·휘두르기 `swing.keys`) 모두 main에 반영·푸시. 남은 일: ①② `feedback_1023.md` 6 숫자패드·7 방물장수 — 10-23 밤 반영됨, `feedback_1024.md` 1~4 — 10-24 반영됨(숙련 다음 단계 = 무예 합성, `skillsEverLearned`로 트리 검사) ③ 합성(`fusion_design.md`)·숙련은 강콩 확인 전이라 코드 안 함 ④ 손때 보류 ⑤ 모든 반영은 강콩 아이폰 확인 필요 ⑥ 방물장수 옆모습(Flow 대기)이 오면 걷기 두 장 번갈아.
 
 - 새 무기 3종·대장장이: 10-16 반영됨(`feedback_1015.md` "반영됨 (2026-10-16)"). 가게 `sells`에 `price`가 없으면 `items.json` `shopPrice`(엽전 + 재료)로 팖. 쥐왕이 새 무기를 떨어뜨릴지는 강콩 답 기다림.
 - 옷 2~6 무기 자세: 미룸.
@@ -81,3 +81,4 @@
 - 10-23: 격자 편집 `{ base: gridHash(blocked), rows }`(옛 편집은 지우고 알림), 관리자 '이 기기 격자 편집 모두 지우기', mapcheck 입구 안 검사, chaos 몬스터 바닥 검사·맵 정해 돌리기, 무기 쥐는 점 `python3 tools/test/weapongrip.py`. 맵 격자를 바꾸면 mapcheck·monsterwalls, 무기 그림이 오면 weapongrip.
 - 10-23 저녁: 휘두르기 `swing.timing` keys(자세가 칼 각도를 이끎, `weaponPose.swingPose`)·ease(예전), 관리자 설정에서 바꿈, 시험 `tools/test/swingsync.mjs`(옷 6 × 방향 3). 휘두르기 값을 바꾸면 swingsync·skilldmg.
 - 10-23 밤: 숫자패드 배치 `src/ui/actionPad.js`(`game.json` `actionPad`, 관리자 「단추 배치」), 무예 9칸, 숫자패드 키, 시험 `tools/test/actionpad.mjs`(겹침·멀티터치·초 글자·키·방물장수). 방물장수 `wander` 끔(옆모습 오면 다시). 단추 자리를 바꾸면 actionpad.
+- 10-24: 지축 가르기 금은 누운 채 뻗음·그림은 솟음(`artEarthBurst`, `groundCrack(len)`, `noTrail`), 시험 `earthsplit.mjs`(docs/fx_check 찍기). 캔버스 = `#game` 크기(`main.js` ResizeObserver), 시험 `screenfill.mjs`. 숫자패드 40·3·6·46, 글자 `--pad-*`. **무예 숙련** `src/core/mastery.js`·`skills.json mastery`·`monsters.json tier`, MapScene `masteryCast`·`noteMastery`·`skillCooldownMul`, 무예창 막대, 관리자 숙련, 저장 `skillMastery`·`skillsEverLearned`, 시험 `mastery.mjs`·`masteryplay.mjs`. 무예 값을 바꾸면 mastery·masteryplay·skilldmg, 단추 자리를 바꾸면 actionpad, 화면 크기 코드를 바꾸면 screenfill.

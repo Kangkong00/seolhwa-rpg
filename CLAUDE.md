@@ -138,7 +138,7 @@ docs/          문서 사본
 - [x] **휘두르기 손·칼 맞추기**(`docs/spec/feedback_1023.md` 5 "반영됨"): 자세별 칼 각도 구간 `swing.keys`, 예전 방식은 `swing.timing: "ease"`로 남김·관리자에서 비교, 시험 `tools/test/swingsync.mjs` — 강콩 아이폰 확인 필요
 - [x] **숫자패드 배열 단추**(`docs/spec/feedback_1023.md` 6 "반영됨"): 무예 9칸 3×3 + 엔터 자리 공격(두 줄 높이), PC 숫자패드 — 강콩 아이폰 확인 필요
 - [x] **방물장수 세워 두기**(`docs/spec/feedback_1023.md` 7 "반영됨"): 옆모습 그림이 올 때까지 `wander` 끔, (300,432)
-- [ ] **2026-10-24 피드백 + 무예 숙련**(`docs/spec/feedback_1024.md` 1~4): 지축 가르기 연출, 화면 꽉 채우기, 숫자패드 줄이기, 무예 숙련·`skillsEverLearned` 저장
+- [x] **2026-10-24 피드백 + 무예 숙련**(`docs/spec/feedback_1024.md` 1~4 "반영됨"): 지축 가르기 연출, 화면 꽉 채우기, 숫자패드 줄이기, 무예 숙련·`skillsEverLearned` 저장 — 강콩 아이폰 확인 필요
 
 ## 작업 규칙
 
