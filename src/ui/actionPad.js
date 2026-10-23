@@ -34,6 +34,9 @@ export class ActionPad {
     const px = (v) => `${v}px`;
     const edge = (side, v) => `calc(env(safe-area-inset-${side}) + ${v}px)`;
     const attackH = attackRows * slot + (attackRows - 1) * gap;
+    // 글자 크기: 칸 크기에 비례(slot 54 → 번호 10·초 15, slot 40 → 번호 8·초 12)
+    const font = { slot: slot, face: Math.round(slot * 0.37), num: Math.round(slot * 0.2), cd: Math.round(slot * 0.3), attack: Math.round(slot * 0.33), menu: Math.round(slot * 0.25) };
+    for (const [k, v] of Object.entries(font)) document.body.style.setProperty(`--pad-${k}`, `${v}px`);
     const cols = 3;
     const rows = Math.ceil(btns.length / cols);
     Object.assign(attack.style, { right: edge('right', margin), bottom: edge('bottom', margin), width: px(attackW), height: px(attackH), borderRadius: '12px' });

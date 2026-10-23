@@ -2,7 +2,7 @@
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
   "skillSlots": 9,
-  "actionPad": {"layout": "numpad", "slot": 54, "gap": 6, "margin": 16, "attackW": 64, "attackRows": 2, "menuCell": true},
+  "actionPad": {"layout": "numpad", "slot": 40, "gap": 3, "margin": 6, "attackW": 46, "attackRows": 2, "menuCell": true},
   "defenseK": 200,
   "_defenseK": "받는 데미지 = 데미지 × defenseK / (defenseK + 방어력), 최소 1(docs/spec/feedback_1022.md 8). 방어 140이면 59%, 250이면 44%",
   "skillTreeRequires": true,

@@ -85,6 +85,18 @@ for (const layout of ['numpad', 'rows']) {
   const left = Math.min(...els.map((e) => e.x));
   const top = Math.min(...els.map((e) => e.y));
   ok(`${layout}: 보이는 칸끼리 안 겹침`, !overlap, `겹침 ${overlap} · 차지한 넓이 ${Math.round(right - left)}×${Math.round(390 - top)}px · 오른쪽 끝 틈 ${Math.round(844 - right)}px`);
+  // 숫자패드: 칸 사이 틈도 누름 영역(docs/spec/feedback_1024.md 3) — 단추 묶음 안 1px마다 단추가 아닌 곳(맵)이 눌리는지
+  if (layout === 'numpad') {
+    const holes = await page.evaluate(({ l, t, r, b }) => {
+      let n = 0;
+      for (let y = t + 0.5; y < b; y += 1) for (let x = l + 0.5; x < r; x += 1) {
+        const el = document.elementFromPoint(x, y);
+        if (!(el && el.closest('.skill-btn, #btn-attack, #btn-pad-menu'))) n++;
+      }
+      return n;
+    }, { l: left, t: top, r: right, b: Math.max(...els.map((e) => e.y + e.h)) });
+    ok(`${layout}: 칸 사이 틈도 누름 영역`, !holes, `단추 묶음 안에서 맵이 눌리는 곳 ${holes}px`);
+  }
   // ② 조이스틱을 누른 채 단추마다 한 번씩
   await page.evaluate(() => { window.__att = 0; window.__sk = []; window.__menu = 0; });
   const joy = { x: 120, y: 300 };
@@ -94,10 +106,10 @@ for (const layout of ['numpad', 'rows']) {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: joy.x + dx, y: joy.y, id: 1 }] });
   for (const e of els) {
     await page.evaluate(() => { const s = seolhwa.game.scene.getScene('map'); s.cooldowns.left = {}; s.skillCast = null; });
-    // 칸 가장자리 가까이(안쪽 4px)를 누름
+    // 칸 가장자리 가까이(안쪽 3px)를 누름
     // 동그란 공격(예전)은 네모 귀퉁이가 동그라미 밖이라 둘레 안쪽(가운데에서 반지름의 85%)
     const round = e.name === 'btn-attack' && layout === 'rows';
-    const p = round ? { x: e.x + e.w / 2 + e.w * 0.3, y: e.y + e.h / 2 - e.h * 0.3 } : { x: e.x + e.w - 4, y: e.y + 4 };
+    const p = round ? { x: e.x + e.w / 2 + e.w * 0.3, y: e.y + e.h / 2 - e.h * 0.3 } : { x: e.x + e.w - 3, y: e.y + 3 };
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: joy.x + dx, y: joy.y, id: 1 }, { x: p.x, y: p.y, id: 2 }] });
     await page.waitForTimeout(50);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [{ x: p.x, y: p.y, id: 2 }] });
