@@ -65,6 +65,7 @@ docs/          문서 사본
 | [docs/spec/weapon_list.md](docs/spec/weapon_list.md) | **무기 목록 v2(2026-10-18)**: 20종(구간마다 2자루, 둘째는 우두머리 재료로 제작), 디자인·무기별 고유 연출(`fx`) |
 | [docs/spec/skills_impact.md](docs/spec/skills_impact.md) | **타격감·무예 확장(2026-10-18)**: 멈춤·흔들림 키움, 타격 섬광·베인 자국·회심·쓰러뜨림 연출, 무예 13개(새 10개)·무예 칸 4개·무예창, 직업 대비 `job` |
 | [docs/spec/mastery_fusion.md](docs/spec/mastery_fusion.md) | **숙련(무예·무기·능력치)과 무예 합성(2개씩, 실패 있음) 방향 + 합성 제안 v1(성질 섞기 + 무작위, 2026-10-22 결정, 강콩 확인 전 — 코드 아직 안 함)** |
+| [docs/spec/fusion_design.md](docs/spec/fusion_design.md) | **무예 합성·무기 합성 설계 v1(2026-10-23, 강콩 확인 전 — 코드 아직 안 함)**: 공통 뼈대(주+부·씨앗·세기 상한·3차), 무예 성질 표, 무기 새김 2칸, 기운 맞춤, 비전 후보, 만드는 순서 |
 | [docs/spec/items_fix_1022.md](docs/spec/items_fix_1022.md) | **아이템 고치기(2026-10-22)**: 전리품 사 주는 곳, 청동 환두도 650, 회복약 % (주먹밥 15%·탕약 50%), 새 약·술 6(인삼·녹용·탁주·약주·송순주·산삼), 기다림 묶음·술 버프 |
 | [docs/spec/secrets.md](docs/spec/secrets.md) | **숨은 장치 목록**(게임 안에서 안내 안 함): `secret: true` 규칙, 산삼, 비전 무예 |
 | [docs/spec/feedback_1023.md](docs/spec/feedback_1023.md) | **2026-10-23**: 무기 7자루 쥐는 점(술 달린 칼이 손잡이에서 벗어남, 그림 고침), 여우굴 뒷벽 격자, 구미호의 방 못 들어감(이 기기 옛 격자 편집 의심 → 저장소 격자와 짝짓기), 손때 보류 |
@@ -133,6 +134,7 @@ docs/          문서 사본
 - [x] **회복 "+1" 줄줄이·변수 전면 재검토**(`feedback_1022.md` 10 "반영됨"): 회복 0.5초마다 모아 머리 위에, 맵 옮긴 뒤 남던 버프·여우불 그림판 고침, 개발용 감시·2분 무작위 시험(`tools/test/chaos.mjs`) — 강콩 아이폰 확인 필요
 - [x] **아이템 고치기**(`docs/spec/items_fix_1022.md` "반영됨"): 전리품 사 주는 곳·값 순서·회복약 %·새 약·술 6·기다림 묶음·산삼(`secrets.md` 1) — 아이콘(Flow 139)은 오기 전 `iconText`, 강콩 아이폰 확인 필요
 - [x] **2026-10-23 피드백**(`docs/spec/feedback_1023.md` "반영됨"): 무기 그림·여우굴 격자는 기획 쪽이 고침 — Claude Code는 격자 편집 짝짓기·관리자 지우기·입구 검사 정확히·몬스터 바닥 시험·무기 쥐는 점 시험(`tools/test/weapongrip.py`) — 강콩 아이폰 확인 필요(구미호의 방 들어가기)
+- [ ] **휘두르기 손·칼 맞추기**(`docs/spec/feedback_1023.md` 5): 자세별 칼 각도 구간 `swing.keys`, 예전 방식은 `swing.timing: "ease"`로 남김·관리자에서 비교
 
 ## 작업 규칙
 
