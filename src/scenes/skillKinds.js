@@ -9,7 +9,7 @@ import {
   GuardShield, lightning, StarMap, bigBurst,
 } from './skillFx.js';
 import { hitStar, slashMark } from './impactFx.js';
-import { artCrescent, artEarthCrack, artWindCrescent, artLightning, artShockRing, artDashStreak, artTiger, artStarBurst, ArtShield, artHeal } from './skillArt.js';
+import { artCrescent, artEarthBurst, artWindCrescent, artLightning, artShockRing, artDashStreak, artTiger, artStarBurst, ArtShield, artHeal } from './skillArt.js';
 import { swingPose } from './weaponPose.js';
 
 const A = (scene) => scene.d.game.fxImages.art; // 그림 크기(data/game.json fxImages.art)
@@ -185,22 +185,31 @@ export const SKILL_KINDS = {
     return true;
   },
 
-  // 앞 직선: 지축 가르기 — 칼을 내리찍는 순간 땅이 갈라지며 금이 지나가는 자리의 몬스터를 벰
+  // 앞 직선: 지축 가르기(docs/spec/feedback_1024.md 1) — 칼을 내리찍는 순간 발 앞 바닥에서 금이 바라보는 쪽으로 누운 채 뻗어 나감.
+  // 위에서 내려오는 것 없음(칼 궤적도 그리지 않음). 위·아래는 땅에 누운 느낌으로 화면 세로 verticalSquash배.
+  // 금이 지나간 자리에서 주황빛이 솟고(artEarthBurst) 돌 조각이 위로 튐. 맞힘은 금 끝이 지나가는 순간 그 자리 몬스터
   line(scene, sk) {
     scene.attackWithAssist({
       damageMul: sk.damageMul,
       hitStopMul: 1.2,
+      noTrail: !!sk.noTrail,
       onStrike: () => {
         const facing = scene.facing;
         const [dx, dy] = DIR[facing];
-        const start = { x: scene.pos.x + dx * 10, y: scene.pos.y + dy * 6 };
-        const end = { x: start.x + dx * sk.length, y: start.y + dy * sk.length };
+        const len = sk.length * (dy ? sk.verticalSquash ?? 1 : 1);
+        const start = { x: scene.pos.x + dx * 10, y: scene.pos.y + (dy > 0 ? 4 : dy < 0 ? -4 : 0) };
+        const end = { x: start.x + dx * len, y: start.y + dy * len };
         const base = scene.skillBase() * sk.damageMul;
         const hitIds = new Set();
         scene.cameras.main.shake(scene.cfg.swingFx.shakeMs * 1.5, scene.cfg.swingFx.shakeIntensity * 2);
         scene.sfx.play('punchHit');
-        artEarthCrack(scene, start.x, start.y, facing, sk.length * A(scene).earthLength); // 그림: 땅 갈라짐
-        groundCrack(scene, start.x, start.y, dx, dy, sk, (dist) => {
+        let bursts = 0;
+        const burstSize = sk.eruptionSize * A(scene).earthLength;
+        groundCrack(scene, start.x, start.y, dx, dy, len, sk, (dist, tip) => {
+          // 솟는 주황빛: 금 끝이 eruptions 등분 자리를 지날 때마다 하나
+          for (; bursts < sk.eruptions && dist >= ((bursts + 0.5) / sk.eruptions) * len; bursts++) {
+            artEarthBurst(scene, tip.x, tip.y, burstSize * (0.8 + 0.4 * (bursts / sk.eruptions)), { holdMs: sk.crackHoldMs, fadeMs: sk.crackFadeMs, flipX: bursts % 2 === 1 });
+          }
           const hits = [];
           for (const m of scene.spawner.monsters) {
             if (m.hp <= 0 || hitIds.has(m.id)) continue;

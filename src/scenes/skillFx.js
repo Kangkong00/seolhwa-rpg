@@ -236,18 +236,27 @@ export function exclaim(scene, x, y, text, color, ms, pixelRatio) {
   scene.tweens.add({ targets: t, alpha: 0, y: y - 8, delay: ms - 250, duration: 250, onComplete: () => t.destroy() });
 }
 
-// 땅 갈라짐: (x,y)에서 (dx,dy) 쪽으로 length까지 지그재그 금이 crackMs 동안 달려가고 돌 조각이 튐.
-// onReach(거리)는 금 끝이 지나갈 때마다 불림(맞힘 판정을 금에 맞추려고)
-export function groundCrack(scene, x, y, dx, dy, sk, onReach) {
+// 땅 갈라짐(docs/spec/feedback_1024.md 1): (x,y)에서 (dx,dy) 쪽으로 len까지, 바닥에 누운 지그재그 금이 crackMs 동안 길이만 0→1로 뻗음
+// (굵기 그대로). 돌 조각은 금 자리에서 위로 튀며 흐려짐(떨어지지 않음). crackHoldMs 남았다가 crackFadeMs 동안 흐려짐.
+// onReach(거리, 금 끝 자리)는 금 끝이 지나갈 때마다 불림(맞힘·솟는 빛을 금에 맞추려고)
+export function groundCrack(scene, x, y, dx, dy, len, sk, onReach) {
   const g = scene.add.graphics().setDepth(-0.8);
   const glow = scene.add.graphics().setDepth(-0.79).setBlendMode(Phaser.BlendModes.ADD);
   const pts = [];
   const n = 12;
   for (let i = 0; i <= n; i++) {
     const t = i / n;
+    // 옆으로 비뚤기: 가로로 뻗으면 세로로(눌러서 0.6배), 세로로 뻗으면 가로로
     const side = i === 0 || i === n ? 0 : (i % 2 ? 1 : -1) * (3 + Math.random() * 4);
-    pts.push({ x: x + dx * sk.length * t - dy * side, y: y + dy * sk.length * t * 0.9 + dx * side * 0.6, d: sk.length * t });
+    pts.push({ x: x + dx * len * t - dy * side, y: y + dy * len * t + dx * side * 0.6 });
   }
+  g.crackPts = pts; // 시험용(tools/test/earthsplit.mjs): 금 자리
+  const tipAt = (k) => {
+    const u = Math.min(n, k * n);
+    const i = Math.min(n - 1, Math.floor(u));
+    const f = u - i;
+    return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * f, y: pts[i].y + (pts[i + 1].y - pts[i].y) * f };
+  };
   const o = { k: 0 };
   let thrown = 0;
   scene.tweens.add({
@@ -269,17 +278,17 @@ export function groundCrack(scene, x, y, dx, dy, sk, onReach) {
         }
         gg.strokePath();
       }
-      onReach(sk.length * o.k);
-      // 돌 조각
+      onReach(len * o.k, tipAt(o.k));
+      // 돌 조각: 금 끝 뒤 자리에서 위로 튀며 흐려짐
       const want = Math.floor(o.k * sk.rockCount);
       for (; thrown < want; thrown++) {
-        const p = pts[Math.min(n, Math.floor((thrown / sk.rockCount) * n) + 1)];
+        const p = tipAt((thrown + 1) / sk.rockCount);
         const r = scene.add.rectangle(p.x, p.y, 3 + Math.random() * 3, 3 + Math.random() * 2, hex(sk.rockColor)).setDepth(p.y + 0.1).setAngle(Math.random() * 90);
-        scene.tweens.add({ targets: r, y: p.y - 10 - Math.random() * 14, x: p.x + (Math.random() - 0.5) * 16, angle: r.angle + 180, duration: 220, yoyo: true, ease: 'Quad.easeOut', onComplete: () => r.destroy() });
+        scene.tweens.add({ targets: r, y: p.y - 12 - Math.random() * 16, x: p.x + (Math.random() - 0.5) * 14, angle: r.angle + 180, alpha: 0, duration: 380, ease: 'Quad.easeOut', onComplete: () => r.destroy() });
       }
     },
     onComplete: () => {
-      scene.tweens.add({ targets: [g, glow], alpha: 0, delay: 500, duration: 700, onComplete: () => { g.destroy(); glow.destroy(); } });
+      scene.tweens.add({ targets: [g, glow], alpha: 0, delay: sk.crackHoldMs ?? 500, duration: sk.crackFadeMs ?? 300, onComplete: () => { g.destroy(); glow.destroy(); } });
     },
   });
 }

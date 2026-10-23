@@ -826,7 +826,8 @@ export class MapScene extends Phaser.Scene {
       this.swingArt(s.mods);
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
-    if (!s.trail) s.trail = this.makeTrail(w, s.mods);
+    // 지축 가르기(noTrail): 위에서 내려오는 칼 궤적 없이(docs/spec/feedback_1024.md 1)
+    if (!s.trail) s.trail = s.mods && s.mods.noTrail ? { draw() {}, fadeOut() {}, pointAt: null } : this.makeTrail(w, s.mods);
     const prog = (theta - sw.thetaFrom) / (sw.thetaTo - sw.thetaFrom);
     s.trail.draw(prog);
     this.swingParticles(s, w, prog, dt);

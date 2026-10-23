@@ -1,6 +1,6 @@
 // 무예 효과 그림 붙이기(docs/spec/feedback_1022.md 9). 그림 12장(assets/fx)을 fxSprite로 더하기 섞기.
 // 지금 도형 연출은 그대로 두고 그림을 함께 겹쳐 그림. 크기(px)·시간은 data/game.json fxImages.art.
-// 그림 방향: 초승달 열린 쪽 = 오른쪽, 땅 갈라짐 = 위로 뻗음, 검풍 앞 = 왼쪽, 번개 = 위 → 아래, 빛줄기 앞 = 오른쪽,
+// 그림 방향: 초승달 열린 쪽 = 오른쪽, 땅 갈라짐 = 위로 솟음(돌리지 않음), 검풍 앞 = 왼쪽, 번개 = 위 → 아래, 빛줄기 앞 = 오른쪽,
 // 호랑이 = 오른쪽으로 달려듦. 그림이 없으면 아무것도 안 그림(도형 연출만).
 import { fxSprite, hasFx } from './fxSprite.js';
 
@@ -28,19 +28,23 @@ export function artTriple(scene, x, y, facing, size) {
   });
 }
 
-// 땅 갈라짐: 바라보는 쪽으로 눕혀(세로 0.6배) 시작점에서 길이 방향으로 0→1 늘어나고 0.5초 남음
-export function artEarthCrack(scene, x, y, facing, length) {
-  const tex = hasFx(scene, 'fx_earth_crack') ? scene.textures.get('fx:fx_earth_crack').getSourceImage() : null;
-  if (!tex) return null;
-  // 그림은 위로 뻗음 → 바라보는 쪽으로 돌림. 화면 세로로 0.6배 눌러 땅에 눕힘(옆이면 그림의 가로, 위아래면 그림의 세로)
-  const rot = (ANGLE[facing] ?? 0) + 90;
-  const side = facing === 'left' || facing === 'right';
-  const unit = length / tex.height;
-  return fxSprite(scene, 'fx_earth_crack', x, y, {
-    scale: unit, originY: 1, rot,
-    sx: side ? 0.6 : 1, sy: 0.01,
-    ms: 300, ease: 'Quad.easeOut', to: { sy: side ? 1 : 0.6 }, holdMs: 500, fadeMs: 250,
+// 땅 갈라짐 자리에서 솟는 주황빛(docs/spec/feedback_1024.md 1): 그림을 돌리지 않고 늘 위로 솟게(아래 바닥 → 위),
+// 바닥(y)에 밑을 대고 세로 0→1로 솟았다 holdMs 남고 흐려짐. 깊이는 그 자리 y(주인공 앞뒤 가림 그대로, 무예 층 아님)
+export function artEarthBurst(scene, x, y, size, { holdMs = 500, fadeMs = 300, flipX = false } = {}) {
+  if (!hasFx(scene, 'fx_earth_crack')) return null;
+  const tex = scene.textures.get('fx:fx_earth_crack').getSourceImage();
+  const unit = size / Math.max(tex.width, tex.height);
+  const img = scene.add.image(x, y, 'fx:fx_earth_crack')
+    .setOrigin(0.5, 0.95)
+    .setBlendMode(Phaser.BlendModes.ADD)
+    .setScale(unit, unit * 0.05)
+    .setFlipX(flipX)
+    .setDepth(y + 0.2);
+  scene.tweens.add({
+    targets: img, scaleY: unit, duration: 160, ease: 'Quad.easeOut',
+    onComplete: () => scene.tweens.add({ targets: img, alpha: 0, delay: holdMs, duration: fadeMs, onComplete: () => img.destroy() }),
   });
+  return img;
 }
 
 // 검풍: 날아가는 방향으로 돌린 반달 검기(앞 = 왼쪽). keep — 부른 쪽이 움직이고 지움
