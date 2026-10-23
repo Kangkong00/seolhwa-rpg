@@ -1,7 +1,8 @@
 {
   "_설명": "화면·조작 관련 임시값. 코드 수정 없이 여기서 바꾸면 됩니다. 길이 단위는 마을 그림의 픽셀.",
   "cameraZoom": 1.0,
-  "skillSlots": 8,
+  "skillSlots": 9,
+  "actionPad": {"layout": "numpad", "slot": 54, "gap": 6, "margin": 16, "attackW": 64, "attackRows": 2, "menuCell": true},
   "defenseK": 200,
   "_defenseK": "받는 데미지 = 데미지 × defenseK / (defenseK + 방어력), 최소 1(docs/spec/feedback_1022.md 8). 방어 140이면 59%, 250이면 44%",
   "skillTreeRequires": true,
@@ -22,7 +23,8 @@
     "color": "#c9a7ff", "stroke": "#3a1760", "fontPx": 18, "boostPx": 11,
     "delayMs": 150, "holdMs": 1200, "fadeMs": 400, "floatPx": 22, "abovePx": 18
   },
-  "_skillSlots": "무예 칸 수(공격 단추 왼쪽·위 2줄, docs/spec/feedback_1021.md 1). 저장된 칸이 더 적으면 앞에서부터 옮기고 나머지는 빈칸",
+  "_actionPad": "공격·무예 단추 배치(docs/spec/feedback_1023.md 6): numpad = 무예 3×3(아래 줄 1·2·3) + 오른쪽 공격(attackRows 줄 높이) + 맨 위 오른쪽 무예창 칸(menuCell), rows = 예전(동그란 공격 + 위 4칸 줄). slot 칸 크기·gap 사이·margin 화면 끝에서·attackW 공격 폭(px). 관리자 설정에서 바꿔 비교",
+  "_skillSlots": "무예 칸 수(숫자패드 1~9, docs/spec/feedback_1023.md 6). 저장된 칸이 더 적으면 앞에서부터 옮기고 나머지는 빈칸",
   "maxPixelRatio": 2,
   "maxTextures": 1,
   "_maxTextures": "한 번에 묶어 그리는 그림 수(0 = Phaser 기본). 시험 환경에서 기울인 그림(칼)이 잘려 보이는 문제가 있어 1로 둠(그림 수가 적어 성능 영향은 작음). 아이폰에서 0으로 바꿔도 칼이 멀쩡하면 0이 더 빠름 (확인 필요)",

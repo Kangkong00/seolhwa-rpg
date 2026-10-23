@@ -18,6 +18,7 @@ import { ItemInfo } from '../ui/itemInfo.js';
 import { openItemInfo, tipText } from './itemInfoView.js';
 import { StatusPanel } from '../ui/statusPanel.js';
 import { SkillButtons } from '../ui/skillButtons.js';
+import { ActionPad } from '../ui/actionPad.js';
 import { NpcPanel } from '../ui/npcPanel.js';
 import { Toast } from '../ui/toast.js';
 import { NpcView, loadNpcTexture } from './NpcView.js';
@@ -252,6 +253,9 @@ export class MapScene extends Phaser.Scene {
       this.d.toast = new Toast(document.getElementById('toast'), this.d.economy.textFx.toastHoldMs);
       this.d.npcPanel = new NpcPanel(document.getElementById('npc-panel'));
       this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id), () => this.d.skillPanel.show());
+      // 공격·무예 배치(숫자패드/예전 줄, docs/spec/feedback_1023.md 6)
+      this.d.actionPad = new ActionPad({ attack: document.getElementById('btn-attack'), skills: document.getElementById('skill-buttons'), menu: document.getElementById('btn-pad-menu') }, () => this.d.skillPanel.show());
+      this.d.actionPad.apply(this.d.game.actionPad || { layout: 'rows' });
       // 조이스틱 자리(왼쪽)에 선 사람을 눌러도 창이 뜨게
       this.d.joystick.tapHandler = (cx, cy) => this.d.scene.tapNpcAtClient(cx, cy);
       this.d.hud.setSoundOn(!this.d.sfx.muted);
@@ -401,6 +405,7 @@ export class MapScene extends Phaser.Scene {
     this.d.joystick.setEnabled(v);
     this.attackButton.setVisible(v);
     this.skillButtons.setVisible(v);
+    this.d.actionPad.setVisible(v);
   }
 
   // 가방 물건을 누르면 정보창(끼기·쓰기는 정보창 단추로)
@@ -1726,6 +1731,7 @@ export class MapScene extends Phaser.Scene {
     this.d.joystick.setEnabled(!on);
     if (this.d.attackButton) this.d.attackButton.setVisible(!on);
     if (this.d.skillButtons) this.d.skillButtons.setVisible(!on);
+    if (this.d.actionPad) this.d.actionPad.setVisible(!on);
     if (on) this.overlay.draw(this.map.grid, this.map);
   }
 

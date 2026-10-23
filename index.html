@@ -44,8 +44,10 @@
 
   <!-- 오른쪽 아래 공격 버튼 (src/ui/attackButton.js, PC는 스페이스) -->
   <button id="btn-attack" type="button" aria-label="공격">공격</button>
-  <!-- 공격 버튼 둘레 무예 칸 4개 (src/ui/skillButtons.js, PC는 1·2·3·4) -->
+  <!-- 무예 칸 9개 (src/ui/skillButtons.js, PC는 1~9·숫자패드 1~9) — 배치는 src/ui/actionPad.js -->
   <div id="skill-buttons"></div>
+  <!-- 숫자패드 배치 맨 위 오른쪽 「무예창」 칸 (docs/spec/feedback_1023.md 6) -->
+  <button id="btn-pad-menu" type="button" hidden>무예창</button>
 
   <!-- 사람(NPC) 창: 사기·팔기·무예 배우기·대화 (src/ui/npcPanel.js) -->
   <div id="npc-panel" class="panel" hidden></div>

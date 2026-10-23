@@ -371,6 +371,13 @@ export class AdminPanel {
     body.appendChild(this.row(`휘두르기 방식 (${isKeys ? '자세별 각도' : '예전 매끄럽게'})`,
       this.btn('자세별 각도', () => { sw.timing = 'keys'; this.note('휘두르기: 자세별 각도(새 방식)'); this.render(); }, isKeys ? 'on' : ''),
       this.btn('예전', () => { sw.timing = 'ease'; this.note('휘두르기: 예전 방식(비교용, 저장 안 됨)'); this.render(); }, isKeys ? '' : 'on')));
+    // 공격·무예 단추 배치(docs/spec/feedback_1023.md 6): 숫자패드 / 예전 줄 — 이번 실행만
+    const pad = s.d.game.actionPad || (s.d.game.actionPad = { layout: 'rows' });
+    const isPad = pad.layout === 'numpad';
+    const setPad = (layout, msg) => { pad.layout = layout; s.d.actionPad.apply(pad); this.note(msg); this.render(); };
+    body.appendChild(this.row(`단추 배치 (${isPad ? '숫자패드' : '예전 줄'})`,
+      this.btn('숫자패드', () => setPad('numpad', '단추 배치: 숫자패드(새 방식)'), isPad ? 'on' : ''),
+      this.btn('예전', () => setPad('rows', '단추 배치: 예전 줄(비교용, 저장 안 됨)'), isPad ? '' : 'on')));
     body.appendChild(el('div', 'ad-group', '기타'));
     body.appendChild(this.row('의뢰', this.btn('처음부터', () => {
       resetQuests(s.quests);

@@ -1,4 +1,4 @@
-// 공격 단추 왼쪽·위의 네모 무예 칸 SLOT_COUNT개(2줄 × 4칸, 위 1~4·아래 5~8, PC는 1~8 키, docs/spec/feedback_1021.md 1).
+// 네모 무예 칸 SLOT_COUNT개(PC는 1~9 키·숫자패드 1~9). 자리는 src/ui/actionPad.js(숫자패드 모양 또는 예전 4칸 줄, docs/spec/feedback_1023.md 6).
 // 칸에 무엇을 넣을지는 무예창(src/ui/skillPanel.js)에서 고름. 빈칸을 누르면 무예창이 열림.
 // 기다리는 동안은 어두운 막이 시계 방향으로 걷히고 가운데 남은 초, 다 차면 테두리가 한 번 반짝. 칼이 필요한 무예는 맨손이면 흐리게.
 import { SLOT_COUNT } from '../core/skills.js';
@@ -48,7 +48,9 @@ export class SkillButtons {
     }
     window.addEventListener('keydown', (e) => {
       if (e.repeat || e.target instanceof HTMLInputElement) return;
-      const n = Number(e.key);
+      // 윗줄 숫자(e.key) 또는 숫자패드(e.code — Num Lock이 꺼져 있어도)
+      const pad = /^Numpad([1-9])$/.exec(e.code);
+      const n = pad ? Number(pad[1]) : Number(e.key);
       if (n >= 1 && n <= SLOT_COUNT && this.slots[n - 1]) onUse(this.slots[n - 1]);
     });
   }

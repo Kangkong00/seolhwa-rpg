@@ -1,4 +1,4 @@
-// 오른쪽 아래 공격 버튼 (PC는 스페이스). 누르고 있으면 isDown이 계속 true → 공격 간격마다 반복.
+// 오른쪽 아래 공격 버튼 (PC는 스페이스·숫자패드 Enter). 누르고 있으면 isDown이 계속 true → 공격 간격마다 반복.
 // 여러 손가락: 조이스틱을 누른 채 눌러도 됨(포인터마다 따로 셈). 누르는 순간 짧은 진동.
 import { vibrate } from './press.js';
 
@@ -31,13 +31,13 @@ export class AttackButton {
     el.addEventListener('pointercancel', up);
     el.addEventListener('lostpointercapture', up);
     window.addEventListener('keydown', (e) => {
-      if (e.code !== 'Space') return;
+      if (e.code !== 'Space' && e.code !== 'NumpadEnter') return;
       e.preventDefault();
       if (!this.keyDown) this.pressedOnce = true;
       this.keyDown = true;
     });
     window.addEventListener('keyup', (e) => {
-      if (e.code === 'Space') this.keyDown = false;
+      if (e.code === 'Space' || e.code === 'NumpadEnter') this.keyDown = false;
     });
     window.addEventListener('blur', () => {
       this.keyDown = false;

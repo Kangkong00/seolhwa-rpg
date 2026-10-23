@@ -1702,3 +1702,53 @@ button {
 .equip-cell.cooling {
   position: relative;
 }
+
+/* ---------- 숫자패드 배치 (src/ui/actionPad.js, docs/spec/feedback_1023.md 6) ---------- */
+/* 자리·크기는 actionPad.js가 data/game.json actionPad로 정함. 누르는 영역 = 보이는 칸 + 틈의 절반(서로 안 겹침) */
+.pad-numpad .skill-box {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.pad-numpad .skill-btn::after,
+.pad-numpad #btn-attack::after,
+#btn-pad-menu::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--half-gap, 3px));
+  border-radius: 0;
+}
+
+.pad-numpad .skill-btn .skill-num {
+  right: 4px;
+  bottom: 2px;
+  font-size: 10px;
+}
+
+#btn-pad-menu {
+  position: fixed;
+  z-index: 15;
+  font: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  color: #f3ead6;
+  background: rgba(60, 40, 25, 0.6);
+  border: 2px solid rgba(243, 234, 214, 0.45);
+  border-radius: 8px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#btn-pad-menu[hidden] {
+  display: none;
+}
+
+#btn-pad-menu:active {
+  transform: scale(0.9);
+}
+
+#btn-pad-menu:focus:not(:focus-visible) {
+  outline: none;
+}

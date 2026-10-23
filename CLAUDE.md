@@ -135,8 +135,8 @@ docs/          문서 사본
 - [x] **아이템 고치기**(`docs/spec/items_fix_1022.md` "반영됨"): 전리품 사 주는 곳·값 순서·회복약 %·새 약·술 6·기다림 묶음·산삼(`secrets.md` 1) — 아이콘(Flow 139)은 오기 전 `iconText`, 강콩 아이폰 확인 필요
 - [x] **2026-10-23 피드백**(`docs/spec/feedback_1023.md` "반영됨"): 무기 그림·여우굴 격자는 기획 쪽이 고침 — Claude Code는 격자 편집 짝짓기·관리자 지우기·입구 검사 정확히·몬스터 바닥 시험·무기 쥐는 점 시험(`tools/test/weapongrip.py`) — 강콩 아이폰 확인 필요(구미호의 방 들어가기)
 - [x] **휘두르기 손·칼 맞추기**(`docs/spec/feedback_1023.md` 5 "반영됨"): 자세별 칼 각도 구간 `swing.keys`, 예전 방식은 `swing.timing: "ease"`로 남김·관리자에서 비교, 시험 `tools/test/swingsync.mjs` — 강콩 아이폰 확인 필요
-- [ ] **숫자패드 배열 단추**(`docs/spec/feedback_1023.md` 6): 무예 9칸 3×3 + 엔터 자리 공격(두 줄 높이), PC 숫자패드
-- [ ] **방물장수 세워 두기**(`docs/spec/feedback_1023.md` 7): 옆모습 그림이 올 때까지 `wander` 끔, (300,432)
+- [x] **숫자패드 배열 단추**(`docs/spec/feedback_1023.md` 6 "반영됨"): 무예 9칸 3×3 + 엔터 자리 공격(두 줄 높이), PC 숫자패드 — 강콩 아이폰 확인 필요
+- [x] **방물장수 세워 두기**(`docs/spec/feedback_1023.md` 7 "반영됨"): 옆모습 그림이 올 때까지 `wander` 끔, (300,432)
 
 ## 작업 규칙
 
