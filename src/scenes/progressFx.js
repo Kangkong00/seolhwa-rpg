@@ -137,10 +137,11 @@ export class SpinTrail {
 
 // 무예 숙련 등급이 오름(docs/spec/feedback_1024.md 4): 머리 위 짧은 붓글씨 "검풍 숙련 3", 마지막 등급은 금빛. 주인공을 따라 떠오름
 const BRUSH = '"Nanum Brush Script", "Gungsuh", "AppleMyungjo", "Apple SD Gothic Neo", serif';
-export function showMasteryUp(scene, text, max, cfg, pixelRatio) {
+// big: 이름이 바뀌는 순간 "검풍 → 검기"(docs/spec/feedback_1031.md 3) — 더 크고 오래
+export function showMasteryUp(scene, text, max, cfg, pixelRatio, { big = false } = {}) {
   const t = scene.add
     .text(scene.pos.x, scene.pos.y - 78, text, {
-      fontFamily: BRUSH, fontSize: max ? '22px' : '18px', fontStyle: 'bold',
+      fontFamily: BRUSH, fontSize: `${(max ? 22 : 18) + (big ? 8 : 0)}px`, fontStyle: 'bold',
       color: max ? cfg.upMaxColor : cfg.upColor, stroke: cfg.upStroke, strokeThickness: 4,
       shadow: max ? { offsetX: 0, offsetY: 0, color: cfg.upMaxColor, blur: 10, fill: true, stroke: true } : undefined,
     })
@@ -153,7 +154,7 @@ export function showMasteryUp(scene, text, max, cfg, pixelRatio) {
   const o = { k: 0 };
   scene.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 180, ease: 'Back.easeOut' });
   scene.tweens.add({
-    targets: o, k: 1, duration: cfg.upMs,
+    targets: o, k: 1, duration: cfg.upMs * (big ? 1.6 : 1),
     onUpdate: () => t.setPosition(scene.pos.x, scene.pos.y - 78 - 14 * o.k),
     onComplete: () => scene.tweens.add({ targets: t, alpha: 0, duration: 300, onComplete: () => t.destroy() }),
   });

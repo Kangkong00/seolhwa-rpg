@@ -11,7 +11,7 @@ import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } fr
 import { totalStats, damageTaken, levelOk, passiveSum } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns, normalizeSlots, autoSlot } from '../core/skills.js';
-import { gradeOf, applyMastery, masteryBonus, cooldownMulWith, countsForMastery, addMasteryUse, normalizeMastery, hasMastery } from '../core/mastery.js';
+import { gradeOf, applyMastery, masteryBonus, cooldownMulWith, countsForMastery, addMasteryUse, normalizeMastery, hasMastery, masteryName, nameRank } from '../core/mastery.js';
 import { SKILL_KINDS, chainMods, pullMonsters } from './skillKinds.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
@@ -258,7 +258,8 @@ export class MapScene extends Phaser.Scene {
       this.d.status = new StatusPanel(document.getElementById('status'));
       this.d.toast = new Toast(document.getElementById('toast'), this.d.economy.textFx.toastHoldMs);
       this.d.npcPanel = new NpcPanel(document.getElementById('npc-panel'));
-      this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id), () => this.d.skillPanel.show());
+      this.d.skillButtons = new SkillButtons(document.getElementById('skill-buttons'), this.d.skills.skills, (id) => this.d.scene.useSkill(id), () => this.d.skillPanel.show(), (i) => this.d.skillPanel.showSlot(i));
+      this.d.skillButtons.setRank((id) => this.d.scene.skillRank(id)); // 숙련 이름 단계 테두리
       // 공격·무예 배치(숫자패드/예전 줄, docs/spec/feedback_1023.md 6)
       this.d.actionPad = new ActionPad({ attack: document.getElementById('btn-attack'), skills: document.getElementById('skill-buttons'), menu: document.getElementById('btn-pad-menu') }, () => this.d.skillPanel.show());
       this.d.actionPad.apply(this.d.game.actionPad || { layout: 'rows' });
@@ -1382,7 +1383,7 @@ export class MapScene extends Phaser.Scene {
     }
     // 회복 무예는 맞히는 몬스터가 없어 싸우는 중에 쓰면 셈
     if (mc && mc.healKinds.includes(sk.kind) && this.lastFought && this.calmMs < mc.healCombatMs) this.noteMastery(this.lastFought);
-    this.skillFx.start(sk, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
+    this.skillFx.start({ ...sk, name: this.skillDisplayName(sk) }, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
     // 칠보 팔찌·무예 달인: 기다림 −, 관리자 '무예 기다림 없음'이면 기다리지 않음
     if (!this.d.admin.noCooldown) this.cooldowns.start(id, sk.cooldownMs * this.skillCooldownMul(sk));
     this.refreshSkills();
@@ -1392,6 +1393,17 @@ export class MapScene extends Phaser.Scene {
   masteryGrade(id) {
     const mc = this.d.skills.mastery;
     return mc ? gradeOf(this.d.skillMastery[id] || 0, mc) : 1;
+  }
+
+  // 지금 등급의 무예 이름·이름 단계(0 기본·1 은빛·2 금빛, docs/spec/feedback_1031.md 3)
+  skillDisplayName(sk) {
+    const mc = this.d.skills.mastery;
+    return mc ? masteryName(sk, this.masteryGrade(sk.id), mc) : sk.name;
+  }
+
+  skillRank(id) {
+    const mc = this.d.skills.mastery;
+    return mc ? nameRank(this.masteryGrade(id), mc) : 0;
   }
 
   // 무예 기다림 배율: 장비·패시브 cooldownCut + 숙련(합쳐 최대 0.5)
@@ -1413,8 +1425,17 @@ export class MapScene extends Phaser.Scene {
     c.counted = true;
     const r = addMasteryUse(this.d.skillMastery, c.id, mc);
     if (r.after > r.before) {
-      showMasteryUp(this, `${sk.name} 숙련 ${r.after}`, r.after >= mc.maxGrade, mc, this.d.getPixelRatio());
-      this.sfx.play('learn');
+      const was = masteryName(sk, r.before, mc);
+      const now = masteryName(sk, r.after, mc);
+      // 5·10등급에 이름이 바뀜(docs/spec/feedback_1031.md 3): 큰 붓글씨 "검풍 → 검기", 10등급은 금빛 + 작은 별빛 터짐
+      if (now !== was) {
+        showMasteryUp(this, `${was} → ${now}`, r.after >= mc.maxGrade, mc, this.d.getPixelRatio(), { big: true });
+        if (r.after >= mc.maxGrade) artStarBurst(this, this.pos.x, this.pos.y - 70, (mc.nameStarSize || 60));
+        this.sfx.play('levelUp');
+      } else {
+        showMasteryUp(this, `${now} 숙련 ${r.after}`, r.after >= mc.maxGrade, mc, this.d.getPixelRatio());
+        this.sfx.play('learn');
+      }
       this.refreshSkills();
       this.save();
     }

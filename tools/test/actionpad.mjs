@@ -49,6 +49,9 @@ await page.evaluate(() => {
   // 빈 9번 칸도 눌린 것을 세게: 시험 동안 9번에 무예 하나
   s.skillSlots[8] = s.skillSlots[0];
   window.__restoreShow = () => { s.d.skillPanel.show = show; };
+  // 길게 누르기(무예창)는 tools/test/skillslots.mjs가 봄. 여기서는 끔 — 헤드리스는 무예 한 번 처리에 0.5초 넘게 걸려
+  // CDP가 뗌을 그만큼 늦게 보내 짧은 누름이 길게 잡힘(아이폰에서는 몇 ms)
+  s.d.skillButtons.longMs = 1e9;
 });
 const cdp = await ctx.newCDPSession(page);
 for (const layout of ['numpad', 'rows']) {

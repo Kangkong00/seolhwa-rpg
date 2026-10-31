@@ -82,7 +82,8 @@ await page.evaluate(() => { window.__s.d.skillMastery.roar = 899; clear(); put('
 await page.waitForTimeout(250);
 const up10 = await page.evaluate(() => { const t = window.__s.children.list.filter((o) => o.masteryUp).pop(); return { text: t && t.text, color: t && t.style.color }; });
 const gold = await page.evaluate(() => window.__s.d.skills.mastery.upMaxColor);
-ok('10등급은 금빛', up10.text === '호통 숙련 10' && up10.color === gold, `"${up10.text}" ${up10.color}`);
+// 10등급은 이름도 바뀜(docs/spec/feedback_1031.md 3): "사자후 → 대사자후" 금빛
+ok('10등급은 금빛(이름 바뀜)', up10.text === '사자후 → 대사자후' && up10.color === gold, `"${up10.text}" ${up10.color}`);
 // ④ 데미지·기다림: 1등급과 10등급 비교(같은 몬스터, 회심 없음)
 const dmgAt = async (n) => page.evaluate((n) => {
   const s = window.__s;

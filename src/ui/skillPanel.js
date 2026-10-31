@@ -2,10 +2,11 @@
 // 칸 상태 3가지: 배움(밝게) / 지금 배울 수 있음(테두리 반짝) / 못 배움(흐림 + "레벨 N" 또는 "앞 무예 필요").
 // 칸을 누르면 오른쪽 정보창: 이름·가지·레벨·값·기다림·지금 내 공격력으로 계산한 데미지·범위·설명·[무예 칸에 넣기].
 // 배운 액티브 무예는 숙련 등급·다음 등급까지 막대(docs/spec/feedback_1024.md 4).
-// 넣기를 누르면 무예 칸이 나오고, 칸을 누르면 그 칸에 넣음(다른 칸에 있으면 맞바꿈). 찬 칸은 [빼기].
+// 넣기를 누르면 무예 칸 9개(화면 숫자패드와 같은 3×3)가 나오고 화면 숫자패드도 깜빡임 — 어느 쪽 칸을 눌러도 그 칸에 넣음
+// (다른 칸에 있으면 맞바꿈). 찬 칸은 [빼기]. 숫자패드 칸을 길게 누르면 그 칸을 고른 채 열림(showSlot).
 // 배우기는 우물가 늙은 군관에게서(여기서는 보기만). 위쪽 '무예' 단추로 열고 닫음, PC는 K. getScene() = 지금 MapScene
 import { placeInSlot, clearSlot, canLearn } from '../core/skills.js';
-import { masteryProgress, masteryBonus, applyMastery, hasMastery } from '../core/mastery.js';
+import { masteryProgress, masteryBonus, applyMastery, hasMastery, masteryName, nameRank, nextMasteryName } from '../core/mastery.js';
 import { charIcon } from './itemIcon.js';
 import { josa } from './josa.js';
 import { formatNum } from './format.js';
@@ -15,6 +16,11 @@ function el(tag, cls = '', text = '') {
   if (cls) e.className = cls;
   if (text) e.textContent = text;
   return e;
+}
+
+// 숙련 이름 단계 → 아이콘 테두리 class(docs/spec/feedback_1031.md 3): 은빛(5~9등급)·금빛(10등급). 감싼 칸에 붙임(아이콘은 그림이 오면 바뀜)
+function rankClass(r) {
+  return r === 2 ? ' rank-gold' : r === 1 ? ' rank-silver' : '';
 }
 
 // 무예 아이콘(그림이 오면 그림, 아직 없으면 한자)
@@ -77,6 +83,7 @@ export class SkillPanel {
     this.open = false;
     this.sel = null; // 고른 무예 id
     this.placing = false; // 무예 칸 고르는 중
+    this.slotSel = -1; // 숫자패드 칸을 길게 눌러 연 칸(docs/spec/feedback_1031.md 2)
     this.box = el('div', 'ad-box sk-box sk-tree-box');
     root.appendChild(this.box);
     root.addEventListener('pointerdown', (e) => {
@@ -103,6 +110,7 @@ export class SkillPanel {
     if (s.adminPanel && s.adminPanel.open) s.adminPanel.close();
     this.open = true;
     this.placing = false;
+    this.slotSel = -1;
     this.message = '';
     this.root.hidden = false;
     s.setControlsVisible(false);
@@ -110,10 +118,24 @@ export class SkillPanel {
     this.render();
   }
 
+  // 숫자패드 i번 칸을 길게 누름: 그 칸을 고른 채 엶(무예가 있으면 그 무예 — 빼기·다른 칸으로)
+  showSlot(i) {
+    this.show();
+    if (!this.open) return;
+    const s = this.s;
+    const id = s.skillSlots[i];
+    this.slotSel = i;
+    this.sel = id || null;
+    this.message = id ? '' : `${i + 1}번 칸은 빈칸입니다 — 무예를 고른 뒤 「무예 칸에 넣기」`;
+    this.render();
+  }
+
   close() {
     if (!this.open) return;
     this.open = false;
+    this.placing = false;
     this.root.hidden = true;
+    this.syncPad();
     const s = this.s;
     if (s && s.hud) {
       s.hud.setSkillsOn(false);
@@ -144,10 +166,10 @@ export class SkillPanel {
   node(sk) {
     const s = this.s;
     const { st, why } = this.stateOf(sk);
-    const b = el('button', `sk-node ${st}${this.sel === sk.id ? ' sel' : ''}${sk.type === 'passive' ? ' passive' : ''}`);
+    const b = el('button', `sk-node ${st}${this.sel === sk.id ? ' sel' : ''}${sk.type === 'passive' ? ' passive' : ''}${rankClass(this.rankOf(sk))}`);
     b.type = 'button';
     b.appendChild(skillIcon(sk));
-    b.appendChild(el('span', 'sk-node-name', sk.name));
+    b.appendChild(el('span', 'sk-node-name', this.nameOf(sk)));
     const at = s.skillSlots.indexOf(sk.id);
     if (at >= 0) b.appendChild(el('span', 'sk-node-slot', String(at + 1)));
     // 무예 숙련 등급과 다음 등급까지 막대(docs/spec/feedback_1024.md 4)
@@ -168,6 +190,17 @@ export class SkillPanel {
       this.render();
     });
     return b;
+  }
+
+  // 지금 등급의 이름·이름 단계(배우지 않았으면 기본 이름, docs/spec/feedback_1031.md 3)
+  nameOf(sk) {
+    const mp = this.mastery(sk);
+    return mp ? masteryName(sk, mp.grade, this.s.d.skills.mastery) : sk.name;
+  }
+
+  rankOf(sk) {
+    const mp = this.mastery(sk);
+    return mp ? nameRank(mp.grade, this.s.d.skills.mastery) : 0;
   }
 
   // 배운 액티브 무예의 숙련(없으면 null): { grade, into, need, max }
@@ -226,6 +259,24 @@ export class SkillPanel {
     main.appendChild(this.info(byId[this.sel]));
     this.box.appendChild(main);
     if (this.message) this.box.appendChild(el('div', 'ad-msg', this.message));
+    this.syncPad();
+  }
+
+  // 「칸에 넣기」 중이면 화면 숫자패드도 창 위로 올라와 금빛으로 깜빡이고, 누르면 그 칸에 넣음(무예창 안 3×3과 같은 동작)
+  syncPad() {
+    const s = this.s;
+    const pad = s && s.d && s.d.skillButtons;
+    if (!pad) return;
+    const sk = this.open && this.placing && this.sel ? s.skills.find((k) => k.id === this.sel) : null;
+    pad.setPlacing(sk ? (i) => this.place(sk, i) : null);
+    this.root.classList.toggle('placing', !!sk);
+  }
+
+  place(sk, i) {
+    const s = this.s;
+    placeInSlot(s.skillSlots, i, sk.id);
+    this.slotSel = i;
+    this.changed(`${josa(this.nameOf(sk), '을', '를')} ${i + 1}번 칸에 넣었습니다`);
   }
 
   info(sk) {
@@ -237,10 +288,10 @@ export class SkillPanel {
       return box;
     }
     const brName = ((s.d.skills.branches || []).find((b) => b.id === sk.branch) || {}).name || '';
-    const top = el('div', 'sk-info-top');
+    const top = el('div', `sk-info-top${rankClass(this.rankOf(sk))}`);
     top.appendChild(skillIcon(sk));
     const t = el('div');
-    t.appendChild(el('div', 'sk-info-name', sk.name));
+    t.appendChild(el('div', 'sk-info-name', this.nameOf(sk)));
     t.appendChild(el('div', 'sk-info-sub', `${brName}${sk.type === 'passive' ? ' · 패시브(늘 켜짐)' : ''} · 레벨 ${lv(sk)}`));
     top.appendChild(t);
     box.appendChild(top);
@@ -268,6 +319,8 @@ export class SkillPanel {
       if (mb.cooldownCut > 0) parts.push(`기다림 −${pct(mb.cooldownCut)}%`);
       if (mb.rangeMul > 1) parts.push(`범위 +${pct(mb.rangeMul - 1)}%`);
       box.appendChild(el('div', 'sk-info-line sk-m-bonus', parts.length ? `숙련 덤 ${parts.join(' · ')}` : '숙련 덤 없음 — 이 무예로 몬스터를 맞히면 오름'));
+      const nx = nextMasteryName(sk, mp.grade, mc);
+      if (nx) box.appendChild(el('div', 'sk-info-line sk-m-next', `다음 이름: ${nx.name} (${nx.grade}등급)`));
     }
     const cost = sk.cost || {};
     const items = Object.entries(cost.items || {}).map(([id, n]) => `${(s.itemDefs[id] && s.itemDefs[id].name) || id} ${n}`);
@@ -279,7 +332,7 @@ export class SkillPanel {
     if (range) lines.push(`범위 ${range}`);
     const need = (sk.requiresSkill || []).map((id) => {
       const k = s.skills.find((x) => x.id === id);
-      return `${k ? k.name : id}${s.learned.includes(id) ? ' ✓' : ''}`;
+      return `${k ? this.nameOf(k) : id}${s.learned.includes(id) ? ' ✓' : ''}`;
     });
     if (need.length) lines.push(`앞 무예 ${need.join(' + ')}`);
     for (const l of lines) box.appendChild(el('div', 'sk-info-line', l));
@@ -301,40 +354,50 @@ export class SkillPanel {
         out.type = 'button';
         out.addEventListener('click', () => {
           clearSlot(s.skillSlots, at);
-          this.changed(`${josa(sk.name, '을', '를')} 칸에서 뺐습니다`);
+          this.changed(`${josa(this.nameOf(sk), '을', '를')} 칸에서 뺐습니다`);
         });
         acts.appendChild(out);
       }
       box.appendChild(acts);
-      if (this.placing) box.appendChild(this.slotRow(sk));
     }
+    // 무예 칸 3×3은 늘 보임(넣는 중이면 누른 칸에 넣음) — 화면 숫자패드와 같은 칸
+    box.appendChild(this.slotRow(this.placing && st === 'learned' && sk.type !== 'passive' ? sk : null));
     return box;
   }
 
-  // 무예 칸 8개(위 1~4, 아래 5~8). sk가 있으면 누른 칸에 넣음
+  // 무예 칸 = 화면 오른쪽 아래 숫자패드와 같은 3×3(위 7·8·9, 가운데 4·5·6, 아래 1·2·3, 공격·무예창 칸 빼고 docs/spec/feedback_1031.md 2).
+  // sk가 있으면 누른 칸에 넣음, 없으면 그 칸의 무예를 고름
   slotRow(sk) {
     const s = this.s;
     const byId = Object.fromEntries(s.skills.map((k) => [k.id, k]));
+    const outer = el('div', 'sk-slots-wrap');
+    outer.appendChild(el('div', 'sk-slots-title', sk ? '오른쪽 아래 무예 칸 — 넣을 칸을 누르세요(화면 칸도 됨)' : '오른쪽 아래 무예 칸'));
     const wrap = el('div', 'sk-slots');
+    const n = s.skillSlots.length;
+    const rows = Math.ceil(n / 3);
     s.skillSlots.forEach((id, i) => {
       const k = id && byId[id];
-      const b = el('button', `sk-slot${sk ? ' target' : ''}`);
+      const b = el('button', `sk-slot${sk ? ' target' : ''}${this.slotSel === i ? ' picked' : ''}${k ? rankClass(this.rankOf(k)) : ''}`);
       b.type = 'button';
-      b.appendChild(el('span', 'sk-num', String(i + 1)));
+      b.dataset.slot = String(i);
+      b.dataset.skill = id || '';
+      b.style.gridRow = String(rows - Math.floor(i / 3));
+      b.style.gridColumn = String((i % 3) + 1);
       if (k) b.appendChild(skillIcon(k));
-      else b.appendChild(el('span', 'sk-slot-name', '빈칸'));
+      else b.appendChild(el('span', 'sk-slot-name', '+'));
+      b.appendChild(el('span', 'sk-num', String(i + 1)));
       b.disabled = !sk && !k;
       b.addEventListener('click', () => {
-        if (sk) {
-          placeInSlot(s.skillSlots, i, sk.id);
-          this.changed(`${josa(sk.name, '을', '를')} ${i + 1}번 칸에 넣었습니다`);
-        } else if (k) {
+        if (sk) this.place(sk, i);
+        else if (k) {
           this.sel = k.id;
+          this.slotSel = i;
           this.render();
         }
       });
       wrap.appendChild(b);
     });
-    return wrap;
+    outer.appendChild(wrap);
+    return outer;
   }
 }

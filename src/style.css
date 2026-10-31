@@ -1853,3 +1853,105 @@ button {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* ---------- 무예창 칸 = 숫자패드 3×3, 화면 칸과 연결(docs/spec/feedback_1031.md 2) ---------- */
+.sk-slots-title {
+  font-size: 11px;
+  opacity: 0.8;
+  margin: 6px 0 3px;
+}
+
+.sk-slots {
+  grid-template-columns: repeat(3, 46px);
+  gap: 4px;
+}
+
+.ad-box button.sk-slot {
+  width: 46px;
+  height: 46px;
+  padding: 2px;
+  justify-content: center;
+}
+
+.sk-slot img,
+.sk-slot .icon-text {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+
+.sk-slot .sk-num {
+  position: absolute;
+  left: auto;
+  top: auto;
+  right: 3px;
+  bottom: 1px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.ad-box button.sk-slot.picked {
+  border-color: #fff3c4;
+  box-shadow: 0 0 0 2px #ffd98a;
+}
+
+/* 「칸에 넣기」 중: 무예창은 오른쪽을 비워 화면 숫자패드가 보이게, 숫자패드는 창 위로 올라와 금빛으로 깜빡임 */
+#skill-panel.placing {
+  justify-content: flex-start;
+}
+
+#skill-panel.placing .ad-box.sk-tree-box {
+  width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 200px);
+  margin-left: 6px;
+}
+
+#skill-buttons.placing {
+  z-index: 36;
+}
+
+#skill-buttons.placing .skill-box {
+  animation: pad-place 0.8s ease-in-out infinite;
+}
+
+@keyframes pad-place {
+  0%, 100% { border-color: #ffd98a; box-shadow: 0 0 4px 1px rgba(255, 210, 110, 0.5); }
+  50% { border-color: #fff6c8; box-shadow: 0 0 10px 3px rgba(255, 220, 130, 0.95); }
+}
+
+/* ---------- 숙련 이름 단계 테두리(docs/spec/feedback_1031.md 3): 5~9등급 은빛, 10등급 금빛 + 약한 반짝임 ---------- */
+.skill-btn.rank-silver .skill-box {
+  border-color: #d9dee6;
+  box-shadow: 0 0 0 1px rgba(200, 210, 225, 0.6) inset;
+}
+
+.skill-btn.rank-gold .skill-box {
+  border-color: #ffd84a;
+  animation: rank-gold 2.4s ease-in-out infinite;
+}
+
+.rank-silver img,
+.rank-silver .icon-text {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #d9dee6;
+}
+
+.rank-gold img,
+.rank-gold .icon-text {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #ffd84a;
+  animation: rank-gold-icon 2.4s ease-in-out infinite;
+}
+
+@keyframes rank-gold {
+  0%, 100% { box-shadow: 0 0 2px 0 rgba(255, 216, 74, 0.4); }
+  50% { box-shadow: 0 0 7px 1px rgba(255, 216, 74, 0.8); }
+}
+
+@keyframes rank-gold-icon {
+  0%, 100% { box-shadow: 0 0 0 2px #ffd84a, 0 0 2px 0 rgba(255, 216, 74, 0.4); }
+  50% { box-shadow: 0 0 0 2px #ffe98a, 0 0 7px 1px rgba(255, 216, 74, 0.8); }
+}
+
+.sk-m-next {
+  color: #ffe2a0;
+}

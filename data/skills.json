@@ -1,7 +1,7 @@
 {
   "_설명": "무예(늙은 군관에게 배움, docs/spec/economy.md). requires.level=배울 수 있는 레벨, cost.coins=내는 엽전(푼), cost.items=내는 전리품, cooldownMs=다시 쓸 때까지 기다리는 시간, image=무예 아이콘 그림(아직 없으면 icon 한자로 대신 — 새 무예 그림은 나중에 assets/items/icons/skill_<id>.png로 옴), icon=그림을 못 받으면 대신 쓰는 한자, job=직업(geomgaek = 검객, 가칭 — 나중에 직업이 늘 때), needsBlade=칼이 있어야 쓸 수 있음(맨손이면 흐리게), colorFromWeapon=연출 색을 든 무기 궤적 색으로. PC 단축키는 무예 칸 1~4(무예창에서 고름). kind별 연출·값(docs/spec/skills_impact.md 2): chain 연속(hits번, swingMsMul 빠르기, 마지막 lastDamageMul·lastKnockbackMul·lastStarScale, 궤적 trailHoldMs 동안 남음) · dash 돌진(distance를 dashMs에, 폭 width, ghosts 잔상, delayMs 있으면 지나간 뒤 늦게 터짐, tiger 호랑이 무늬) · shout 주변(radius 안 stunMs 멈칫, 고리 rings) · line 앞 직선(length·width, 금 crackMs 동안 뻗고 crackHoldMs 남았다 crackFadeMs 흐려짐, 위·아래는 길이 verticalSquash배, 솟는 빛 eruptions개·eruptionSize px, 돌 rockCount, noTrail 칼 궤적 안 그림 — docs/spec/feedback_1024.md 1) · projectile 날아감(distance·speed·radius, 꿰뚫음) · stance 자세(guardMs 동안 물리면 0 + counterMul 반격·반드시 회심) · multi 여러 대상(radius 안 maxTargets마리에 gapMs 간격 번개) · ultimate 궁극(durationMs 동안 칠성 자리 7곳 starRadius, 마지막 finalRadius·finalDamageMul). spin에 pullPx·pullRadius(끌어당김)·rings2(고리 2겹)·leafCount(나뭇잎) 추가. 효과 값은 kind별(docs/spec/feedback_1015.md 1). powerSlash: chargeMs 모으기·chargeColor 칼 금빛·trailColor 궤적 색·waveRadius·waveMs·waveColor 반달 충격파. heal: rings·ringGapMs·ringFrom→ringTo(지름)·ringMs·ringColor 발밑 고리, particleCount·particleMs·particleColor 빛 알갱이. spin: spinMs 도는 시간, turnMs 한 바퀴, tickMs마다 radius 안 몬스터를 모두 때림(damageMul배), moveMul 도는 동안 걸음 배율, ringColor·ringAlpha 바람 고리, dustEveryMs·dustColor 바닥 먼지. heal의 hotRatio·hotMs=바로 healRatio만큼 채운 뒤 hotMs 동안 hotRatio만큼 더(조금씩). type(docs/spec/feedback_1020.md 8): active=무예 칸에 넣어 누름, passive=배우면 늘 켜짐(칸에 안 넣음, 엽전만 냄). passive 효과: maxHpMul 최대 체력 +%, bladeAttackMul·bladeSwingCut 칼을 들면 공격력 +%·휘두르기 빠르게, critChance·critDamage 회심 확률·회심 데미지 +, regenAfterMs·regenRatio·regenEveryMs 싸우지 않은 지 regenAfterMs가 지나면 regenEveryMs마다 최대 체력 regenRatio 회복, speed 걸음 +, damageCut 받는 데미지 −, momentumMs·momentumAttackMul 쓰러뜨리면 그 시간 공격력 +, cooldownCut 액티브 기다림 −(팔찌와 더함, 최대 0.5), bossDamageMul 우두머리에게 데미지 +. 모두 임시값 트리(docs/spec/feedback_1022.md 5): branch=가지(branches: sword 검술·wind 풍술·qi 기공·mind 심법(패시브)·final 끝), requiresSkill=먼저 배워야 하는 무예 목록(모두 배워야 함, data/game.json skillTreeRequires가 켜져 있을 때만. 이미 배운 무예는 그대로 둠).",
   "mastery": {
-    "_설명": "무예 숙련(docs/spec/feedback_1024.md 4, 모두 임시값, 계산은 src/core/mastery.js). 무예마다 몬스터를 1마리 이상 맞힌 번 수를 셈(한 번 쓸 때 여러 마리를 맞혀도 1). 등급 1~maxGrade, 다음 등급까지 perGrade×지금 등급(10등급까지 모두 900번). 등급마다 damagePerGrade(데미지, damageKeys에 곱함)·cooldownPerGrade(기다림 −, 장비·패시브와 더해 최대 cooldownCap). rangeAt: 그 등급부터 범위(rangeKeys) +. healKinds(숨 고르기)는 데미지 대신 healPerGrade(healKeys), counterKinds(받아치기)는 counterPerGrade(counterKeys). 세는 몬스터: 내 구간(tierLevels = 구간마다 시작 레벨, 몬스터는 monsters.json tier) − countTiersBelow 구간 이상, 우두머리는 늘, 분신은 안 셈. 회복 무예는 맞히는 몬스터가 없어 싸우는 중(마지막 싸움이 healCombatMs 안이고 그 몬스터가 세는 몬스터)에 쓰면 셈. 등급이 오르면 머리 위 붓글씨 upText(10등급 upMaxColor)",
+    "_설명": "무예 숙련(docs/spec/feedback_1024.md 4, 모두 임시값, 계산은 src/core/mastery.js). 무예마다 몬스터를 1마리 이상 맞힌 번 수를 셈(한 번 쓸 때 여러 마리를 맞혀도 1). 등급 1~maxGrade, 다음 등급까지 perGrade×지금 등급(10등급까지 모두 900번). 등급마다 damagePerGrade(데미지, damageKeys에 곱함)·cooldownPerGrade(기다림 −, 장비·패시브와 더해 최대 cooldownCap). rangeAt: 그 등급부터 범위(rangeKeys) +. healKinds(숨 고르기)는 데미지 대신 healPerGrade(healKeys), counterKinds(받아치기)는 counterPerGrade(counterKeys). 세는 몬스터: 내 구간(tierLevels = 구간마다 시작 레벨, 몬스터는 monsters.json tier) − countTiersBelow 구간 이상, 우두머리는 늘, 분신은 안 셈. 회복 무예는 맞히는 몬스터가 없어 싸우는 중(마지막 싸움이 healCombatMs 안이고 그 몬스터가 세는 몬스터)에 쓰면 셈. 등급이 오르면 머리 위 붓글씨 upText(10등급 upMaxColor). 이름(docs/spec/feedback_1031.md 3, 바뀌는 순간 10등급은 nameStarSize px 별빛): 무예마다 names = [기본, nameGrades[0]등급부터, nameGrades[1]등급부터] — 이름·아이콘 테두리(은빛·금빛)만 바뀌고 효과는 숙련 덤 그대로, 저장 없음(등급에서 계산)",
     "maxGrade": 10,
     "perGrade": 20,
     "damagePerGrade": 0.05,
@@ -19,6 +19,8 @@
     "tierLevels": [1, 10, 15, 20, 25, 30, 33, 36, 38],
     "countTiersBelow": 1,
     "healCombatMs": 5000,
+    "nameGrades": [5, 10],
+    "nameStarSize": 60,
     "upColor": "#fff3c4",
     "upStroke": "#7a4a14",
     "upMaxColor": "#ffd84a",
@@ -113,6 +115,7 @@
       "id": "power_slash",
       "image": "assets/items/icons/skill_power_slash.png",
       "name": "힘껏 베기",
+      "names": ["힘껏 베기", "일도양단", "개산일도"],
       "icon": "斬",
       "kind": "powerSlash",
       "desc": "앞으로 한 번 크게 벰. 데미지 3배, 밀어내기 2배",
@@ -145,6 +148,7 @@
       "id": "breath",
       "image": "assets/items/icons/skill_breath.png",
       "name": "숨 고르기",
+      "names": ["숨 고르기", "조식", "운기조식"],
       "icon": "息",
       "kind": "heal",
       "desc": "제자리에서 숨을 골라 최대 체력의 50%를 바로, 3초 동안 10%를 더 되찾음",
@@ -180,6 +184,7 @@
       "id": "whirl",
       "image": "assets/items/icons/skill_whirl.png",
       "name": "휘돌려 베기",
+      "names": ["휘돌려 베기", "선풍참", "대선풍"],
       "icon": "旋",
       "kind": "spin",
       "desc": "2초 동안 몸을 계속 돌리며 0.4초마다 주변 몬스터를 모두 벰(각 1.2배). 도는 동안 천천히 움직일 수 있음",
@@ -212,6 +217,7 @@
     {
       "id": "triple_cut",
       "name": "삼연참",
+      "names": ["삼연참", "삼재검", "삼재연환검"],
       "icon": "參",
       "kind": "chain",
       "job": "geomgaek",
@@ -245,6 +251,7 @@
     {
       "id": "dash_cut",
       "name": "질풍참",
+      "names": ["질풍참", "질풍일섬", "섬광질풍"],
       "icon": "疾",
       "kind": "dash",
       "job": "geomgaek",
@@ -278,6 +285,7 @@
     {
       "id": "roar",
       "name": "호통",
+      "names": ["호통", "사자후", "대사자후"],
       "icon": "喝",
       "kind": "shout",
       "job": "geomgaek",
@@ -312,6 +320,7 @@
     {
       "id": "earth_split",
       "name": "지축 가르기",
+      "names": ["지축 가르기", "열지참", "천붕지열"],
       "icon": "裂",
       "kind": "line",
       "job": "geomgaek",
@@ -352,6 +361,7 @@
     {
       "id": "sword_wind",
       "name": "검풍",
+      "names": ["검풍", "검기", "만리검풍"],
       "icon": "風",
       "kind": "projectile",
       "job": "geomgaek",
@@ -382,6 +392,7 @@
     {
       "id": "counter",
       "name": "받아치기",
+      "names": ["받아치기", "반격세", "금강반격"],
       "icon": "返",
       "kind": "stance",
       "job": "geomgaek",
@@ -407,6 +418,7 @@
     {
       "id": "whirlwind",
       "name": "회오리 베기",
+      "names": ["회오리 베기", "회선검", "용권풍"],
       "icon": "渦",
       "kind": "spin",
       "job": "geomgaek",
@@ -444,6 +456,7 @@
     {
       "id": "thunder_cut",
       "name": "뇌전참",
+      "names": ["뇌전참", "뇌정검", "만뢰격"],
       "icon": "雷",
       "kind": "multi",
       "job": "geomgaek",
@@ -473,6 +486,7 @@
     {
       "id": "tiger_flash",
       "name": "백호일섬",
+      "names": ["백호일섬", "백호참", "백호천섬"],
       "icon": "虎",
       "kind": "dash",
       "job": "geomgaek",
@@ -506,6 +520,7 @@
     {
       "id": "seven_star_dance",
       "name": "칠성검무",
+      "names": ["칠성검무", "칠성검진", "북두칠성검"],
       "icon": "星",
       "kind": "ultimate",
       "job": "geomgaek",

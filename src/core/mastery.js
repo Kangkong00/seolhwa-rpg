@@ -94,3 +94,26 @@ export function normalizeMastery(saved) {
   if (saved && typeof saved === 'object') for (const [k, v] of Object.entries(saved)) if (Number.isFinite(v) && v > 0) out[k] = Math.floor(v);
   return out;
 }
+
+// ---------- 등급 이름(docs/spec/feedback_1031.md 3) ----------
+// 이름 단계: 0 = 기본(1~4등급), 1 = 둘째(nameGrades[0]=5~9등급), 2 = 마지막(nameGrades[1]=10등급). 아이콘 테두리도 이 단계(은빛·금빛)
+export function nameRank(grade, cfg) {
+  const g = cfg.nameGrades || [5, 10];
+  return grade >= g[1] ? 2 : grade >= g[0] ? 1 : 0;
+}
+
+// 지금 등급의 이름(names가 없거나 패시브면 그대로 name)
+export function masteryName(skill, grade, cfg) {
+  if (!skill || !hasMastery(skill) || !Array.isArray(skill.names)) return skill ? skill.name : '';
+  const r = nameRank(grade, cfg);
+  return skill.names[r] || skill.names[skill.names.length - 1] || skill.name;
+}
+
+// 다음 이름: { name, grade } 또는 null(마지막 이름이거나 이름표 없음)
+export function nextMasteryName(skill, grade, cfg) {
+  if (!skill || !hasMastery(skill) || !Array.isArray(skill.names)) return null;
+  const r = nameRank(grade, cfg);
+  const g = cfg.nameGrades || [5, 10];
+  if (r >= 2 || !skill.names[r + 1]) return null;
+  return { name: skill.names[r + 1], grade: g[r] };
+}
