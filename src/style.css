@@ -5,11 +5,14 @@
   font-display: block;
 }
 
+/* 높이 = 큰 화면 높이(lvh, 주소창이 들어갔을 때 높이). 아이폰 사파리에서 100%·inset 0이 작은 높이(주소창이 나와 있을 때)로
+   잡혀 아래에 검은 띠가 남던 것(docs/spec/feedback_1031.md 1). lvh가 없는 브라우저는 100vh */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100lvh;
   overflow: hidden;
   background: #1d1a14;
   color: #f3ead6;
@@ -25,7 +28,11 @@ html, body {
 
 #game {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
 }
 
 #game canvas {
@@ -1834,4 +1841,15 @@ button {
 .sk-m-num {
   font-size: 11px;
   opacity: 0.8;
+}
+
+/* 관리자 설정 탭 맨 아래 화면 크기 줄(docs/spec/feedback_1031.md 1) */
+.ad-screen-info {
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  opacity: 0.75;
+  word-break: break-all;
+  -webkit-user-select: text;
+  user-select: text;
 }

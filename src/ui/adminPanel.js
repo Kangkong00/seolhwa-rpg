@@ -439,5 +439,7 @@ export class AdminPanel {
       window.location.reload();
     }, this.confirmClear ? 'ad-danger on' : 'ad-danger');
     body.appendChild(this.row('저장', clear));
+    // 화면 크기(docs/spec/feedback_1031.md 1): 아래 검은 띠 원인 찾기용 — 강콩이 아이폰에서 찍어 보냄
+    if (window.seolhwaScreenInfo) body.appendChild(el('div', 'ad-screen-info', `화면: ${window.seolhwaScreenInfo()}`));
   }
 }

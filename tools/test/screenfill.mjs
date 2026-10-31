@@ -1,6 +1,6 @@
 // 화면 꽉 채우기 시험(docs/spec/feedback_1024.md 2): 아이폰 가로 844×390, 안전 영역(좌우 47·아래 21) 흉내.
 // 경우마다 ① 게임 그림(캔버스)이 화면 끝까지인지 ② 화면 가장자리에 검은 띠(바탕색 #1d1a14 줄)가 있는지
-// ③ 단추·체력바가 안전 영역 안인지. 경우: 사파리(주소창이 화면을 조금 덮어 visualViewport가 작음)·사파리(주소창 들어감)·홈 화면 앱(standalone).
+// ③ 단추·체력바가 안전 영역 안인지 ④ 공격 단추 아래 끝 + 안전 영역 + 끝 여백 = 화면 아래 끝. 경우: 사파리(주소창이 화면을 조금 덮어 visualViewport가 작음)·사파리(주소창 들어감)·홈 화면 앱(standalone).
 // 쓰는 법: python3 -m http.server 8123 & 을 켠 뒤 node tools/test/screenfill.mjs [그림 저장 폴더]
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
@@ -10,12 +10,14 @@ const CASES = [
   { name: '사파리(주소창 나옴)', vvH: 342, standalone: false },
   { name: '사파리(주소창 들어감)', vvH: 0, standalone: false },
   { name: '홈 화면 앱(standalone)', vvH: 0, standalone: true },
+  // 페이지가 쓰는 높이가 화면보다 작게 잡힘(아이폰 10-31: 아래 1/8 검은 띠) — standalone이면 screen 값으로 채움(docs/spec/feedback_1031.md 1)
+  { name: '홈 화면 앱(페이지 높이 340 < 화면 390)', vvH: 0, standalone: true, pageH: 340, expectH: 390 },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const rows = [];
 let bad = 0;
 for (const c of CASES) {
-  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+  const ctx = await browser.newContext({ viewport: { width: 844, height: c.pageH || 390 }, screen: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   await ctx.addInitScript(([c]) => {
     if (!sessionStorage.getItem('seeded')) {
       sessionStorage.setItem('seeded', '1');
@@ -45,7 +47,7 @@ for (const c of CASES) {
   const r = await page.evaluate(() => {
     const cv = document.querySelector('#game canvas').getBoundingClientRect();
     const box = (sel) => { const e = document.querySelector(sel); if (!e || e.hidden) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: innerWidth - b.right, b: innerHeight - b.bottom }; };
-    return { cv: { x: cv.x, y: cv.y, w: cv.width, h: cv.height }, W: innerWidth, H: innerHeight, hud: box('#hud'), status: box('#status'), attack: box('#btn-attack'), skills: box('#skill-buttons'), joy: box('#joystick-base') };
+    return { cv: { x: cv.x, y: cv.y, w: cv.width, h: cv.height }, W: innerWidth, H: innerHeight, pad: seolhwa.game.scene.getScene('map').d.game.actionPad, bodyH: document.body.getBoundingClientRect().height, hud: box('#hud'), status: box('#status'), attack: box('#btn-attack'), skills: box('#skill-buttons'), joy: box('#joystick-base') };
   });
   // 가장자리 검은 띠: 맨 끝 줄(위·아래·왼쪽·오른쪽 3px)에서 바탕색과 거의 같은 점이 90% 넘으면 띠
   const shot = await page.screenshot({ path: OUT ? `${OUT}/fill_${CASES.indexOf(c)}.png` : undefined });
@@ -67,17 +69,21 @@ for (const c of CASES) {
       left: side(line((i) => [k / 2 | 0, i], H)), right: side(line((i) => [W - 1 - (k / 2 | 0), i], H)),
     };
   }, shot.toString('base64'));
-  const full = Math.abs(r.cv.x) < 0.5 && Math.abs(r.cv.y) < 0.5 && Math.abs(r.cv.w - r.W) < 1 && Math.abs(r.cv.h - r.H) < 1;
+  const wantH = c.expectH || r.H;
+  const full = Math.abs(r.cv.x) < 0.5 && Math.abs(r.cv.y) < 0.5 && Math.abs(r.cv.w - r.W) < 1 && Math.abs(r.cv.h - wantH) < 1 && r.bodyH >= r.H - 0.5;
+  // 단추 아래 끝 + 안전 영역(+ 숫자패드 끝 여백) = 화면 아래 끝(docs/spec/feedback_1031.md 1)
+  const padOn = r.pad && r.pad.layout === 'numpad';
+  const bottomOk = !safeOk || !padOn || !r.attack || Math.abs(r.attack.b - (SAFE.bottom + r.pad.margin)) < 0.6;
   const bands = Object.entries(band).filter(([, v]) => v > 0.9).map(([k]) => k);
   const inSafe = [['hud', r.hud, ['r', SAFE.right]], ['status', r.status, ['l', SAFE.left]], ['attack', r.attack, ['r', SAFE.right], ['b', SAFE.bottom]], ['skills', r.skills, ['r', SAFE.right], ['b', SAFE.bottom]]]
     .filter(([, b]) => b).flatMap(([n, b, ...cs]) => cs.filter(([k, v]) => b[k] < v - 0.5).map(([k]) => `${n}.${k}=${Math.round(b[k])}`));
-  const ok = full && !bands.length && (!safeOk || !inSafe.length) && !errors.length;
+  const ok = full && bottomOk && !bands.length && (!safeOk || !inSafe.length) && !errors.length;
   if (!ok) bad++;
-  rows.push(`| ${c.name} | ${Math.round(r.cv.w)}×${Math.round(r.cv.h)} @(${Math.round(r.cv.x)},${Math.round(r.cv.y)}) / 화면 ${r.W}×${r.H} | ${bands.length ? bands.join('·') : '없음'} | ${safeOk ? (inSafe.length ? inSafe.join(', ') : '모두 안') : '흉내 못 함'} | ${errors.length ? errors[0] : '0'} | ${ok ? '좋음' : '문제'} |`);
+  rows.push(`| ${c.name} | ${Math.round(r.cv.w)}×${Math.round(r.cv.h)} @(${Math.round(r.cv.x)},${Math.round(r.cv.y)}) / 화면 ${r.W}×${r.H} | ${bands.length ? bands.join('·') : '없음'} | ${safeOk ? (inSafe.length ? inSafe.join(', ') : '모두 안') : '흉내 못 함'} | ${r.attack ? `${Math.round(r.attack.b * 10) / 10} = 안전 ${SAFE.bottom} + ${r.pad.margin}${bottomOk ? '' : ' ✗'}` : '-'} | ${errors.length ? errors[0] : '0'} | ${ok ? '좋음' : '문제'} |`);
   await ctx.close();
 }
-console.log('| 경우 | 캔버스 / 화면 | 가장자리 검은 띠 | 단추·체력바 안전 영역 | 오류 | 결과 |');
-console.log('|---|---|---|---|---|---|');
+console.log('| 경우 | 캔버스 / 화면 | 가장자리 검은 띠 | 단추·체력바 안전 영역 | 공격 단추 아래 틈 | 오류 | 결과 |');
+console.log('|---|---|---|---|---|---|---|');
 console.log(rows.join('\n'));
 console.log(bad ? `문제 ${bad}개` : '문제 없음');
 await browser.close();

@@ -91,11 +91,40 @@ async function boot() {
   // 예전에는 visualViewport 크기를 썼는데, 아이폰 사파리 주소창이 나와 있으면 이 값이 화면보다 작아 아래에 검은 띠가 생겼음.
   // 소수 크기는 올림(1px 틈 없게). 맵은 노치 옆·홈 막대 아래까지, 단추·체력바만 안전 영역 안(style.css env(safe-area-inset-*)).
   const gameEl = document.getElementById('game');
+  // 홈 화면 앱(standalone)이면 window.screen(아이폰은 돌려도 세로 기준 값)과도 견줘 더 큰 쪽(docs/spec/feedback_1031.md 1)
+  const standalone = () => !!(navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
   const viewSize = () => {
+    gameEl.style.width = '';
+    gameEl.style.height = '';
     const b = gameEl.getBoundingClientRect();
-    const w = b.width || window.innerWidth;
-    const h = b.height || window.innerHeight;
+    let w = b.width || window.innerWidth;
+    let h = b.height || window.innerHeight;
+    if (standalone() && window.screen && w >= h) {
+      const sw = Math.max(screen.width, screen.height);
+      const sh = Math.min(screen.width, screen.height);
+      if (sw > w || sh > h) {
+        w = Math.max(w, sw);
+        h = Math.max(h, sh);
+        gameEl.style.width = `${w}px`;
+        gameEl.style.height = `${h}px`;
+      }
+    }
     return { w: Math.ceil(w), h: Math.ceil(h) };
+  };
+  // 관리자 창 설정 탭의 화면 크기 줄(원인 찾기용)
+  window.seolhwaScreenInfo = () => {
+    const vv = window.visualViewport;
+    const g = gameEl.getBoundingClientRect();
+    const cv = gameEl.querySelector('canvas');
+    const c = cv ? cv.getBoundingClientRect() : { width: 0, height: 0 };
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+    document.body.appendChild(probe);
+    const ps = getComputedStyle(probe);
+    const safe = [ps.paddingTop, ps.paddingRight, ps.paddingBottom, ps.paddingLeft].map((v) => Math.round(parseFloat(v) || 0)).join('·');
+    probe.remove();
+    const r = (n) => Math.round(n * 10) / 10;
+    return `inner ${innerWidth}×${innerHeight} · vv ${vv ? `${r(vv.width)}×${r(vv.height)}(+${r(vv.offsetTop)})` : '-'} · #game ${r(g.width)}×${r(g.height)} · 캔버스 ${r(c.width)}×${r(c.height)} · screen ${screen.width}×${screen.height} · 안전 ${safe}(위·오른·아래·왼) · standalone ${standalone() ? '예' : '아니오'} · dpr ${devicePixelRatio}`;
   };
 
   const joystick = new Joystick({
