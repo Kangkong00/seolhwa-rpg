@@ -21,10 +21,19 @@
     "healCombatMs": 5000,
     "nameGrades": [5, 10],
     "nameStarSize": 60,
+    "fxStages": {"_설명": "숙련 단계별 연출(docs/spec/feedback_1031.md 4, 이름 단계와 같은 1~4 / 5~9 / 10): sizeStart = 단계 첫 등급의 꾸밈 크기 배율, sizeStep = 단계 안에서 등급마다 더함(1등급 1.0 → 4등급 1.15, 5등급 1.25 → 9등급 1.45, 10등급 1.6), particleMul = 알갱이 배율, shakeMul = 무예로 맞힐 때 흔들림 배율, t3Size = 셋째 단계 마무리 그림 크기(px, 그림 fx_t3_*.png가 있을 때), raysCount·raysLen·raysMs = 셋째 단계 끝 빛살, beamH = 둘째부터 솟는 빛줄기 높이, objBudget = 둘째·셋째 단계에서 화면 물체가 이만큼이면 알갱이를 더 만들지 않음(1등급 가장 무거운 무예가 약 136 — 알갱이가 먼저 그려지고 무예 자체 연출이 뒤에 더해지므로 그보다 낮게). 바닥 범위 연출(고리·금·회오리 바닥·직선)은 이 배율을 쓰지 않고 실제 맞는 범위(숙련 범위 덤)만 따름", "sizeStart": [1, 1.25, 1.6], "sizeStep": 0.05, "particleMul": [1, 1.5, 1.5], "shakeMul": [1, 1, 1.3], "t3Size": 170, "objBudget": 110, "raysCount": 12, "raysLen": 70, "raysMs": 320, "beamH": 90},
+    "tierColorKeys": {"_설명": "둘째·셋째 단계에서 가지 색(tierColors)으로 바꾸는 무예 색 값: light = 밝은 색, main = 진한 색", "light": ["glowColor", "particleColor", "chargeColor", "leafColor", "windColor"], "main": ["color", "trailColor", "ringColor", "boltColor", "shieldColor", "waveColor", "ghostColor"]},
     "upColor": "#fff3c4",
     "upStroke": "#7a4a14",
     "upMaxColor": "#ffd84a",
     "upMs": 1400
+  },
+  "tierColors": {
+    "_설명": "가지별 숙련 단계 색(docs/spec/feedback_1031.md 4-1, 임시 — 아이폰에서 보고 고침). [첫째, 둘째, 셋째] 단계마다 [밝은 색, 진한 색]. 첫째 단계는 지금 무예 색을 그대로 씀(이 값은 참고), 둘째부터 이 색으로 바꾸고 효과 그림도 밝은 색으로 물들임. 무기 궤적 색을 따르는 무예(colorFromWeapon)도 둘째부터 가지 색",
+    "sword": [["#fff4d6", "#ffd75e"], ["#bfe3ff", "#5aa8ff"], ["#ffb347", "#ff5a2a"]],
+    "wind": [["#e9f6ff", "#9fd8ff"], ["#b8ffe6", "#2fd3a0"], ["#f0d8ff", "#a35cff"]],
+    "qi": [["#f4ffd6", "#c8e86a"], ["#d6fff4", "#5fe0c8"], ["#fff1b8", "#ffc21a"]],
+    "final": [["#fff1b8", "#ffd75e"], ["#d8e8ff", "#6f8cff"], ["#ffe7a0", "#c07bff"]]
   },
   "fxCommon": {
     "_설명": "무예 공통 연출 층(docs/spec/feedback_1020.md 5, 모든 액티브 무예, 모두 임시값). 시전: dim=화면 어둡게(0~1, ultimateDim=칠성검무), dimInMs·dimOutMs=어두워지는·밝아지는 시간, holdMs=짧은 무예도 적어도 이만큼 어둡게, chargeCount·chargeRadius·chargeMs=빨려 드는 빛 알갱이, sigilRadius·sigilMs=발밑 원 문양, namePx·nameStrokePx·nameY(화면 높이 비율)·nameMs=무예 이름 큰 글씨, flashAlpha·flashMs=시작·끝 화면 무예 색 섬광. 실행: sizeMul=크기 배율(sizeKeys 값과 3겹 빛 크기에 곱함, 맞는 범위는 그대로), particleMul=알갱이 배율(countKeys 값과 burstCount에 곱함), glowMs=3겹 빛(흰 중심·무예 색 몸통·바깥 잔광)이 남는 시간, particleMs=알갱이 퍼지는 시간, shockRings·shockGapMs·shockMs=땅 충격파 고리, ghosts·ghostGapMs·ghostMs=잔상(돌진·연속 베기). bloom=빛 번짐(이 층에만, 무예를 쓰는 동안만. 기본 false — 10-21 아이폰에서 화면이 검게 됨. true여도 아이폰·사파리는 자동으로 끔, 관리자 창 설정 탭에서 이번 실행만 켜고 끔), bloomCfg=threshold·blurRadius·blurSteps·amount. 맞힘: hitStarSize=큰 섬광, hitSlashLen=X자 베인 자국, hitShards=파편, numberScale=데미지 숫자 배율(테두리는 무예 색), tickGapMs·tickMax=여러 마리를 맞히면 '타다닥' 간격·최대 수. shakeMul·hitStopMul=무예 흔들림·멈춤 배율. 칠성검무 끝: finalFlashAlpha·finalFlashMs 흰 섬광, finalSlowMs 동안 시간 finalSlowScale배. maxParticles=화면에 동시 알갱이 상한",
@@ -113,6 +122,7 @@
   "skills": [
     {
       "id": "power_slash",
+      "t3Fx": "fx_t3_power",
       "image": "assets/items/icons/skill_power_slash.png",
       "name": "힘껏 베기",
       "names": ["힘껏 베기", "일도양단", "개산일도"],
@@ -146,6 +156,7 @@
     },
     {
       "id": "breath",
+      "t3Fx": "fx_t3_breath",
       "image": "assets/items/icons/skill_breath.png",
       "name": "숨 고르기",
       "names": ["숨 고르기", "조식", "운기조식"],
@@ -182,6 +193,7 @@
     },
     {
       "id": "whirl",
+      "t3Fx": "fx_t3_whirl",
       "image": "assets/items/icons/skill_whirl.png",
       "name": "휘돌려 베기",
       "names": ["휘돌려 베기", "선풍참", "대선풍"],
@@ -216,6 +228,7 @@
     },
     {
       "id": "triple_cut",
+      "t3Fx": "fx_t3_triple",
       "name": "삼연참",
       "names": ["삼연참", "삼재검", "삼재연환검"],
       "icon": "參",
@@ -250,6 +263,7 @@
     },
     {
       "id": "dash_cut",
+      "t3Fx": "fx_t3_dash",
       "name": "질풍참",
       "names": ["질풍참", "질풍일섬", "섬광질풍"],
       "icon": "疾",
@@ -284,6 +298,7 @@
     },
     {
       "id": "roar",
+      "t3Fx": "fx_t3_roar",
       "name": "호통",
       "names": ["호통", "사자후", "대사자후"],
       "icon": "喝",
@@ -319,6 +334,7 @@
     },
     {
       "id": "earth_split",
+      "t3Fx": "fx_t3_earth",
       "name": "지축 가르기",
       "names": ["지축 가르기", "열지참", "천붕지열"],
       "icon": "裂",
@@ -360,6 +376,7 @@
     },
     {
       "id": "sword_wind",
+      "t3Fx": "fx_t3_wind",
       "name": "검풍",
       "names": ["검풍", "검기", "만리검풍"],
       "icon": "風",
@@ -391,6 +408,7 @@
     },
     {
       "id": "counter",
+      "t3Fx": "fx_t3_counter",
       "name": "받아치기",
       "names": ["받아치기", "반격세", "금강반격"],
       "icon": "返",
@@ -417,6 +435,7 @@
     },
     {
       "id": "whirlwind",
+      "t3Fx": "fx_t3_whirlwind",
       "name": "회오리 베기",
       "names": ["회오리 베기", "회선검", "용권풍"],
       "icon": "渦",
@@ -455,6 +474,7 @@
     },
     {
       "id": "thunder_cut",
+      "t3Fx": "fx_t3_thunder",
       "name": "뇌전참",
       "names": ["뇌전참", "뇌정검", "만뢰격"],
       "icon": "雷",
@@ -485,6 +505,7 @@
     },
     {
       "id": "tiger_flash",
+      "t3Fx": "fx_t3_tiger",
       "name": "백호일섬",
       "names": ["백호일섬", "백호참", "백호천섬"],
       "icon": "虎",
@@ -519,6 +540,7 @@
     },
     {
       "id": "seven_star_dance",
+      "t3Fx": "fx_t3_seven",
       "name": "칠성검무",
       "names": ["칠성검무", "칠성검진", "북두칠성검"],
       "icon": "星",

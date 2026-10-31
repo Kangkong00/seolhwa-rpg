@@ -11,7 +11,7 @@ import { createProgress, addExp, expToNext, maxHpFor, damageBonus, setLevel } fr
 import { totalStats, damageTaken, levelOk, passiveSum } from '../core/stats.js';
 import { killRewards, GroundDrops } from '../core/loot.js';
 import { Cooldowns, normalizeSlots, autoSlot } from '../core/skills.js';
-import { gradeOf, applyMastery, masteryBonus, cooldownMulWith, countsForMastery, addMasteryUse, normalizeMastery, hasMastery, masteryName, nameRank } from '../core/mastery.js';
+import { gradeOf, applyMastery, masteryBonus, cooldownMulWith, countsForMastery, addMasteryUse, normalizeMastery, hasMastery, masteryName, nameRank, fxStage, applyTierColors, tierColor } from '../core/mastery.js';
 import { SKILL_KINDS, chainMods, pullMonsters } from './skillKinds.js';
 import { formatCoins } from '../core/money.js';
 import { EquipmentPanel } from '../ui/equipmentPanel.js';
@@ -980,7 +980,7 @@ export class MapScene extends Phaser.Scene {
     if (roll.crit) this.sfx.play('crit');
     if (!o.quiet) {
       let stop = sfx.hitStopMs * (o.hitStopMul || 1) * (isSkill ? fxc.hitStopMul : 1);
-      let shake = sfx.shakeIntensity * (o.shakeMul || 1) * (isSkill ? fxc.shakeMul : 1);
+      let shake = sfx.shakeIntensity * (o.shakeMul || 1) * (isSkill ? fxc.shakeMul * this.skillFx.stageShake() : 1);
       if (roll.crit) {
         stop *= im.crit.hitStopMul;
         shake *= im.crit.shakeMul;
@@ -1004,7 +1004,7 @@ export class MapScene extends Phaser.Scene {
     const k = this.skillFx.active ? 1 : 0;
     const killed = hits.some((h) => h.killed);
     this.hitStopMs = Math.max(this.hitStopMs, sfx.hitStopMs * stopMul * (killed ? this.cfg.impact.kill.hitStopMul : 1) * (k ? fxc.hitStopMul : 1));
-    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * shakeMul * (k ? fxc.shakeMul : 1));
+    this.cameras.main.shake(sfx.shakeMs, sfx.shakeIntensity * shakeMul * (k ? fxc.shakeMul * this.skillFx.stageShake() : 1));
     this.sfx.play(this.canSwing ? 'woodHit' : 'punchHit');
     const w = this.canSwing ? this.weaponDef : null;
     this.playPok((w && w.fx && w.fx.fxTier) || 1);
@@ -1377,13 +1377,24 @@ export class MapScene extends Phaser.Scene {
     const mc = this.d.skills.mastery;
     const grade = this.masteryGrade(id);
     this.masteryCast = { id, counted: false };
-    if (!run || !run(this, this.fxScaled(mc ? applyMastery(sk, grade, mc) : sk))) {
+    // 숙련 단계별 연출(docs/spec/feedback_1031.md 4): 둘째부터 가지 색(무기 색을 따르던 무예도), 꾸밈 크기·알갱이 배율.
+    // 효과 그림은 fxStyle을 보고 물들이고 키움(범위 그림은 그대로), 공통 층은 단계마다 한 겹 더
+    const st = mc ? fxStage(grade, mc) : { stage: 0, sizeMul: 1, particleMul: 1, shakeMul: 1 };
+    let use = mc ? applyMastery(sk, grade, mc) : sk;
+    if (st.stage > 0) use = { ...applyTierColors(use, st.stage, this.d.skills.tierColors, mc.tierColorKeys), colorFromWeapon: false };
+    const tc = tierColor(sk, st.stage, this.d.skills.tierColors);
+    const color = (tc ? tc[1] : sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e';
+    this.skillFx.prepare({ ...st, objBudget: (mc && mc.fxStages && mc.fxStages.objBudget) || 0, tint: tc ? tc[0] : null, color, t3: sk.t3Fx || null, t3Color: tc ? tc[1] : null });
+    const scaled = this.fxScaled(use, st);
+    this.lastCastSk = scaled; // 시험용(tools/test/fxtiers.mjs)
+    if (!run || !run(this, scaled)) {
       this.masteryCast = null;
+      this.skillFx.prepare(null);
       return;
     }
     // 회복 무예는 맞히는 몬스터가 없어 싸우는 중에 쓰면 셈
     if (mc && mc.healKinds.includes(sk.kind) && this.lastFought && this.calmMs < mc.healCombatMs) this.noteMastery(this.lastFought);
-    this.skillFx.start({ ...sk, name: this.skillDisplayName(sk) }, (sk.colorFromWeapon && this.canSwing ? this.weaponDef.trailColor : sk.color || sk.trailColor || sk.ringColor || sk.glowColor || sk.boltColor || sk.shieldColor) || '#ffd75e');
+    this.skillFx.start({ ...use, name: this.skillDisplayName(sk) }, color); // 범위 덤만 곱한 값(꾸밈 배율은 공통 층이 fxStyle로)
     // 칠보 팔찌·무예 달인: 기다림 −, 관리자 '무예 기다림 없음'이면 기다리지 않음
     if (!this.d.admin.noCooldown) this.cooldowns.start(id, sk.cooldownMs * this.skillCooldownMul(sk));
     this.refreshSkills();
@@ -1443,12 +1454,15 @@ export class MapScene extends Phaser.Scene {
 
   // 무예 연출 크기·알갱이 수를 키운 사본(fxCommon.sizeKeys×sizeMul, countKeys×particleMul). 맞는 범위(radius 등)는 그대로.
   // 칠성검무는 별 자리(size)가 곧 맞는 자리라 키우지 않음
-  fxScaled(sk) {
+  // st: 숙련 단계(fxStage) — 꾸밈 크기·알갱이에 더 곱함(docs/spec/feedback_1031.md 4-2, 맞는 범위는 그대로)
+  fxScaled(sk, st = null) {
     const c = this.d.skills.fxCommon;
     if (!c || sk.kind === 'ultimate') return sk;
     const out = { ...sk };
-    for (const k of c.sizeKeys) if (typeof out[k] === 'number') out[k] *= c.sizeMul;
-    for (const k of c.countKeys) if (typeof out[k] === 'number') out[k] = Math.round(out[k] * c.particleMul);
+    const sm = c.sizeMul * (st ? st.sizeMul : 1);
+    const pm = c.particleMul; // 무예 자체 알갱이 수는 단계와 무관(셋째 단계 부담을 지금 가장 무거운 무예 수준으로, 4-4) — 단계 ×1.5는 공통 층 터짐 알갱이만
+    for (const k of c.sizeKeys) if (typeof out[k] === 'number') out[k] *= sm;
+    for (const k of c.countKeys) if (typeof out[k] === 'number') out[k] = Math.round(out[k] * pm);
     return out;
   }
 

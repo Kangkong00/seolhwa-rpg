@@ -24,11 +24,13 @@ export function hasFx(scene, id) {
 //      stretch(가로로 늘리기), alpha, ms, depth, tint, flipX, flipY, originX·originY,
 //      to: { scale, rot, stretch, sx, sy, alpha, x, y } (끝 값, 없으면 그대로·alpha 0), ease,
 //      holdMs·fadeMs(있으면 to까지 간 뒤 holdMs 머물다 fadeMs 동안 흐려짐 — 이때 to.alpha 기본 = 처음 alpha),
-//      keep(true면 사라지지 않음 — 부른 쪽이 destroy) }
+//      keep(true면 사라지지 않음 — 부른 쪽이 destroy), fixed(true면 숙련 단계 배율을 곱하지 않음 — 실제 범위를 그리는 그림) }
 export function fxSprite(scene, id, x, y, o = {}) {
   if (!hasFx(scene, id)) return null;
   const tex = scene.textures.get(key(id)).getSourceImage();
-  const unit = o.size ? o.size / Math.max(tex.width, tex.height) : 1;
+  // 무예를 쓰는 동안(숙련 단계 docs/spec/feedback_1031.md 4): 꾸밈 그림은 단계 배율만큼 크게. fixed(범위 그림·마무리 그림)는 그대로
+  const style = !o.fixed && scene.skillFx && scene.skillFx.style;
+  const unit = (o.size ? o.size / Math.max(tex.width, tex.height) : 1) * (style ? style.sizeMul || 1 : 1);
   const scale = (o.scale ?? 1) * unit;
   const stretch = o.stretch ?? 1;
   const sx = o.sx ?? 1;

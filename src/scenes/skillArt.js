@@ -33,13 +33,15 @@ export function artTriple(scene, x, y, facing, size) {
 export function artEarthBurst(scene, x, y, size, { holdMs = 500, fadeMs = 300, flipX = false } = {}) {
   if (!hasFx(scene, 'fx_earth_crack')) return null;
   const tex = scene.textures.get('fx:fx_earth_crack').getSourceImage();
-  const unit = size / Math.max(tex.width, tex.height);
+  const st = scene.skillFx && scene.skillFx.style; // 숙련 단계: 꾸밈이라 크게·물들임
+  const unit = (size * (st ? st.sizeMul || 1 : 1)) / Math.max(tex.width, tex.height);
   const img = scene.add.image(x, y, 'fx:fx_earth_crack')
     .setOrigin(0.5, 0.95)
     .setBlendMode(Phaser.BlendModes.ADD)
     .setScale(unit, unit * 0.05)
     .setFlipX(flipX)
     .setDepth(y + 0.2);
+  if (st && st.tint) img.setTint(Phaser.Display.Color.HexStringToColor(st.tint).color);
   scene.tweens.add({
     targets: img, scaleY: unit, duration: 160, ease: 'Quad.easeOut',
     onComplete: () => scene.tweens.add({ targets: img, alpha: 0, delay: holdMs, duration: fadeMs, onComplete: () => img.destroy() }),
@@ -56,7 +58,7 @@ export function artWindCrescent(scene, x, y, facing, size) {
 export class ArtWhirl {
   constructor(scene, radius) {
     this.scene = scene;
-    this.img = fxSprite(scene, 'fx_whirl_ring', scene.pos.x, scene.pos.y, { size: radius * 2.1, originY: 0.92, alpha: 0.85, keep: true });
+    this.img = fxSprite(scene, 'fx_whirl_ring', scene.pos.x, scene.pos.y, { fixed: true, size: radius * 2.1, originY: 0.92, alpha: 0.85, keep: true }); // 범위 그림
     this.t = 0;
   }
 
@@ -96,7 +98,7 @@ export function artLightning(scene, x, y, height) {
 
 // 충격파 고리: 0.3→1.6배로 퍼지며 흐려짐(0.4초), 두 장을 0.1초 차이로
 export function artShockRing(scene, x, y, size) {
-  const one = () => fxSprite(scene, 'fx_shock_ring', x, y, { size, scale: 0.3, ms: 400, to: { scale: 1.6 } });
+  const one = () => fxSprite(scene, 'fx_shock_ring', x, y, { fixed: true, size, scale: 0.3, ms: 400, to: { scale: 1.6 } }); // 범위 그림(끝 지름 = 맞는 범위)
   one();
   scene.time.delayedCall(100, one);
 }

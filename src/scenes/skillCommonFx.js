@@ -7,6 +7,7 @@
 // 관리자 창 설정 탭 '빛 번짐'으로 이번 실행만 켜고 끔(scene.d.admin.bloom). 알갱이는 화면에 동시 maxParticles개까지.
 import { hitStar, slashMark } from './impactFx.js';
 import { afterimage } from './skillFx.js';
+import { fxSprite, hasFx } from './fxSprite.js';
 
 const hex = (c) => Phaser.Display.Color.HexStringToColor(c).color;
 
@@ -38,6 +39,23 @@ export class SkillCommonFx {
     this.dim = scene.add.rectangle(0, 0, cam.width * 3, cam.height * 3, 0x000000, 1).setOrigin(0.5).setScrollFactor(0).setDepth(-0.95).setAlpha(0);
     this.dim.setPosition(cam.width / 2, cam.height / 2);
     this.sky = null;
+    this.style = null; // 숙련 단계 연출(prepare): { stage, sizeMul, particleMul, shakeMul, tint, color, t3, t3Color }
+  }
+
+  // 무예를 쓰기 바로 전(무예 연출이 그려지기 전)에 숙련 단계를 정함(docs/spec/feedback_1031.md 4). null이면 지움.
+  // 효과 그림(fxSprite)은 이것을 보고 밝은 색으로 물들이고 꾸밈 크기를 키움(범위 그림은 그대로)
+  prepare(style) {
+    this.style = style || null;
+  }
+
+  // 무예로 맞힐 때 흔들림 배율(셋째 단계 ×1.3)
+  stageShake() {
+    return (this.style && this.style.shakeMul) || 1;
+  }
+
+  // 꾸밈 크기 배율(첫째 1.0~1.15, 둘째 1.25~1.45, 셋째 1.6)
+  get fxMul() {
+    return (this.style && this.style.sizeMul) || 1;
   }
 
   // 빛 번짐을 쓸지: 관리자 창에서 고른 값이 있으면 그것, 없으면 fxCommon.bloom이고 아이폰·사파리가 아닐 때만
@@ -62,6 +80,8 @@ export class SkillCommonFx {
 
   // 무예를 쓰는 동안만 빛 번짐 층에 넣고, 평타 파편처럼 무예 밖에서 그리는 것은 일반 층에
   add(obj) {
+    // 숙련 둘째·셋째: 효과 그림을 가지 밝은 색으로 물들임
+    if (this.style && this.style.tint && obj.type === 'Image' && obj.setTint && !obj.noStageTint) obj.setTint(hex(this.style.tint));
     if (!this.cast) {
       obj.setDepth(1e6 - 3);
       return obj;
@@ -80,7 +100,8 @@ export class SkillCommonFx {
     const c = this.cfg;
     const ult = sk.kind === 'ultimate';
     const pos = { x: s.pos.x, y: s.pos.y };
-    this.cast = { sk, color, t: 0, holdMs: ult ? sk.durationMs + 400 : c.holdMs, ult };
+    const stage = (this.style && this.style.stage) || 0;
+    this.cast = { sk, color, t: 0, holdMs: ult ? sk.durationMs + 400 : c.holdMs, ult, stage, style: this.style };
     this.hitIds = new Set(); // 이번 무예에 맞은 몬스터(어둡게 하지 않음, 어둠이 걷힐 때까지)
     this.setBloom(this.bloomWanted);
     s.tweens.killTweensOf(this.dim);
@@ -88,9 +109,12 @@ export class SkillCommonFx {
     this.screenFlash(color, c.flashAlpha, c.flashMs);
     this.charge(pos, color, c.chargeCount);
     this.sigil(pos, color);
-    this.skillName(sk.name, color);
+    this.skillName(sk.name, color, stage);
     this.burst(pos, sk, color);
+    // 둘째 단계부터 한 겹 더: 잔상·두 번째 충격파 고리(burst 안)·솟는 빛줄기 하나
     if (sk.kind === 'dash' || sk.kind === 'chain') this.ghosts(color);
+    else if (stage >= 1) this.ghosts(color, 1); // 원래 잔상이 없던 무예는 한 장(부담 4-4)
+    if (stage >= 1) this.beam(pos, color);
     if (ult) this.skyDipper(color);
   }
 
@@ -106,6 +130,9 @@ export class SkillCommonFx {
     s.tweens.killTweensOf(this.dim);
     s.tweens.add({ targets: this.dim, alpha: 0, duration: this.cfg.dimOutMs });
     this.screenFlash(k.color, this.cfg.flashAlpha, this.cfg.flashMs);
+    // 셋째 단계 마무리: 고유 그림(fx_t3_*, 있으면) + 짧은 빛살
+    if (k.stage >= 2 && k.style) this.finale(k.style);
+    if (this.style === k.style) this.style = null;
     if (this.sky) {
       const sky = this.sky;
       this.sky = null;
@@ -168,6 +195,8 @@ export class SkillCommonFx {
   // 알갱이 하나(상한을 넘으면 안 만듦)
   particle(x, y, shape, color, size) {
     if (this.particles >= this.cfg.maxParticles) return null;
+    // 숙련 둘째·셋째 단계: 화면 물체가 objBudget에 이르면 알갱이를 더 만들지 않음(지금 가장 무거운 무예 수준, docs/spec/feedback_1031.md 4-4)
+    if (this.style && this.style.stage >= 1 && this.style.objBudget && this.scene.children.list.length + (this.layer.list ? this.layer.list.length : 0) >= this.style.objBudget) return null;
     this.particles++;
     const g = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     const col = hex(color);
@@ -235,15 +264,16 @@ export class SkillCommonFx {
   }
 
   // 무예 이름: 화면 위 가운데 큰 글씨, 빠르게 커졌다 자리 잡음
-  skillName(name, color) {
+  // stage: 숙련 단계 — 둘째 은빛, 셋째 금빛 크게(docs/spec/feedback_1031.md 4-1)
+  skillName(name, color, stage = 0) {
     const s = this.scene;
     const c = this.cfg;
     const v = this.view();
     const t = s.add.text(v.x + v.w / 2, v.y + v.h * c.nameY, name, {
       fontFamily: NAME_FONT,
-      fontSize: `${c.namePx}px`,
+      fontSize: `${Math.round(c.namePx * (stage >= 2 ? 1.25 : 1))}px`,
       fontStyle: 'bold',
-      color: '#ffffff',
+      color: stage >= 2 ? '#ffe27a' : stage >= 1 ? '#e8eef6' : '#ffffff',
       stroke: color,
       strokeThickness: c.nameStrokePx,
       shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 8, fill: true, stroke: true },
@@ -256,7 +286,10 @@ export class SkillCommonFx {
   burst(pos, sk, color) {
     const s = this.scene;
     const c = this.cfg;
-    const r = (sk.radius || sk.waveRadius || sk.width || 40) * c.sizeMul;
+    // 꾸밈(빛·알갱이)은 단계 배율까지, 땅 충격파 고리는 실제 맞는 범위(radius)까지만(docs/spec/feedback_1031.md 4-2)
+    const base = sk.radius || sk.waveRadius || sk.width || 40;
+    const r = base * c.sizeMul * this.fxMul;
+    const ringR = sk.radius || base;
     const x = pos.x;
     const y = pos.y - 12;
     const col = hex(color);
@@ -281,17 +314,19 @@ export class SkillCommonFx {
     });
     // 알갱이(기본 수의 particleMul배)
     const shape = (sk.leafCount && 'petal') || SHAPE[sk.kind] || 'spark';
-    const n = Math.round(c.burstCount * c.particleMul);
+    const n = Math.round(c.burstCount * c.particleMul * ((this.style && this.style.particleMul) || 1));
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const d = r * (0.5 + Math.random() * 0.8);
-      const p = this.particle(x, y, shape, i % 4 ? color : '#ffffff', 2 + Math.random() * 2.5);
+      const p = this.particle(x, y, shape, i % 4 ? color : '#ffffff', (2 + Math.random() * 2.5) * (this.style && this.style.stage >= 1 ? 1.2 : 1));
       if (!p) break;
       p.rotation = a;
       s.tweens.add({ targets: p, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * 0.65 - (shape === 'cloud' || shape === 'flame' ? 10 : 0), alpha: 0, scale: 0.5, duration: c.particleMs * (0.6 + Math.random() * 0.6), ease: 'Cubic.easeOut', onComplete: () => p.destroy() });
     }
     // 땅 충격파 고리
-    for (let i = 0; i < c.shockRings; i++) {
+    const rings = c.shockRings + ((this.style && this.style.stage >= 1) ? 1 : 0);
+    this.lastRingR = ringR; // 시험용(tools/test/fxtiers.mjs): 고리가 끝나는 반지름
+    for (let i = 0; i < rings; i++) {
       const ring = this.add(s.add.graphics().setBlendMode(Phaser.BlendModes.ADD));
       const q = { k: 0 };
       s.tweens.add({
@@ -301,7 +336,7 @@ export class SkillCommonFx {
         duration: c.shockMs,
         ease: 'Quad.easeOut',
         onUpdate: () => {
-          const rr = r * (0.3 + q.k * 1.1);
+          const rr = ringR * (0.3 + q.k * 0.7);
           ring.clear();
           ring.lineStyle(4 * (1 - q.k) + 1, i ? col : 0xffffff, 1 - q.k);
           ring.strokeEllipse(pos.x, pos.y, rr * 2, rr * 1.1);
@@ -311,10 +346,70 @@ export class SkillCommonFx {
     }
   }
 
-  // 잔상: 주인공 그림 3장이 흐려지며 따라옴
-  ghosts(color) {
+  // 둘째 단계부터: 발밑에서 위로 솟는 빛줄기 하나(꾸밈)
+  beam(pos, color) {
     const s = this.scene;
-    for (let i = 0; i < this.cfg.ghosts; i++) {
+    const f = s.d.skills.mastery && s.d.skills.mastery.fxStages || {};
+    const h = (f.beamH || 90) * this.fxMul;
+    const g = this.add(s.add.graphics().setBlendMode(Phaser.BlendModes.ADD));
+    const col = hex(color);
+    const o = { k: 0 };
+    s.tweens.add({
+      targets: o, k: 1, duration: 420, ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        const a = 1 - o.k;
+        const hh = h * Math.min(1, o.k * 2.5);
+        g.clear();
+        g.fillStyle(col, 0.35 * a);
+        g.fillRect(pos.x - 9, pos.y - hh, 18, hh);
+        g.fillStyle(0xffffff, 0.6 * a);
+        g.fillRect(pos.x - 3, pos.y - hh, 6, hh);
+      },
+      onComplete: () => g.destroy(),
+    });
+  }
+
+  // 셋째 단계 마무리(docs/spec/feedback_1031.md 4-3): 무예 고유 그림 fx_t3_*(기획 쪽 Flow 140~142 — 없으면 건너뜀) + 짧은 빛살
+  finale(style) {
+    const s = this.scene;
+    const f = s.d.skills.mastery && s.d.skills.mastery.fxStages || {};
+    const x = s.pos.x;
+    const y = s.pos.y - 30;
+    if (style.t3 && hasFx(s, style.t3)) {
+      const img = fxSprite(s, style.t3, x, y, { fixed: true, size: f.t3Size || 170, scale: 0.6, ms: 260, to: { scale: 1 }, holdMs: 260, fadeMs: 300, depth: 1e6 - 3 });
+      if (img) { img.noStageTint = true; img.clearTint(); }
+      this.lastFinale = style.t3; // 시험용
+    }
+    const col = hex(style.t3Color || style.color || '#ffd75e');
+    const g = s.add.graphics().setBlendMode(Phaser.BlendModes.ADD).setDepth(1e6 - 3);
+    const n = f.raysCount || 12;
+    const len = (f.raysLen || 70) * this.fxMulOf(style);
+    const o = { k: 0 };
+    s.tweens.add({
+      targets: o, k: 1, duration: f.raysMs || 320, ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        g.clear();
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2;
+          const r0 = 10 + len * 0.3 * o.k;
+          const r1 = 10 + len * o.k;
+          g.lineStyle(i % 2 ? 2 : 3, i % 2 ? 0xffffff : col, 1 - o.k);
+          g.lineBetween(x + Math.cos(a) * r0, y + Math.sin(a) * r0 * 0.7, x + Math.cos(a) * r1, y + Math.sin(a) * r1 * 0.7);
+        }
+      },
+      onComplete: () => g.destroy(),
+    });
+    this.lastRays = n; // 시험용
+  }
+
+  fxMulOf(style) {
+    return (style && style.sizeMul) || 1;
+  }
+
+  // 잔상: 주인공 그림 3장이 흐려지며 따라옴
+  ghosts(color, n = this.cfg.ghosts) {
+    const s = this.scene;
+    for (let i = 0; i < n; i++) {
       s.time.delayedCall(i * this.cfg.ghostGapMs, () => afterimage(s, s.playerView, color, 0.5, this.cfg.ghostMs));
     }
   }

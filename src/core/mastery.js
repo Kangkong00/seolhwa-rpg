@@ -117,3 +117,30 @@ export function nextMasteryName(skill, grade, cfg) {
   if (r >= 2 || !skill.names[r + 1]) return null;
   return { name: skill.names[r + 1], grade: g[r] };
 }
+
+// ---------- 숙련 단계별 연출(docs/spec/feedback_1031.md 4) ----------
+// 단계(= 이름 단계 0·1·2)와 꾸밈 연출 배율. 바닥 범위 연출은 이 배율이 아니라 masteryBonus.rangeMul만 따름
+export function fxStage(grade, cfg) {
+  const st = nameRank(grade, cfg);
+  const f = cfg.fxStages || {};
+  const first = st === 0 ? 1 : (cfg.nameGrades || [5, 10])[st - 1];
+  const sizeMul = (f.sizeStart ? f.sizeStart[st] : 1) + (st < 2 ? (Math.max(1, grade) - first) * (f.sizeStep || 0) : 0);
+  return { stage: st, sizeMul, particleMul: f.particleMul ? f.particleMul[st] : 1, shakeMul: f.shakeMul ? f.shakeMul[st] : 1 };
+}
+
+// 가지 색 [밝은 색, 진한 색](둘째·셋째 단계만, 첫째는 null — 지금 색 그대로)
+export function tierColor(skill, stage, tierColors) {
+  if (!skill || stage < 1 || !tierColors) return null;
+  const row = tierColors[skill.branch];
+  return row && row[stage] ? row[stage] : null;
+}
+
+// 무예 색 값을 가지 색으로 바꾼 사본(keys = tierColorKeys)
+export function applyTierColors(skill, stage, tierColors, keys) {
+  const tc = tierColor(skill, stage, tierColors);
+  if (!tc || !keys) return skill;
+  const out = { ...skill };
+  for (const k of keys.light || []) if (typeof out[k] === 'string') out[k] = tc[0];
+  for (const k of keys.main || []) if (typeof out[k] === 'string') out[k] = tc[1];
+  return out;
+}

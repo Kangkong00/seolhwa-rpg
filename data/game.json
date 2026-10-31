@@ -16,7 +16,7 @@
       "lightning": 150, "shockMul": 1.25, "dashThick": 26, "tigerThick": 34, "tiger": 96,
       "starCrescent": 44, "starBurst": 46, "finalBurst": 80, "shield": 54, "heal": 96, "critCrescent": 40, "critBurst": 36
     },
-    "ids": ["fx_slash_crescent", "fx_slash_triple", "fx_earth_crack", "fx_wind_crescent", "fx_whirl_ring", "fx_lightning", "fx_shock_ring", "fx_dash_streak", "fx_tiger_spirit", "fx_star_burst", "fx_gold_shield", "fx_heal_swirl"]
+    "ids": ["fx_slash_crescent", "fx_slash_triple", "fx_earth_crack", "fx_wind_crescent", "fx_whirl_ring", "fx_lightning", "fx_shock_ring", "fx_dash_streak", "fx_tiger_spirit", "fx_star_burst", "fx_gold_shield", "fx_heal_swirl", "fx_t3_power", "fx_t3_breath", "fx_t3_whirl", "fx_t3_triple", "fx_t3_dash", "fx_t3_roar", "fx_t3_earth", "fx_t3_wind", "fx_t3_counter", "fx_t3_whirlwind", "fx_t3_thunder", "fx_t3_tiger", "fx_t3_seven"]
   },
   "expText": {
     "_설명": "얻은 경험치 글자(docs/spec/feedback_1021.md 3). 몬스터가 쓰러지면 그 자리 위(abovePx 더 위)에 '+N 경험'이 데미지 숫자보다 delayMs 늦게, floatPx 떠오르며 holdMs 머문 뒤 fadeMs 동안 흐려짐. fontPx=글자 크기(데미지 숫자 22의 0.9배), boostPx=시험 배율 '×3' 크기. 의뢰 보상은 주인공 머리 위",
