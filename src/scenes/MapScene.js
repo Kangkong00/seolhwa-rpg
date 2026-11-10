@@ -29,11 +29,11 @@ import { PickupFeed } from './pickupFeed.js';
 import { josa } from '../ui/josa.js';
 import { crescentWave, WindRing, leafSwirl, CrescentShot } from './skillFx.js';
 import { levelUpFx } from './levelUpFx.js';
-import { SwingTrail, inkSplash } from './weaponFx.js';
+import { SwingTrail, inkSplash, strikeDust, weaponSmear } from './weaponFx.js';
 import { swingPose } from './weaponPose.js';
 import { PlayerView } from './PlayerView.js';
 import { MonsterView, loadMonsterTextures } from './MonsterView.js';
-import { preloadMapObjects, createMapObjects, OcclusionGhost } from './mapObjects.js';
+import { preloadMapObjects, createMapObjects, OcclusionGhost, OcclusionFade } from './mapObjects.js';
 import { PortalFx } from './portalFx.js';
 import { showDamage } from './damageText.js';
 import { hitStar, slashMark, weaponHitFx, trailParticle, sevenStar } from './impactFx.js';
@@ -191,6 +191,7 @@ export class MapScene extends Phaser.Scene {
     // 가려지면 가려진 부분에만 진한 윤곽선 (몸이 실제로 minCovered 넘게 가려졌을 때만)
     this.ghost = new OcclusionGhost(this, this.mapObjects, this.playerView.sprite, cfg.occlusionGhost);
     this.events.once('shutdown', () => this.ghost.destroy());
+    this.occFade = new OcclusionFade(this, this.mapObjects, cfg.occlusionFade); // 내 캐릭터를 덮은 조각만 반투명
     this.playerView.setHp(this.player.hp / this.player.maxHp);
     // 장비·가방: 저장된 것, 없으면 data/items.json의 start (맵을 옮겨도 이어짐)
     this.itemDefs = Object.fromEntries(this.d.items.items.map((it) => [it.id, it]));
@@ -768,7 +769,23 @@ export class MapScene extends Phaser.Scene {
 
   // 무기 휘두르기 시작 (칼이 앞을 지나는 순간 맞힘 판정)
   // mods: 힘껏 베기 등 무예 배율 { damageMul, knockbackMul, hitStopMul, trailWidthMul, shakeMul } (없으면 보통 휘두르기)
+  // 끝 동작 한 프레임: 앞 절반은 내려친 자세로 칼을 조금 들고, 뒤 절반은 휘두르는 자세로 칼을 세워 대기 자세에 가깝게. 반환 자세 또는 null(끝)
+  updateSettle(dt) {
+    const st = this.settle;
+    const c = this.d.weapons.swing.settle;
+    st.t += dt;
+    const p = st.t / c.ms;
+    if (p >= 1) {
+      this.settle = null;
+      return null;
+    }
+    const smooth = (v) => v * v * (3 - 2 * v);
+    if (p < c.split) return { theta: c.strikeFrom + (c.strikeTo - c.strikeFrom) * smooth(p / c.split), lean: 0, pose: 'strike' };
+    return { theta: c.swingFrom + (c.swingTo - c.swingFrom) * smooth((p - c.split) / (1 - c.split)), lean: 0, pose: 'swing' };
+  }
+
   startSwing(mods = null) {
+    this.settle = null;
     // 삼연참처럼 빠르게 휘두르는 무예는 swingMsMul배 시간
     // 검술 숙련: 휘두르기 swingMul배 시간(빠르게)
     const sm = this.stats().swingMul;
@@ -814,6 +831,8 @@ export class MapScene extends Phaser.Scene {
     if (s.t >= pre + w.swingMs + sw.recoverMs) {
       if (s.trail) s.trail.fadeOut();
       this.swing = null;
+      // 끝 동작(feedback_1110.md 2): 내려친 자세에서 대기 자세로 부드럽게 — 다음 공격·무예·걷기를 막지 않음(시작하면 바로 끊김)
+      if (sw.settle && sw.settle.ms > 0 && sw.timing !== 'ease' && !(s.mods && s.mods.chain)) this.settle = { t: 0 };
       // 연속 무예(삼연참): 다음 휘두르기를 바로 이어감
       const ch = s.mods && s.mods.chain;
       if (ch && ch.index + 1 < ch.sk.hits) {
@@ -833,6 +852,7 @@ export class MapScene extends Phaser.Scene {
       else this.strikeHit(w, s.mods);
       if (s.mods && s.mods.waveRadius) crescentWave(this, this.pos.x, this.pos.y, this.facing, s.mods);
       this.swingArt(s.mods);
+      strikeDust(this, this.pos.x, this.pos.y, this.facing, sw.dust); // 내려치는 순간 발 앞 먼지
     }
     // 궤적: 방향마다 정해 둔 모양을 휘두르는 진행만큼 그림 (data/weapons.json trail)
     // 지축 가르기(noTrail): 위에서 내려오는 칼 궤적 없이(docs/spec/feedback_1024.md 1)
@@ -1942,9 +1962,20 @@ export class MapScene extends Phaser.Scene {
     this.updateDrops(dt);
     for (const fx of this.portalFx) fx.update(this.pos.x, this.pos.y);
 
-    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || (this.punchMs > 0 ? 'punch' : null));
+    // 끝 동작: 휘두르기가 끝난 뒤 걷지도, 다른 동작도 하지 않을 때만
+    let settlePose = null;
+    if (this.settle) {
+      if (swingPose || this.punchMs > 0 || this.moving || !this.canSwing) this.settle = null;
+      else settlePose = this.updateSettle(dt);
+    }
+    this.playerView.update(dt, this.pos.x, this.pos.y, this.facing, this.moving, swingPose || settlePose || (this.punchMs > 0 ? 'punch' : null));
+    // 칼 잔상: 휘두르는 빠른 구간(자세 swing·strike)에만
+    if (this.swing && swingPose && (swingPose.pose === 'swing' || swingPose.pose === 'strike') && this.swing.t < ((this.d.weapons.swing.lean && this.d.weapons.swing.lean.preMs) || 0) + this.swing.weapon.swingMs) {
+      weaponSmear(this, this.playerView.weaponSprite, this.d.weapons.swing.smear);
+    }
     // 물건 조각 뒤로 가려지면 가려진 부분에 윤곽선
     this.ghost.update(this.pos.y);
+    this.occFade.update(this.pos.x, this.pos.y, this.cfg.occlusionFade ? this.cfg.occlusionFade.bodyW : 22, this.cfg.player.height || 62, dt);
 
     // 마을 사람: 레벨에 따라 보이기·오가기(방물장수 — 창이 열려 있으면 멈춤)
     for (const v of this.npcViews) v.update(dt, this.progress.level, this.npcPanel.open);

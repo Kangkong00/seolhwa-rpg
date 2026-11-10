@@ -48,7 +48,7 @@
     {"id": "seven_star", "job": "geomgaek", "name": "칠성검", "image": "assets/weapons/seven_star.png", "tipFromGrip": 640, "damage": 600, "swingMs": 189, "cooldownMs": 430, "reach": 68, "width": 44, "knockbackPx": 22, "stunMs": 400, "stepPx": 4, "trailColor": "#ffe680", "fx": {"fxTier": 9, "trailParticles": "sevenStars", "hitFx": "starBurst"}}
   ],
   "swing": {
-    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 theta < poseSwingTheta이면 raise, poseSwingTheta ≤ theta < poseStrikeTheta이면 swing, 그 이상 strike. hitTheta를 지나는 순간 맞힘 판정. timing(docs/spec/feedback_1023.md 5): keys(기본) = 몸 자세가 칼 각도를 이끎 — keys마다 휘두르기 시간 t0~t1 동안 그 자세(pose)로, 칼은 theta0→theta1(ease in 천천히 시작 / linear 고르게 / out 빠르게 시작해 멈추듯), 자세가 바뀌는 순간 칼도 다음 구간으로. ease = 예전 방식(thetaFrom→thetaTo를 ease 지수로, 몸은 poseSwingTheta·poseStrikeTheta 문턱) — 비교용, 관리자 창 설정 탭에서 바꿈. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간. lean=몸 전체 움직임(640 기준 단위): 휘두르기 직전 preMs 동안 바라보는 반대쪽으로 backPx 뺌 → 진행 stepFrom~stepTo 동안 바라보는 쪽으로 내딛기(옆면 stepSide, 정면·뒷면 stepFrontBack) → 끝나면(recoverMs 동안) 제자리",
+    "_설명": "휘두르기(3D 방향 계산 후 화면 투영, CLAUDE.md '무기'). theta: 0=칼끝 위, 90=앞, 180=아래, 음수=머리 뒤. thetaFrom→thetaTo로 돌리며 ease 지수만큼 처음엔 느리고 끝으로 갈수록 빠르게. 몸 그림은 theta < poseSwingTheta이면 raise, poseSwingTheta ≤ theta < poseStrikeTheta이면 swing, 그 이상 strike. hitTheta를 지나는 순간 맞힘 판정. timing(docs/spec/feedback_1023.md 5): keys(기본) = 몸 자세가 칼 각도를 이끎 — keys마다 휘두르기 시간 t0~t1 동안 그 자세(pose)로, 칼은 theta0→theta1(ease in 천천히 시작 / linear 고르게 / out 빠르게 시작해 멈추듯), 자세가 바뀌는 순간 칼도 다음 구간으로. ease = 예전 방식(thetaFrom→thetaTo를 ease 지수로, 몸은 poseSwingTheta·poseStrikeTheta 문턱) — 비교용, 관리자 창 설정 탭에서 바꿈. lat=옆으로 기운 정도(정면·뒷면 latFrontBack, 옆면 latSide). depthK=앞뒤 깊이를 화면 세로로 줄이는 비율. recoverMs=다 휘두른 뒤 strike 자세로 멈춰 있는 시간. lean=몸 전체 움직임(640 기준 단위): 휘두르기 직전 preMs 동안 바라보는 반대쪽으로 backPx 뺌 → 진행 stepFrom~stepTo 동안 바라보는 쪽으로 내딛기(옆면 stepSide, 정면·뒷면 stepFrontBack) → 끝나면(recoverMs 동안) 제자리 끝 동작·잔상·먼지(docs/spec/feedback_1110.md 2): settle = 휘두르기가 끝난 뒤 ms 동안 내려친 자세(strikeFrom→strikeTo 도)에서 휘두르는 자세(swingFrom→swingTo 도)를 거쳐 대기 자세로(split = 앞 절반 비율, 다음 공격·걷기를 시작하면 바로 끊김, ms 0이면 끔), smear = 칼 잔상(alpha·ms, alpha 0이면 끔), dust = 내려치는 순간 발 앞 먼지(count 0이면 끔). trail.glowAlpha = 궤적 빛 겹(0이면 끔)",
     "thetaFrom": -40,
     "thetaTo": 125,
     "ease": 2,
@@ -65,10 +65,14 @@
     "hitTheta": 60,
     "depthK": 0.5,
     "recoverMs": 90,
+    "settle": {"ms": 150, "split": 0.45, "strikeFrom": 125, "strikeTo": 100, "swingFrom": 70, "swingTo": 16},
+    "smear": {"alpha": 0.28, "ms": 110},
+    "dust": {"count": 5, "spread": 16, "ms": 260, "alpha": 0.45, "color": "#cdbb96"},
     "lean": { "preMs": 60, "backPx": 6, "stepSide": 10, "stepFrontBack": 6, "stepFrom": 0.3, "stepTo": 0.8 }
   },
   "trail": {
     "_설명": "휘두르기 궤적 모양(CLAUDE.md '궤적 모양'). 좌표는 640×720 몸 그림 기준(옆면은 왼쪽을 보는 그림, 오른쪽은 좌우 반전). 크기는 무기 tipFromGrip / refTip 배로, scaleAbout(내려치기 주먹 자리)을 중심으로 늘고 줄어듦. side: 타원 호(center, rx, ry, 각도 from→to, 바깥 테두리에서 안쪽으로 thickness), front·back: 사선 직선(from→to, 굵기 thickness). peakAt=가장 두꺼운 곳(진행 비율), tailPart=시작 쪽 흐려지는 꼬리 비율, whiten=바깥(직선은 가운데)으로 갈수록 흰색 쪽으로 밝아지는 정도, alphaMax·alphaPower=진하기(안쪽 0 → 바깥 1, 비율^power × max), edgeWidth=또렷한 바깥 테두리 굵기(맵 픽셀), behind=몸 뒤에 그림",
+    "glowAlpha": 0.5,
     "refTip": 420,
     "peakAt": 0.6,
     "tailPart": 0.5,

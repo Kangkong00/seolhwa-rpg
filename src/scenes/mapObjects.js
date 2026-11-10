@@ -184,3 +184,81 @@ export class OcclusionGhost {
     this.canvasTex = null;
   }
 }
+
+// 가려지면 비쳐 보이기(2026-11-10 강콩: 나무 뒤로 가도 나뭇잎 정도만 가려지게).
+// 내 캐릭터 몸을 실제 픽셀로 덮고 있는 '앞 조각'만 반투명(alpha)으로 — 조각 아래 바닥 그림에 같은 물건이 그려져 있어
+// 물건 모양은 그대로 보이고, 그 사이에 선 캐릭터만 비쳐 보임. 몬스터·NPC는 그대로 가려짐. 값은 data/game.json occlusionFade.
+// 덮는지는 조각마다 작은 불투명 지도(맵 2px 한 칸, 처음 필요할 때 한 번 만듦)로 봄 — 조각 네모만 겹치는 것으로는 흐려지지 않음.
+export class OcclusionFade {
+  constructor(scene, objects, cfg) {
+    this.objects = objects;
+    this.cfg = cfg || {};
+    this.on = !!this.cfg.enabled && objects.length > 0;
+    this.faded = new Set();
+    this.covered = 0; // 몸 표본 점 중 가려진 비율(시험용)
+    if (!this.on) return;
+    this.atlas = scene.textures.get(objects[0].key);
+    this.src = this.atlas.getSourceImage();
+    this.masks = new Map();
+    this.cv = document.createElement('canvas');
+    this.ctx = this.cv.getContext('2d', { willReadFrequently: true });
+  }
+
+  // 조각의 불투명 지도: { w, h, data(Uint8Array, 1 = 불투명) }, 한 칸 = 맵 CELL px
+  mask(e) {
+    let m = this.masks.get(e);
+    if (m) return m;
+    const CELL = 2;
+    const w = Math.max(1, Math.ceil(e.o.w / CELL));
+    const h = Math.max(1, Math.ceil(e.o.h / CELL));
+    const f = this.atlas.get(e.o.frame);
+    this.cv.width = w;
+    this.cv.height = h;
+    this.ctx.clearRect(0, 0, w, h);
+    this.ctx.drawImage(this.src, f.cutX, f.cutY, f.cutWidth, f.cutHeight, 0, 0, w, h);
+    const px = this.ctx.getImageData(0, 0, w, h).data;
+    const data = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) data[i] = px[i * 4 + 3] > 100 ? 1 : 0;
+    m = { w, h, data, cell: CELL };
+    this.masks.set(e, m);
+    return m;
+  }
+
+  // 발 (x, y), 몸 크기(bodyW × bodyH, 발에서 위로), dt ms
+  update(x, y, bodyW, bodyH, dt) {
+    if (!this.on) return;
+    const c = this.cfg;
+    const left = x - bodyW / 2;
+    const top = y - bodyH;
+    const now = new Set();
+    // 몸 표본 점(가로 3 × 세로 6)
+    const pts = [];
+    for (let j = 0; j < 6; j++) for (let i = 0; i < 3; i++) pts.push([left + bodyW * (0.2 + 0.3 * i), top + bodyH * (0.08 + 0.168 * j)]);
+    const hitPt = new Uint8Array(pts.length);
+    for (const e of this.objects) {
+      const o = e.o;
+      if (o.baseY <= y || o.x > left + bodyW || o.x + o.w < left || o.y > y || o.y + o.h < top) continue;
+      const m = this.mask(e);
+      let n = 0;
+      pts.forEach(([px, py], k) => {
+        const cx = Math.floor((px - o.x) / m.cell);
+        const cy = Math.floor((py - o.y) / m.cell);
+        if (cx < 0 || cy < 0 || cx >= m.w || cy >= m.h || !m.data[cy * m.w + cx]) return;
+        n++;
+        hitPt[k] = 1;
+      });
+      if (n >= (c.minPoints ?? 2)) now.add(e);
+    }
+    this.covered = hitPt.reduce((a, b) => a + b, 0) / pts.length;
+    const step = dt / Math.max(1, c.ms ?? 160);
+    const low = c.alpha ?? 0.45;
+    for (const e of now) this.faded.add(e);
+    for (const e of [...this.faded]) {
+      const want = now.has(e) ? low : 1;
+      const a = e.image.alpha;
+      const next = want < a ? Math.max(want, a - step * (1 - low)) : Math.min(want, a + step * (1 - low));
+      e.image.setAlpha(next);
+      if (!now.has(e) && next >= 1) this.faded.delete(e);
+    }
+  }
+}

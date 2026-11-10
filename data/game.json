@@ -73,6 +73,14 @@
     "glowAlpha": 0.55,
     "item": "item_return_charm"
   },
+  "occlusionFade": {
+    "_설명": "가려지면 비쳐 보이기(2026-11-10, docs/spec/feedback_1110.md 1): 내 캐릭터 몸을 실제 픽셀로 덮은 앞 조각만 alpha까지 반투명하게(ms 동안 부드럽게). 조각 아래 바닥 그림에 같은 물건이 있어 물건은 그대로 보이고 캐릭터만 비쳐 보임. bodyW = 몸 가로(px, 표본 점을 찍는 폭), minPoints = 몸 표본 점 18개 중 이만큼 넘게 덮은 조각만. enabled false면 예전처럼 완전히 가려짐",
+    "enabled": true,
+    "alpha": 0.45,
+    "ms": 160,
+    "bodyW": 22,
+    "minPoints": 2
+  },
   "occlusionGhost": {
     "_설명": "내 캐릭터가 물건 조각(앞뒤 가림) 뒤로 가려지면 가려진 부분에만 윤곽선(docs/spec/maps.md 'v2'). enabled=켜고 끄기(2026-10-12 우선 끔), color=윤곽선 색, alpha=진하기(0~1), widthPx=굵기(맵 픽셀), minCovered=몸이 조각 픽셀로 이 비율 넘게 가려졌을 때만 보임. 몬스터는 하지 않음",
     "enabled": false,
@@ -89,7 +97,7 @@
   },
   "swingFx": {
     "_설명": "무기 휘두르기 연출(임시값). trailMs=궤적이 다 그어진 뒤 흐려지는 시간(모양은 data/weapons.json trail), hitStopMs=맞는 순간 멈춤, shakeMs·shakeIntensity=화면 흔들림(2026-10-18 키움, docs/spec/skills_impact.md 1), splashColor·splashCount·splashSize·splashMs=먹 튐 색·방울 수·크기·사라지는 시간",
-    "trailMs": 250,
+    "trailMs": 320,
     "hitStopMs": 85,
     "shakeMs": 110,
     "shakeIntensity": 0.004,

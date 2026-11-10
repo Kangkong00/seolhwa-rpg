@@ -54,6 +54,9 @@ export class SwingTrail {
     this.key = `trail:${trailSeq++}`;
     this.tex = scene.textures.addCanvas(this.key, this.canvas);
     this.image = scene.add.image(this.ox, this.oy, this.key).setOrigin(0, 0).setScale(1 / res).setDepth(depth);
+    // 빛 겹: 같은 궤적을 더하기 섞기로 한 번 더(밝은 속, feedback_1110.md 2). glowAlpha 0이면 없음
+    const ga = (cfg && cfg.glowAlpha) ?? 0;
+    this.glow = ga > 0 ? scene.add.image(this.ox, this.oy, this.key).setOrigin(0, 0).setScale(1 / res).setDepth(depth + 0.0005).setBlendMode(Phaser.BlendModes.ADD).setAlpha(ga) : null;
   }
 
   // 진행 s(0~1)마다 두 가장자리 점: 호는 a=바깥 테두리, b=안쪽(두께만큼), 직선은 a·b = 양쪽 가장자리
@@ -178,7 +181,7 @@ export class SwingTrail {
     if (this.fading) return;
     this.fading = true;
     this.scene.tweens.add({
-      targets: this.image,
+      targets: this.glow ? [this.image, this.glow] : this.image,
       alpha: 0,
       duration: this.fx.trailMs,
       ease: 'Quad.easeIn',
@@ -189,6 +192,7 @@ export class SwingTrail {
   destroy() {
     this.destroyed = true;
     this.image.destroy();
+    if (this.glow) this.glow.destroy();
     if (this.scene.textures.exists(this.key)) this.scene.textures.remove(this.key);
   }
 }
@@ -216,4 +220,39 @@ export function inkSplash(scene, x, y, color, fx, dirX, dirY) {
   // 가운데 번진 먹 한 점
   const blot = scene.add.circle(x, y, fx.splashSize * 2.2, c, 0.55).setDepth(1e6 - 1);
   scene.tweens.add({ targets: blot, scale: 1.6, alpha: 0, duration: fx.splashMs, onComplete: () => blot.destroy() });
+}
+
+// 내려치는 순간 발 앞에서 이는 먼지(feedback_1110.md 2): 납작한 타원 몇 개가 바라보는 쪽으로 퍼지며 흐려짐. 그림 하나(graphics)
+export function strikeDust(scene, x, y, facing, cfg) {
+  if (!cfg || !cfg.count) return;
+  const DIRV = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const [dx, dy] = DIRV[facing] || [0, 1];
+  const g = scene.add.graphics().setDepth(y - 0.2);
+  const col = Phaser.Display.Color.HexStringToColor(cfg.color || '#cdbb96').color;
+  const puffs = [];
+  for (let i = 0; i < cfg.count; i++) puffs.push({ a: (Math.random() - 0.5) * 1.6, d: 8 + Math.random() * (cfg.spread || 16), r: 3 + Math.random() * 3 });
+  const o = { k: 0 };
+  scene.tweens.add({
+    targets: o, k: 1, duration: cfg.ms || 260, ease: 'Cubic.easeOut',
+    onUpdate: () => {
+      g.clear();
+      for (const p of puffs) {
+        const px = x + dx * (10 + p.d * o.k) - dy * Math.sin(p.a) * p.d * o.k;
+        const py = y + dy * (6 + p.d * o.k * 0.6) + dx * Math.sin(p.a) * p.d * o.k * 0.5 - 4 * o.k;
+        g.fillStyle(col, (cfg.alpha ?? 0.5) * (1 - o.k));
+        g.fillEllipse(px, py, p.r * 2 * (1 + o.k), p.r * 1.3 * (1 + o.k));
+      }
+    },
+    onComplete: () => g.destroy(),
+  });
+}
+
+// 칼 잔상(feedback_1110.md 2): 지금 칼 그림을 그 자리에 한 장 남겨 금방 흐려지게(빠른 구간이 번져 보임)
+export function weaponSmear(scene, ws, cfg) {
+  if (!cfg || !cfg.alpha || !ws.visible) return null;
+  const img = scene.add.image(ws.x, ws.y, ws.texture.key, ws.frame.name)
+    .setOrigin(ws.originX, ws.originY).setScale(ws.scaleX, ws.scaleY).setRotation(ws.rotation).setFlip(ws.flipX, ws.flipY)
+    .setDepth(ws.depth - 0.002).setBlendMode(Phaser.BlendModes.ADD).setAlpha(cfg.alpha);
+  scene.tweens.add({ targets: img, alpha: 0, duration: cfg.ms || 100, onComplete: () => img.destroy() });
+  return img;
 }
