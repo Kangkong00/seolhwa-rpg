@@ -53,6 +53,9 @@ export class SwingTrail {
     this.ctx = this.canvas.getContext('2d');
     this.key = `trail:${trailSeq++}`;
     this.tex = scene.textures.addCanvas(this.key, this.canvas);
+    // 휘두르는 도중 맵을 옮기면(장면이 끝나면) 흐려지는 tween이 끊겨 destroy가 안 불림 → 궤적 캔버스 텍스처가 남던 것을 막음
+    this.onShutdown = () => this.destroy();
+    scene.events.once('shutdown', this.onShutdown);
     this.image = scene.add.image(this.ox, this.oy, this.key).setOrigin(0, 0).setScale(1 / res).setDepth(depth);
     // 빛 겹: 같은 궤적을 더하기 섞기로 한 번 더(밝은 속, feedback_1110.md 2). glowAlpha 0이면 없음
     const ga = (cfg && cfg.glowAlpha) ?? 0;
@@ -190,7 +193,9 @@ export class SwingTrail {
   }
 
   destroy() {
+    if (this.destroyed) return;
     this.destroyed = true;
+    this.scene.events.off('shutdown', this.onShutdown);
     this.image.destroy();
     if (this.glow) this.glow.destroy();
     if (this.scene.textures.exists(this.key)) this.scene.textures.remove(this.key);

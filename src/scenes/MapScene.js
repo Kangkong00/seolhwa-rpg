@@ -148,6 +148,7 @@ export class MapScene extends Phaser.Scene {
     this.hpFill = null; // 레벨업 체력바 차오름
     this.slowMo = null; // 레벨업 멈칫(게임이 잠깐 느려짐)
     this.recall = null; // 귀환 부적 쓰는 중 { left }
+    this.settle = null; // 휘두르기 끝 동작(맵을 옮기면 끝)
     this.masteryCast = null; // 무예 숙련: 지금 쓰는 무예 { id, counted }(docs/spec/feedback_1024.md 4)
     this.lastFought = null; // 마지막으로 싸운 몬스터(숨 고르기 숙련을 셀지)
     this.dead = false;
